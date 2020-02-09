@@ -1,7 +1,6 @@
 # awesome-HPE
 
-## 3D HPE
----
+### 3D HPE
 
 Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image [[Paper](https://arxiv.org/abs/1907.11346v2)][[Code](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)]
 
