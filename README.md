@@ -12,4 +12,4 @@ Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from
 
 
 [arxiv]: https://img.shields.io/badge/arXiv-paper-red 
-[github]: https://img.shields.io/badge/GitHub-lightgrey
+[github]: https://img.shields.io/badge/GitHub-code-lightgrey
