@@ -1,21 +1,54 @@
-# awesome-HPE
+# Human Pose Estimation
 
-### 3D HPE
+1. [3D HPE](#3D-HPE)
+2. [Datasets](#Datasets)
+3. [More Papers](#More-Papers)  
 
-Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image   
+3D HPE
+======
+
+#### Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image   
 [[Paper](https://arxiv.org/pdf/1907.11346v2.pdf)]
 [[Code-Pose](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)] 
 [[Code-Root](https://github.com/mks0601/3DMPPE_ROOTNET_RELEASE)] 
 [**ICCV 2019**]
-  
 
+<details>
+<summary>
+Key Points - absolute pose, multi person, multi dataset, pose depth   
+</summary>  
+  
 > * A general framework with 3 networks. 1). Human detection 2). RootNet - Human root localization in global 3D world. 3). PoseNet - 3D single-person pose w.r.t Root. where, Root is a fixed ref. point of human body say, pelvis.  
 > * The RootNet learns 2D co-ordinates of the root and depth separately. Depth is estimated using metric euivlent to pinhole camera model by assuming a constant area for a human in real world and area in image world, i.e bounding box after converting to 1:1 aspect ratio. To handle this constant area assumption (i.e if the human is child or in sitting postion etc), the RootNet from image features, learns a parameter to rectify the area in image world instead to nullify the error in area in real world. Thus predicting a good depth estimate of the human root
 > * Using the localized root from RootNet and 3D pose relative to root from PoseNet, all the detected 3D poses are shifted to respective positions in the global 3D world. As it is modular one can replace the models with SOTA to improve performance. 
 
-Abosulte Pose * Multi Person * Multi Dataset * Depth
-##
+</details>
+
+#### Unsupervised 3D Pose Estimation with Geometric Self-Supervision 
+[[Paper](https://arxiv.org/pdf/1904.04812.pdf)]
+[**CVPR 2019**]
+
+<details>
+<summary>
+Key Points - self supervised, discriminator, domain adaptation, temporal consistency    
+</summary>
+  
+> * Unsupervised learning to lift 2D joints to 3D skeletons 
+> * Lifter network outputs 3D pose which is then rotated in random angles and is projected to 2D in a different POV. A discriminator is used to evaluate if this new 2D pose is in the possible pose distribution which is learnt from 2D pose datasets.
+> * Geometric Self Consistency  
+    1. Since rotations should not change a 3D pose, this new 2D projection when lifted again should give a 3D skeleton when rotated back to the original POV gives back the original 3D pose.   
+    2. And the re-projection of this new 3D skeleton that is rotated to original POV should give a 2D joint identical to the initial 2D joints. These geometric consistencies can be used to generate large data in a self-supervised manner. 
+> * Since training unsupervisedly need more data, a 2D adapter network is trained to convert 2D joints from source domain to a target domain
+> * For sequential 2D pose from video, temporal discriminator is used to evaluate if 2D pose is real or fake based on the previous 2D pose during run time. This improves performance in inference time even when input is not sequential.   
+</details>
 
 
-[arxiv]: https://img.shields.io/badge/arXiv-lightgrey 
-[github]: https://img.shields.io/badge/GitHub-code-lightgrey
+
+Datasets
+========
+
+More Papers
+===========
+
+* [Gyeongsik Moon - Seoul National University](https://scholar.google.com.hk/citations?user=2f2D258AAAAJ&hl=zh-CN)
+* [awesome-human-pose-estimation](https://github.com/wangzheallen/awesome-human-pose-estimation)
