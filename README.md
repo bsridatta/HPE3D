@@ -52,3 +52,4 @@ More Papers
 
 * [Gyeongsik Moon - Seoul National University](https://scholar.google.com.hk/citations?user=2f2D258AAAAJ&hl=zh-CN)
 * [awesome-human-pose-estimation](https://github.com/wangzheallen/awesome-human-pose-estimation)
+* [3d-human-pose-estimation] https://github.com/trumDog/3d-human-pose-estimation
