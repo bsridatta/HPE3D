@@ -15,7 +15,7 @@
 
 <details>
 <summary>
-absolute pose, multi person, pose depth   
+absolute pose, multi person, pose depth, cascade
 </summary>  
   
 > * A general framework with 3 networks. 1). Human detection 2). RootNet - Human root localization in global 3D world. 3). PoseNet - 3D single-person pose w.r.t Root. where, Root is a fixed ref. point of human body say, pelvis.  
@@ -44,18 +44,35 @@ self supervised, discriminator, domain adaptation, temporal consistency
 </details>
 
 
+#### AbsPoseLifter: Absolute 3D Human Pose Lifting Network from a Single Noisy 2D Human Pose
+[[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
+</br>
+<details>
+<summary>
+absolute pose, noise, errors, cascade    
+</summary>
+
+> * method for estimating the root coordinates and root-relative 3D pose simultaneously 
+> * Ambiguities also applies to other papers
+    1. size ambiguity - the size of the human subject is learned implicitly from datasets
+    2. focal length ambiguity - outputs the canonical root depth normalized by the focal length instead of the real depth. If additional focal length information is available, we can obtain the root’s real depth from the canonical depth 
+> * 2D pose estimation errors exhibit a similar distribution regardless of the type of 2D pose estimator
+> * In order to train the lifting network such a distribution of errors are imparted to the 2D GT to synthasize realistic 2D pose that a 2D pose estimator would provide
+> * novel normalization layer normalizes the input 2D pose and adds the target subject’s 2D location and scale information as intermediate features.
+
+</details>
+
 #### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
 [[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
 [[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
-[**CVPR 2018**]
-</br>
+
 <details>
 <summary>
 GAN, unsupervised    
 </summary>
-</br>  
+
 > * An unsupervised method that learns a 3D human pose from 2D joint locations in a single image without any 3D datasets
-> * Keypoint 2
+> * One of the first unsupervised paper?
 </details>
   
 
@@ -68,7 +85,7 @@ GAN, unsupervised
 <summary>
 Keyword1, keyword2, keyword3    
 </summary>
-</br>  
+<*Remove this*/br>  
 > * Keypoint 1 
 > * Keypoint 2
 </details>
