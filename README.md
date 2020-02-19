@@ -15,7 +15,7 @@
 
 <details>
 <summary>
-absolute pose, multi person, multi dataset, pose depth   
+absolute pose, multi person, pose depth   
 </summary>  
   
 > * A general framework with 3 networks. 1). Human detection 2). RootNet - Human root localization in global 3D world. 3). PoseNet - 3D single-person pose w.r.t Root. where, Root is a fixed ref. point of human body say, pelvis.  
@@ -44,6 +44,21 @@ self supervised, discriminator, domain adaptation, temporal consistency
 </details>
 
 
+#### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
+[[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
+[[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
+[**CVPR 2018**]
+</br>
+<details>
+<summary>
+GAN, unsupervised    
+</summary>
+</br>  
+> * An unsupervised method that learns a 3D human pose from 2D joint locations in a single image without any 3D datasets
+> * Keypoint 2
+</details>
+  
+
 <!-- Template for a paper
 #### Title 
 [[Paper](https://arxiv.org/pdf/)]
@@ -57,8 +72,7 @@ Keyword1, keyword2, keyword3
 > * Keypoint 1 
 > * Keypoint 2
 </details>
-End of Template 
--->  
+End of Template -->  
 
 
 Datasets
