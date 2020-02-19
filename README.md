@@ -15,7 +15,7 @@
 
 <details>
 <summary>
-Key Points - absolute pose, multi person, multi dataset, pose depth   
+absolute pose, multi person, multi dataset, pose depth   
 </summary>  
   
 > * A general framework with 3 networks. 1). Human detection 2). RootNet - Human root localization in global 3D world. 3). PoseNet - 3D single-person pose w.r.t Root. where, Root is a fixed ref. point of human body say, pelvis.  
@@ -30,7 +30,7 @@ Key Points - absolute pose, multi person, multi dataset, pose depth
 
 <details>
 <summary>
-Key Points - self supervised, discriminator, domain adaptation, temporal consistency    
+self supervised, discriminator, domain adaptation, temporal consistency    
 </summary>
   
 > * Unsupervised learning to lift 2D joints to 3D skeletons 
@@ -40,8 +40,25 @@ Key Points - self supervised, discriminator, domain adaptation, temporal consist
     2. And the re-projection of this new 3D skeleton that is rotated to original POV should give a 2D joint identical to the initial 2D joints. These geometric consistencies can be used to generate large data in a self-supervised manner. 
 > * Since training unsupervisedly need more data, a 2D adapter network is trained to convert 2D joints from source domain to a target domain
 > * For sequential 2D pose from video, temporal discriminator is used to evaluate if 2D pose is real or fake based on the previous 2D pose during run time. This improves performance in inference time even when input is not sequential.   
+
 </details>
 
+
+<!-- Template for a paper
+#### Title 
+[[Paper](https://arxiv.org/pdf/)]
+[**Venue**]
+</br>
+<details>
+<summary>
+Keyword1, keyword2, keyword3    
+</summary>
+</br>  
+> * Keypoint 1 
+> * Keypoint 2
+</details>
+End of Template 
+-->  
 
 
 Datasets
@@ -52,4 +69,4 @@ More Papers
 
 * [Gyeongsik Moon - Seoul National University](https://scholar.google.com.hk/citations?user=2f2D258AAAAJ&hl=zh-CN)
 * [awesome-human-pose-estimation](https://github.com/wangzheallen/awesome-human-pose-estimation)
-* [3d-human-pose-estimation] https://github.com/trumDog/3d-human-pose-estimation
+* [3d-human-pose-estimation](https://github.com/trumDog/3d-human-pose-estimation)
