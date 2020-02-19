@@ -94,6 +94,8 @@ End of Template -->
 
 Datasets
 ========
+* [Human3.6](http://vision.imar.ro/human3.6m/description.php) - 2D and 3D relative joint pose, multi view
+* [MPI-INF-3DHP](http://gvv.mpi-inf.mpg.de/3dhp-dataset/) -  - 2D and 3D relative joint pose, mutli view
 
 More Papers
 ===========
