@@ -46,6 +46,7 @@ self supervised, discriminator, domain adaptation, temporal consistency
 
 #### AbsPoseLifter: Absolute 3D Human Pose Lifting Network from a Single Noisy 2D Human Pose
 [[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
+[[2019]]
 </br>
 <details>
 <summary>
@@ -62,10 +63,30 @@ absolute pose, noise, errors, cascade
 
 </details>
 
+#### RepNet: Weakly Supervised Training of an Adversarial Reprojection Network for 3D Human Pose Estimation
+[[Paper](https://arxiv.org/pdf/1902.09868.pdf)]
+[[Code](https://github.com/bastianwandt/RepNet)]
+[[**CVPR 2019**]]
+<details>
+<summary>
+weakly supervised, adversial training, GAN    
+</summary>
+
+> * An adversarial training method for a 3D human pose
+estimation neural network (RepNet) based on a 2D reprojection
+> * Weakly supervised training without 2D-3D correspondences and unknown cameras.
+> * Simultaneous 3D skeletal keypoints and camera pose
+estimation
+> * A layer encoding a kinematic chain representation that
+includes bone lengths and joint angle informations
+> * A pose regression network that generalizes well to unknown human poses and cameras
+</details>
+
+
 #### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
 [[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
 [[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
-
+[[2018]]
 <details>
 <summary>
 GAN, unsupervised    
@@ -74,7 +95,9 @@ GAN, unsupervised
 > * An unsupervised method that learns a 3D human pose from 2D joint locations in a single image without any 3D datasets
 > * One of the first unsupervised paper?
 </details>
-  
+
+
+
 
 <!-- Template for a paper
 #### Title 
@@ -90,7 +113,6 @@ Keyword1, keyword2, keyword3
 > * Keypoint 2
 </details>
 End of Template -->  
-
 
 Datasets
 ========
