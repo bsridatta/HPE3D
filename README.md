@@ -97,8 +97,6 @@ GAN, unsupervised
 </details>
 
 
-
-
 <!-- Template for a paper
 #### Title 
 [[Paper](https://arxiv.org/pdf/)]
@@ -113,6 +111,13 @@ Keyword1, keyword2, keyword3
 > * Keypoint 2
 </details>
 End of Template -->  
+
+Flavours
+========
+* Reprojection Error Optimization - 3D human body
+model is deformed such that it satisfies a reprojection error  
+* Direct NN inference -  estimate 3D poses directly from images or detected
+keypoints
 
 Datasets
 ========
