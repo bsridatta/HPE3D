@@ -112,12 +112,14 @@ Keyword1, keyword2, keyword3
 </details>
 End of Template -->  
 
-Flavours
+Concepts
 ========
 * Reprojection Error Optimization - 3D human body
 model is deformed such that it satisfies a reprojection error  
 * Direct NN inference -  estimate 3D poses directly from images or detected
 keypoints
+* Kinematic Chain Space (KCS) - Projecting 3D human pose into KCS, a contraint is dericed that is based on the assumption that the bone lengths are constant. This can be benificial as giving an additional feature matrix to the network, it doesnt have to learn joint length computation and angular constraints on its own.  
+
 
 Datasets
 ========
