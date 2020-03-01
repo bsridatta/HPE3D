@@ -82,6 +82,20 @@ includes bone lengths and joint angle informations
 > * A pose regression network that generalizes well to unknown human poses and cameras
 </details>
 
+#### Distill Knowledge from NRSfM for Weakly Supervised 3D Pose Learning
+[[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Wang_Distill_Knowledge_From_NRSfM_for_Weakly_Supervised_3D_Pose_Learning_ICCV_2019_paper.pdf)]
+[**ICCV 2019**]
+<details>
+<summary>
+teacher student, weakly supervised, NRSfM    
+</summary>
+  
+> * Weakly supervised pose estimation method using solely 2D landmark annotations  
+> * Strong NRSfM baseline modified from Deep-NRSfM, which outperforms current published state-of-the-art NRSfM methods on H3.6M dataset  
+> * New knowledge distilling algorithm applicable to NRSfM methods based on dictionary learning. Demonstrates that our learned network gets significantly lower error on the training set compared to its NRSfM teacher
+
+</details>
+
 
 #### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
 [[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
