@@ -46,7 +46,7 @@ self supervised, discriminator, domain adaptation, temporal consistency
 
 #### AbsPoseLifter: Absolute 3D Human Pose Lifting Network from a Single Noisy 2D Human Pose
 [[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
-[[2019]]
+[2019]
 </br>
 <details>
 <summary>
@@ -66,7 +66,7 @@ absolute pose, noise, errors, cascade
 #### RepNet: Weakly Supervised Training of an Adversarial Reprojection Network for 3D Human Pose Estimation
 [[Paper](https://arxiv.org/pdf/1902.09868.pdf)]
 [[Code](https://github.com/bastianwandt/RepNet)]
-[[**CVPR 2019**]]
+[**CVPR 2019**]
 <details>
 <summary>
 weakly supervised, adversial training, GAN    
