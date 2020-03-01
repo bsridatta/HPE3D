@@ -86,7 +86,7 @@ includes bone lengths and joint angle informations
 #### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
 [[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
 [[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
-[[2018]]
+[2018]
 <details>
 <summary>
 GAN, unsupervised    
