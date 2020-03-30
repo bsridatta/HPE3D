@@ -125,6 +125,7 @@ canonicalization network, NRSFM, self-supervised
 > * uses a novel self-supervised constraint "canoniacalization network" to correctly factorize 3D shape and viewpoint
 > * can handle occlusions and missing values in the observations
 > * works effectively across multiple object categories
+> * both the factorization network and canonicalization network share the same core architecture
 > * losses - 1) reprojection loss 2) canonicalization network loss 3) rotation invariance loss 
 </details>
 
