@@ -111,6 +111,24 @@ GAN, unsupervised
 </details>
 
 
+#### C3DPO: Canonical 3D Pose Networks for Non-Rigid Structure From Motion 
+[[Paper](https://arxiv.org/pdf/1909.02533.pdf)]
+[**ICCV 2019**]
+</br>
+<details>
+<summary>
+canonicalization network, NRSFM, self-supervised
+</summary>
+
+> * recovers both 3D canonical shape and viewpoint using only 2D keypoints in a single image at test time
+> * uses a novel self-supervised constraint "canoniacalization network" to correctly factorize 3D shape and viewpoint
+> * can handle occlusions and missing values in the observations
+> * works effectively across multiple object categories
+> * losses - 1) reprojection loss 2) canonicalization network loss 3) rotation invariance loss 
+</details>
+
+
+
 <!-- Template for a paper
 #### Title 
 [[Paper](https://arxiv.org/pdf/)]
