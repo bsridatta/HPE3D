@@ -2,7 +2,7 @@
 
 1. [3D HPE](#3D-HPE)
 2. [Datasets](#Datasets)
-3. [More Stuff](#More-Papers)  
+3. [More Stuff](#More-Stuff)  
 
 3D HPE
 ======
@@ -164,7 +164,7 @@ Datasets
 
 More Stuff
 ===========
-* [LEarning to Reconstruct people](https://sric.me/Learning-to-Reconstruct-People/)
+* [Learning to Reconstruct people](https://sric.me/Learning-to-Reconstruct-People/)
 * [Gyeongsik Moon - Seoul National University](https://scholar.google.com.hk/citations?user=2f2D258AAAAJ&hl=zh-CN)
 * [awesome-human-pose-estimation](https://github.com/wangzheallen/awesome-human-pose-estimation)
 * [3d-human-pose-estimation](https://github.com/trumDog/3d-human-pose-estimation)
