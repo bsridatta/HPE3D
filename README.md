@@ -158,8 +158,9 @@ keypoints
 
 Datasets
 ========
-* [Human3.6](http://vision.imar.ro/human3.6m/description.php) - 2D and 3D relative joint pose, multi view
-* [MPI-INF-3DHP](http://gvv.mpi-inf.mpg.de/3dhp-dataset/) - 2D and 3D relative joint pose, mutli view
+* [Human3.6](http://vision.imar.ro/human3.6m/description.php)[2014] - 2D and 3D relative joint pose, multi view
+* [MPI-INF-3DHP](http://gvv.mpi-inf.mpg.de/3dhp-dataset/)[2017] - 2D and 3D relative joint pose, mutli view
+* [JTA Joint Track Auto](https://aimagelab.ing.unimore.it/imagelab/page.asp?IdPage=25)[2018] - 2D, 3D, occulusion annotation, synthetic
 
 More Papers
 ===========
