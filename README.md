@@ -2,7 +2,7 @@
 
 1. [3D HPE](#3D-HPE)
 2. [Datasets](#Datasets)
-3. [More Papers](#More-Papers)  
+3. [More Stuff](#More-Papers)  
 
 3D HPE
 ======
@@ -162,9 +162,9 @@ Datasets
 * [MPI-INF-3DHP](http://gvv.mpi-inf.mpg.de/3dhp-dataset/)[2017] - 2D and 3D relative joint pose, mutli view
 * [JTA Joint Track Auto](https://aimagelab.ing.unimore.it/imagelab/page.asp?IdPage=25)[2018] - 2D, 3D, occulusion annotation, synthetic
 
-More Papers
+More Stuff
 ===========
-
+* [LEarning to Reconstruct people](https://sric.me/Learning-to-Reconstruct-People/)
 * [Gyeongsik Moon - Seoul National University](https://scholar.google.com.hk/citations?user=2f2D258AAAAJ&hl=zh-CN)
 * [awesome-human-pose-estimation](https://github.com/wangzheallen/awesome-human-pose-estimation)
 * [3d-human-pose-estimation](https://github.com/trumDog/3d-human-pose-estimation)
