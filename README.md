@@ -1,8 +1,9 @@
 # Human Pose Estimation
 
-1. [3D HPE](#3D-HPE)
-2. [Datasets](#Datasets)
-3. [More Stuff](#More-Stuff)  
+[Concetps](#Concepts)  
+[3D HPE](#3D-HPE)  
+[Datasets](#Datasets)  
+[More Stuff](#More-Stuff)    
 
 Concepts
 ========
