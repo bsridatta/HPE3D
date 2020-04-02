@@ -13,7 +13,7 @@ Concepts
 * Non rigid structure from motion (NRSfM) - aims to obtain the varying 3D structure and camera motion from uncalibrated 2D point tracks [NR-SFM video explanation](https://www.youtube.com/watch?v=zBalNj2F8Ik)
 * Kinematic Feature updates (in 2D) -  encode the kinematic structure via feature updates at coarse resolution [RePose](https://arxiv.org/pdf/2002.03933v1.pdf)
 * Real-time: Casading, Long short skip connections [XNect](https://arxiv.org/pdf/1907.00837v1.pdf)
-* Ordinal Ranking [Ordinal+CVAE](Monocular 3D Human Pose Estimation by Generation and Ordinal Ranking)[DRPose3D - Depth Ranking](https://arxiv.org/pdf/1805.08973.pdf)
+* Ordinal Ranking [Ordinal+CVAE](#Monocular-3D-Human-Pose-Estimation-by-Generation-and-Ordinal-Ranking)[DRPose3D - Depth Ranking](https://arxiv.org/pdf/1805.08973.pdf)
 * C-VAE
 
 
