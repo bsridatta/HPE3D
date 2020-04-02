@@ -108,21 +108,6 @@ teacher student, weakly supervised, NRSfM
 
 </details>
 
-
-#### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
-[[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
-[[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
-[2018]
-<details>
-<summary>
-GAN, unsupervised    
-</summary>
-
-> * An unsupervised method that learns a 3D human pose from 2D joint locations in a single image without any 3D datasets
-> * One of the first unsupervised paper?
-</details>
-
-
 #### C3DPO: Canonical 3D Pose Networks for Non-Rigid Structure From Motion 
 [[Paper](https://arxiv.org/pdf/1909.02533.pdf)]
 [[Code](https://github.com/facebookresearch/c3dpo_nrsfm)]
@@ -141,7 +126,35 @@ canonicalization network, NRSFM, self-supervised
 > * losses - 1) reprojection loss 2) canonicalization network loss 3) rotation invariance loss 
 </details>
 
+#### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
+[[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
+[[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
+[2018]
+<details>
+<summary>
+GAN, unsupervised    
+</summary>
 
+> * An unsupervised method that learns a 3D human pose from 2D joint locations in a single image without any 3D datasets
+> * One of the first unsupervised paper?
+</details>
+
+
+#### Monocular 3D Human Pose Estimation by Generation and Ordinal Ranking 
+[[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Sharma_Monocular_3D_Human_Pose_Estimation_by_Generation_and_Ordinal_Ranking_ICCV_2019_paper.pdf)]
+[**ICCV 2019**]
+</br>
+<details>
+<summary>
+C-VAE, ordinal ranking and score, condition on 2d pose    
+</summary>
+
+> * tackle the inherent ill-posed problem of lifting 2D-to-3D human-pose by learning a deep generative model that synthesizes diverse 3D-pose samples conditioned on the estimated 2D-pose.
+> * employ CVAE for 3D human-pose estimation for the first time.
+> * derive joint-ordinal depth relations from an RGB image and employ them to rank 3D-pose samples.
+> * shows that the oracle-based pose sample obtained from our proposed generative model achieves stateof-the-art results on two benchmark datasets, Human3.6M and Human-Eva.
+> * shows competitive performance over Baseline even when our 2D-to-3D module is trained on a separate MoCap dataset with no images
+</details>
 
 <!-- Template for a paper
 #### Title 
