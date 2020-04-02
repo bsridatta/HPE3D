@@ -7,14 +7,15 @@
 
 Concepts
 ========
-* Reprojection Error Optimization - 3D human body
-model is deformed such that it satisfies a reprojection error  
-* Direct NN inference -  estimate 3D poses directly from images or detected
-keypoints
+* Reprojection Error Optimization - 3D human body model is deformed such that it satisfies a reprojection error  
+* Direct NN inference -  estimate 3D poses directly from images or detected keypoints
 * Kinematic Chain Space (KCS) - Projecting 3D human pose into KCS, a contraint is derived that is based on the assumption that the bone lengths are constant. This can be benificial as giving an additional feature matrix to the network, it doesnt have to learn joint length computation and angular constraints on its own [KCS for monocular MoCap](https://arxiv.org/pdf/1702.00186.pdf)
 * Non rigid structure from motion (NRSfM) - aims to obtain the varying 3D structure and camera motion from uncalibrated 2D point tracks [NR-SFM video explanation](https://www.youtube.com/watch?v=zBalNj2F8Ik)
 * Kinematic Feature updates (in 2D) -  encode the kinematic structure via feature updates at coarse resolution [RePose](https://arxiv.org/pdf/2002.03933v1.pdf)
 * Real-time: Casading, Long short skip connections [XNect](https://arxiv.org/pdf/1907.00837v1.pdf)
+* Ordinal Ranking [Ordinal+CVAE](Monocular 3D Human Pose Estimation by Generation and Ordinal Ranking)[DRPose3D - Depth Ranking](https://arxiv.org/pdf/1805.08973.pdf)
+* C-VAE
+
 
 3D HPE
 ======
