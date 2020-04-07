@@ -1,0 +1,17 @@
+# datafiles
+/data
+
+# dot files
+.vscode
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# checkpoints
+/checkpoints/*.pt
+
+# cache
+__pycache__/
+
+
+
+
