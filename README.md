@@ -169,6 +169,22 @@ occlusion, video
 </details>
 
 
+2D HPE
+======
+
+#### RePose: Learning Deep Kinematic Priors for Fast Human Pose Estimation 
+[[Paper](https://arxiv.org/pdf/2002.03933v1.pdf)]
+[**2020**]
+</br>
+<details>
+<summary>
+kinematic priors
+</summary>
+<*Remove this*/br>  
+> * Keypoint 1 
+> * Keypoint 2
+</details>
+
 <!-- Template for a paper
 #### Title 
 [[Paper](https://arxiv.org/pdf/)]
@@ -183,8 +199,6 @@ Keyword1, keyword2, keyword3
 > * Keypoint 2
 </details>
 End of Template -->  
-
-
 Datasets
 ========
 * [Human3.6](http://vision.imar.ro/human3.6m/description.php)[2014] - 2D and 3D relative joint pose, multi view
