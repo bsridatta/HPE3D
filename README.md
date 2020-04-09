@@ -157,6 +157,18 @@ C-VAE, ordinal ranking and score, condition on 2d pose
 > * shows competitive performance over Baseline even when our 2D-to-3D module is trained on a separate MoCap dataset with no images
 </details>
 
+
+#### Occlusion-Aware Networks for 3D Human Pose Estimation in Video #10 
+[[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Cheng_Occlusion-Aware_Networks_for_3D_Human_Pose_Estimation_in_Video_ICCV_2019_paper.pdf)]
+[**ICCV 2019**]
+</br>
+<details>
+<summary>
+occlusion, video
+</summary>
+</details>
+
+
 <!-- Template for a paper
 #### Title 
 [[Paper](https://arxiv.org/pdf/)]
