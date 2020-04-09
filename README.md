@@ -1,10 +1,11 @@
 # Human Pose Estimation
 
-1. [Concetps](#Concepts)  
-1. [3D HPE](#3D-HPE)
-1. [2D HPE](#2D-HPE)
-1. [Datasets](#Datasets)  
-1. [More Stuff](#More-Stuff)    
+* [Concetps](#Concepts)  
+* [3D HPE](#3D-HPE)
+  * [2D-3D Lifting](#2D-3D-Lifting) 
+* [2D HPE](#2D-HPE)
+* [Datasets](#Datasets)  
+* [More Stuff](#More-Stuff)    
 
 Concepts
 ========
@@ -20,6 +21,9 @@ Concepts
 
 3D HPE
 ======
+
+2D-3D Lifting
+------------
 
 #### Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image   
 [[Paper](https://arxiv.org/pdf/1907.11346v2.pdf)]
