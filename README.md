@@ -38,7 +38,7 @@ Concepts
 
 #### PoseLifter: Absolute 3D human pose lifting network from a single noisy 2D human pose
 [[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
-[2020]
+[2019,2020]
 [image-2D-3D, project w/ focal length, learn human size, absolute pose, noise, errors, cascade]
 
 #### RepNet: Weakly Supervised Training of an Adversarial Reprojection Network for 3D Human Pose Estimation
@@ -50,29 +50,29 @@ Concepts
 #### Distill Knowledge from NRSfM for Weakly Supervised 3D Pose Learning
 [[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Wang_Distill_Knowledge_From_NRSfM_for_Weakly_Supervised_3D_Pose_Learning_ICCV_2019_paper.pdf)]
 [**ICCV 2019**]
-[teacher student, weakly supervised, NRSfM]
+[Image features+2D-3D, NRSfM, teacher student, weakly supervised]
 
 #### C3DPO: Canonical 3D Pose Networks for Non-Rigid Structure From Motion 
 [[Paper](https://arxiv.org/pdf/1909.02533.pdf)]
 [[Code](https://github.com/facebookresearch/c3dpo_nrsfm)]
 [**ICCV 2019**]
-[canonicalization network, NRSFM, self-supervised]
+[2D-3D, NRSFM, canonicalization network, self-supervised]
 
 #### Unsupervised Adversarial Learning of 3D Human Pose from 2D Joint Locations
 [[Paper](https://arxiv.org/pdf/1803.08244.pdf)]
 [[Code](https://github.com/DwangoMediaVillage/3dpose_gan)]
 [2018]
-[GAN, unsupervised]
+[2D-3D, GAN, unsupervised]
 
 #### Monocular 3D Human Pose Estimation by Generation and Ordinal Ranking 
 [[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Sharma_Monocular_3D_Human_Pose_Estimation_by_Generation_and_Ordinal_Ranking_ICCV_2019_paper.pdf)]
 [**ICCV 2019**]
-[C-VAE, ordinal ranking and score, condition on 2d pose]
+[2Dheatmap-3D, ambigious use of 3D GT, C-VAE, ordinal ranking and score, condition on 2d pose]
 
-#### Occlusion-Aware Networks for 3D Human Pose Estimation in Video #10 
+#### Occlusion-Aware Networks for 3D Human Pose Estimation in Video
 [[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Cheng_Occlusion-Aware_Networks_for_3D_Human_Pose_Estimation_in_Video_ICCV_2019_paper.pdf)]
 [**ICCV 2019**]
-[occlusion, video]
+[2Dheatmap-3D, reprojection+GT, adversarial, occlusion, video]
 
 
 Using GT
@@ -100,6 +100,7 @@ Keyword1, keyword2, keyword3
 > * Keypoint 2
 </details>
 End of Template -->  
+
 Datasets
 ========
 * [Human3.6](http://vision.imar.ro/human3.6m/description.php)[2014] - 2D and 3D relative joint pose, multi view
