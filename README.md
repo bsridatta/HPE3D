@@ -25,8 +25,8 @@ Concepts
 
 #### Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image   
 [[Paper](https://arxiv.org/pdf/1907.11346v2.pdf)]
-[[Code-Pose](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)] 
-[[Code-Root](https://github.com/mks0601/3DMPPE_ROOTNET_RELEASE)] 
+[[Code](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)] 
+[[Code](https://github.com/mks0601/3DMPPE_ROOTNET_RELEASE)] 
 [**ICCV 2019**]
 [image-2Dheatmap-3D, reprojection, absolute pose, multi person, pose depth, cascade]
 
