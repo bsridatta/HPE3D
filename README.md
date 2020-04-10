@@ -22,26 +22,24 @@ Concepts
 3D HPE
 ======
 
-2D-3D Lifting
-------------
 
 #### Camera Distance-aware Top-down Approach for 3D Multi-person Pose Estimation from a Single RGB Image   
 [[Paper](https://arxiv.org/pdf/1907.11346v2.pdf)]
 [[Code-Pose](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)] 
 [[Code-Root](https://github.com/mks0601/3DMPPE_ROOTNET_RELEASE)] 
 [**ICCV 2019**]
-[absolute pose, multi person, pose depth, cascade]
+[image-2Dheatmap-3D, reprojection, absolute pose, multi person, pose depth, cascade]
 
 #### Unsupervised 3D Pose Estimation with Geometric Self-Supervision 
 [[Paper](https://arxiv.org/pdf/1904.04812.pdf)]
 [**CVPR 2019**]
-[self supervised, discriminator, domain adaptation, temporal consistency]
+[2D-3D, self supervised, discriminator, domain adaptation, temporal consistency]
 
 
-#### AbsPoseLifter: Absolute 3D Human Pose Lifting Network from a Single Noisy 2D Human Pose
+#### PoseLifter: Absolute 3D human pose lifting network from a single noisy 2D human pose
 [[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
-[2019]
-[absolute pose, noise, errors, cascade]
+[2020]
+[image-2D-3D, project w/ focal length, learn human size,absolute pose, noise, errors, cascade]
 
 #### RepNet: Weakly Supervised Training of an Adversarial Reprojection Network for 3D Human Pose Estimation
 [[Paper](https://arxiv.org/pdf/1902.09868.pdf)]
@@ -75,6 +73,10 @@ Concepts
 [[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Cheng_Occlusion-Aware_Networks_for_3D_Human_Pose_Estimation_in_Video_ICCV_2019_paper.pdf)]
 [**ICCV 2019**]
 [occlusion, video]
+
+
+Using GT
+---------
 
 2D HPE
 ======
