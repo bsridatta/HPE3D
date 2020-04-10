@@ -28,7 +28,7 @@ Concepts
 [[Code](https://github.com/mks0601/3DMPPE_POSENET_RELEASE)] 
 [[Code](https://github.com/mks0601/3DMPPE_ROOTNET_RELEASE)] 
 [**ICCV 2019**]
-[image-2Dheatmap-3D, reprojection, absolute pose, multi person, pose depth, cascade]
+[image-2Dheatmap-3D, absolute pose, multi person, pose depth, cascade]
 
 #### Unsupervised 3D Pose Estimation with Geometric Self-Supervision 
 [[Paper](https://arxiv.org/pdf/1904.04812.pdf)]
@@ -39,13 +39,13 @@ Concepts
 #### PoseLifter: Absolute 3D human pose lifting network from a single noisy 2D human pose
 [[Paper](https://arxiv.org/pdf/1910.12029.pdf)]
 [2020]
-[image-2D-3D, project w/ focal length, learn human size,absolute pose, noise, errors, cascade]
+[image-2D-3D, project w/ focal length, learn human size, absolute pose, noise, errors, cascade]
 
 #### RepNet: Weakly Supervised Training of an Adversarial Reprojection Network for 3D Human Pose Estimation
 [[Paper](https://arxiv.org/pdf/1902.09868.pdf)]
 [[Code](https://github.com/bastianwandt/RepNet)]
 [**CVPR 2019**]
-[weakly supervised, adversial training, GAN]
+[2D-3D, KCS, weakly supervised, adversial training, GAN]
 
 #### Distill Knowledge from NRSfM for Weakly Supervised 3D Pose Learning
 [[Paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Wang_Distill_Knowledge_From_NRSfM_for_Weakly_Supervised_3D_Pose_Learning_ICCV_2019_paper.pdf)]
