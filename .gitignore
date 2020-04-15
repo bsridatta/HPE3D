@@ -5,6 +5,7 @@
 .vscode
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+.h5
 
 # checkpoints
 /checkpoints/*.pt
