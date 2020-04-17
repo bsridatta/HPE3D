@@ -1,5 +1,5 @@
 '''
-Code borrowed from https://github.com/juyongchang/PoseLifter
+Code adapted from https://github.com/juyongchang/PoseLifter
 '''
 
 import numpy as np
@@ -15,6 +15,9 @@ camera_list = np.arange(1, 5)
 img_path = '../../../HPE_datasets/h36m/'
 save_path = './'
 annot_name = 'matlab_meta_new.mat'
+
+# to get smaller subset of the data for dev
+debug = True
 
 if not os.path.exists(save_path):
     os.mkdir(save_path)
@@ -38,7 +41,8 @@ for subject_ in subject_list:
     for action_ in action_list:
         for subaction_ in subaction_list:
             for camera_ in camera_list:
-                dir_name = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (subject_, action_, subaction_, camera_)
+                dir_name = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
+                    subject_, action_, subaction_, camera_)
                 print(dir_name)
                 annot_file = img_path + dir_name + '/' + annot_name
                 try:
@@ -46,9 +50,9 @@ for subject_ in subject_list:
                 except:
                     print('pass %s' % dir_name)
                     continue
-                pose2d_ = np.transpose(data['pose2d'], (2,1,0))
-                pose3d_ = np.transpose(data['pose3d'], (2,1,0))
-                pose3d_global_ = np.transpose(data['pose3d_global'], (2,1,0))
+                pose2d_ = np.transpose(data['pose2d'], (2, 1, 0))
+                pose3d_ = np.transpose(data['pose3d'], (2, 1, 0))
+                pose3d_global_ = np.transpose(data['pose3d_global'], (2, 1, 0))
                 bbox_ = data['bbox']
                 cam_f_ = data['f']
                 cam_c_ = data['c']
@@ -59,12 +63,9 @@ for subject_ in subject_list:
                     if i % 5 != 0:
                         continue
                     idx.append(i+1)
-                    pose2d.append(pose2d_[inds,:,i])
-                    print(pose2d_[inds,:,i].shape, num_images)
-                    print(pose2d_.shape)
-                    exit()
-                    pose3d.append(pose3d_[inds,:,i])
-                    pose3d_global.append(pose3d_global_[inds,:,i])
+                    pose2d.append(pose2d_[inds, :, i])
+                    pose3d.append(pose3d_[inds, :, i])
+                    pose3d_global.append(pose3d_global_[inds, :, i])
                     bbox.append(bbox_[i])
                     cam_f.append(cam_f_[i])
                     cam_c.append(cam_c_[i])
@@ -76,15 +77,27 @@ for subject_ in subject_list:
                     camera.append(camera_)
                     num_samples += 1
 
-exit()
+                    if debug:
+                        break
+                if debug:
+                    break
+            if debug:
+                break
+        if debug:
+            break
+
 print('number of samples = %d' % num_samples)
-h5name = save_path + 'h36m17.h5'
-f = h5py.File(h5name, 'w')
+
+h5name = 'h36m17.h5'
+if debug:
+    h5name = "debug_" + h5name
+
+f = h5py.File(save_path+h5name, 'w')
 f['idx'] = idx
 f['pose2d'] = pose2d
 f['pose3d'] = pose3d
 f['pose3d_global'] = pose3d_global
-f['bbox'] = bbox    
+f['bbox'] = bbox
 f['cam_f'] = cam_f
 f['cam_c'] = cam_c
 f['cam_R'] = cam_R
@@ -94,5 +107,3 @@ f['action'] = action
 f['subaction'] = subaction
 f['camera'] = camera
 f.close()
-
-
