@@ -60,6 +60,9 @@ for subject_ in subject_list:
                         continue
                     idx.append(i+1)
                     pose2d.append(pose2d_[inds,:,i])
+                    print(pose2d_[inds,:,i].shape, num_images)
+                    print(pose2d_.shape)
+                    exit()
                     pose3d.append(pose3d_[inds,:,i])
                     pose3d_global.append(pose3d_global_[inds,:,i])
                     bbox.append(bbox_[i])
@@ -73,6 +76,7 @@ for subject_ in subject_list:
                     camera.append(camera_)
                     num_samples += 1
 
+exit()
 print('number of samples = %d' % num_samples)
 h5name = save_path + 'h36m17.h5'
 f = h5py.File(h5name, 'w')
