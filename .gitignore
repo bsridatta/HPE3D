@@ -3,6 +3,9 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+# other repo
+vae_hands
+
 # checkpoints
 /checkpoints/*.pt
 
