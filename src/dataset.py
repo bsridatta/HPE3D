@@ -66,7 +66,15 @@ class H36M(Dataset):
         image_file = self.image_path+image_dir+'/' +\
             image_dir+"_"+("%06d" % (sample['idx']))+".jpg"
 
-        return Image.open(image_file)
+        image_tmp = Image.open(image_file)
+        image = image_tmp.copy()
+
+        # clear PIL
+        image.close()
+        del image_tmp
+        gc.collect()
+
+        return image
 
 
 def test_h36m():
@@ -91,6 +99,9 @@ def test_h36m():
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size, end=" ")
 
-
+    del dataset
+    del sample
+    gc.collect()
+    
 if __name__ == "__main__":
     test_h36m()
