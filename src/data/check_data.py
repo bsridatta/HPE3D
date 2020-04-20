@@ -46,7 +46,6 @@ def plot_h36(pose):
 
     n = 100
 
-
     # create a 21 x 21 vertex mesh
     xx, yy = np.meshgrid(np.linspace(0,1,21), np.linspace(0,1,21))
 
@@ -78,6 +77,7 @@ def plot_h36(pose):
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
+    ax.axis = 'off'
 
     plt.show()
 
@@ -86,6 +86,81 @@ def plot_h36(pose):
     #     plt.draw()
     #     plt.pause(.001)
     
+
+def plot_3D(pose):
+
+
+    x =  pose[:,0]     
+    y =  -1*pose[:,2]  
+    z =  -1*pose[:,1]  
+    x = x/x.max()
+    y = y/y.min()
+    z = z/z.min()
+    skeleton = ( (0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6) )
+
+    fig = go.Figure(data=go.Scatter3d(
+        x=x, y=y, z=z,
+        mode='markers',
+        marker=dict(
+            size=4,
+            color=z,
+            colorscale='Viridis'
+        ),
+        showlegend=False
+    ))
+
+    for link in skeleton:
+        fig.add_trace(go.Scatter3d(
+                        x=x[([link[0], link[1]])], 
+                        y=y[([link[0], link[1]])], 
+                        z=z[([link[0], link[1]])],
+                        mode='lines', 
+                        showlegend=False
+        ))
+
+
+    fig.update_layout(scene = dict(
+                        xaxis_title='X AXIS TITLE',
+                        yaxis_title='Y AXIS TITLE',
+                        zaxis_title='Z AXIS TITLE'),
+                        width=700,
+                        margin=dict(r=20, b=10, l=10, t=10))
+
+    fig.show()
+
+def may(pose):
+    import numpy as np
+    from mayavi import mlab
+
+
+    black = (0,0,0)
+    white = (1,1,1)
+    mlab.figure(bgcolor=white)
+
+    x =  pose[:,0]     
+    y =  -1*pose[:,2]  
+    z =  -1*pose[:,1] 
+    skeleton = ( (0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6) )
+    i = 0 
+    for link in skeleton:
+        x1=[x[link[0]], x[link[1]]]
+        y1=[y[link[0]], y[link[1]]]
+        z1=[z[link[0]], z[link[1]]]
+        mlab.plot3d(x1, y1, z1, color=black, tube_radius=10.)
+        if i == 1: break
+        i += 1
+
+    
+
+    # Finally, display the set of lines
+    # mlab.pipeline.surface(lines, colormap='Accent', line_width=1, opacity=.4)
+
+    # And choose a nice view
+    mlab.view(33.6, 106, 5.5, [0, 0, .05])
+    mlab.roll(125)
+    mlab.savefig("stick_2.obj")
+    mlab.show()
+
 if __name__ == "__main__":
 
     image_path = '../../../HPE_datasets/h36m/'
@@ -94,19 +169,8 @@ if __name__ == "__main__":
     h5name = save_path + 'debug_h36m17.h5'
 
     f = h5py.File(h5name, 'r')
-    train_f = {}
-    train_subjects = [1,5,6,7,8]
-    train_indices = []
-    for i, subj in enumerate(f['subject']):
-        if subj in train_subjects: 
-            train_indices.append(i)
-    print(f['subject'])
-    for k in f.keys():
-        f[k] = f[k][train_indices]
-    print(f['subject'])
     
-    exit()
-    i = 10
+    i = 1
 
     pose = f['pose3d'][i]
     subject_ = f['subject'][i]
@@ -115,9 +179,14 @@ if __name__ == "__main__":
     camera_ = f['camera'][i]
     idx = f['idx'][i]
     f.close()
+
+    print(list(pose[:,2]))
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (subject_, action_, subaction_, camera_)
     img_file = image_path+dirname+"/"+dirname+"_"+("%06d"%(idx))+".jpg"
     image = sio.imread(img_file)
+    print(image.shape)
+    exit()
+
     plot_h36(pose)
     import gc
     gc.collect()
