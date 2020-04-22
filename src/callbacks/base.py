@@ -12,7 +12,7 @@ class BaseCallback(abc.ABC):
     def on_test_start(self, **kwargs): pass
     def on_test_end(self, **kwargs): pass
     
-class Callbacks(BaseCallback):
+class CallbackList(BaseCallback):
     
     def __init__(self, callbacks):  
         self.callbacks = callbacks
