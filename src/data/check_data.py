@@ -172,7 +172,8 @@ if __name__ == "__main__":
     
     i = 1
 
-    pose = f['pose3d'][i]
+    pose3 = f['pose3d'][i]
+    pose2 = f['pose2d'][i]
     subject_ = f['subject'][i]
     action_ = f['action'][i]
     subaction_ = f['subaction'][i]
@@ -180,11 +181,11 @@ if __name__ == "__main__":
     idx = f['idx'][i]
     f.close()
 
-    print(list(pose[:,2]))
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (subject_, action_, subaction_, camera_)
     img_file = image_path+dirname+"/"+dirname+"_"+("%06d"%(idx))+".jpg"
     image = sio.imread(img_file)
-    print(image.shape)
+    print(pose2.shape)
+    print(pose3.shape)
     exit()
 
     plot_h36(pose)

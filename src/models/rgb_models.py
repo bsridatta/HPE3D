@@ -43,6 +43,7 @@ class RGB_encoder(nn.Module):
 
         return mean, logvar
 
+
 class RGB_decoder(nn.Module):
 
     def __init__(self, latent_dim, activation=nn.ReLU):
@@ -52,7 +53,7 @@ class RGB_decoder(nn.Module):
         # hidden/linear layer between latent space and deconv block
         self.hidden_dim = 256*8*8
         self.activation = activation
- 
+
         self.__build_model()
 
     def __build_model(self):
@@ -84,19 +85,14 @@ class RGB_decoder(nn.Module):
         x = self.conv_block(x)
         return x
 
+
 def reparameterize(mean, logvar):
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)
     return mean + eps*std
 
-class Encoder2D(nn.Module):
 
-    def __init__(self):
-        super(Encoder2D, self).__init__()
-
-        
-
-def test_VAE():
+def test():
     latent_dim = 2
 
     inp = torch.randn(2, 3, 256, 256)  # [b, 3, w, h]
@@ -104,8 +100,8 @@ def test_VAE():
 
     rgb_encoder = RGB_encoder(latent_dim)
     rgb_decoder = RGB_decoder(latent_dim)
-    # rgb_encoder.eval()
-    # rgb_decoder.eval()
+    rgb_encoder.eval()
+    rgb_decoder.eval()
 
     mean, logvar = rgb_encoder(inp.float())
     z = reparameterize(mean, logvar)
@@ -114,5 +110,6 @@ def test_VAE():
     assert(recon.shape[1:] == image_dim)
     print(nn.functional.l1_loss(recon, inp))
 
+
 if __name__ == "__main__":
-    test_VAE()
+    test()
