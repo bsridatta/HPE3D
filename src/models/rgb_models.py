@@ -2,14 +2,15 @@ import torch.nn as nn
 import torch
 
 import torchvision.models as models
+
 '''
 Reference (RGB Decoder) - https://github.com/spurra/vae-hands-3d
 '''
 
 
-class RGB_encoder(nn.Module):
+class EncoderRGB(nn.Module):
     def __init__(self, latent_dim, pretrained=True, train_last_block=False):
-        super(RGB_encoder, self).__init__()
+        super(EncoderRGB, self).__init__()
 
         self.latent_dim = latent_dim
         self.pretrained = pretrained
@@ -44,10 +45,10 @@ class RGB_encoder(nn.Module):
         return mean, logvar
 
 
-class RGB_decoder(nn.Module):
+class DecoderRGB(nn.Module):
 
     def __init__(self, latent_dim, activation=nn.ReLU):
-        super(RGB_decoder, self).__init__()
+        super(DecoderRGB, self).__init__()
         # latent space dimension (z)
         self.latent_dim = latent_dim
         # hidden/linear layer between latent space and deconv block
@@ -98,14 +99,14 @@ def test():
     inp = torch.randn(2, 3, 256, 256)  # [b, 3, w, h]
     image_dim = inp.shape[1:]
 
-    rgb_encoder = RGB_encoder(latent_dim)
-    rgb_decoder = RGB_decoder(latent_dim)
-    rgb_encoder.eval()
-    rgb_decoder.eval()
+    encoder_RGB = EncoderRGB(latent_dim)
+    decoder_RGB = DecoderRGB(latent_dim)
+    encoder_RGB.eval()
+    decoder_RGB.eval()
 
-    mean, logvar = rgb_encoder(inp.float())
+    mean, logvar = encoder_RGB(inp.float())
     z = reparameterize(mean, logvar)
-    recon = rgb_decoder(z)
+    recon = decoder_RGB(z)
 
     assert(recon.shape[1:] == image_dim)
     print(nn.functional.l1_loss(recon, inp))

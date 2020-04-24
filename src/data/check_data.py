@@ -186,8 +186,8 @@ if __name__ == "__main__":
     image = sio.imread(img_file)
     print(pose2.shape)
     print(pose3.shape)
-    exit()
+    
 
-    plot_h36(pose)
+    may(pose3)
     import gc
     gc.collect()

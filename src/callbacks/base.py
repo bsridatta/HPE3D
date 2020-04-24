@@ -1,3 +1,8 @@
+'''
+Callback inspritations from PyTorch Lightning - https://github.com/PyTorchLightning/PyTorch-Lightning
+and https://github.com/devforfu/pytorch_playground/blob/master/loop.ipynb
+'''
+
 import abc
 
 class BaseCallback(abc.ABC):
