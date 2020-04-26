@@ -16,7 +16,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch):
         loss = output['loss_val']
         loss.backward()
         optimizer.step()
-        print(loss.item())
+        print("[trainer] loss", loss.item())
 
         # if batch_idx % 100 == 0:
         #     try:
