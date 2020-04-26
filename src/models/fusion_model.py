@@ -12,7 +12,7 @@ from pose_models import reparameterize, Encoder2D, Encoder3D, Decoder3D
 from rgb_models import EncoderRGB, DecoderRGB
 
 
-def do_forward(encoder, decoder, inp, target,):
+def do_forward(encoder, decoder, inp, target):
     model_params = list(encoder.parameters())+list(decoder.parameters())
     optimizer = torch.optim.Adam(model_params, lr=0.0001)
 

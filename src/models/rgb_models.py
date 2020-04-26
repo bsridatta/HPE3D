@@ -86,7 +86,6 @@ class DecoderRGB(nn.Module):
         x = self.conv_block(x)
         return x
 
-
 def reparameterize(mean, logvar):
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)

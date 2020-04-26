@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-
+from torchvision import transforms
 
 class H36M(Dataset):
 
@@ -54,8 +54,8 @@ class H36M(Dataset):
         for key in self.annotation_keys:
             sample[key] = self.annotations[key][idx]
         if not self.no_images:
-            sample['image'] = self.get_image(sample)
-
+            image = self.get_image(sample)
+            sample['image'] = transforms.ToTensor()(image)
         return sample
 
     def get_image(self, sample):
@@ -70,7 +70,7 @@ class H36M(Dataset):
         image = image_tmp.copy()
 
         # clear PIL
-        image.close()
+        image_tmp.close()
         del image_tmp
         gc.collect()
 
@@ -99,6 +99,7 @@ def test_h36m():
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size, end=" ")
 
+    print(sample['pose3d_global']-sample['pose3d'])
     del dataset
     del sample
     gc.collect()
