@@ -66,7 +66,7 @@ for subject_ in subject_list:
                     pose2d.append(pose2d_[inds, :, i])
                     pose3d.append(pose3d_[inds, :, i])
                     pose3d_global.append(pose3d_global_[inds, :, i])
-                    bbox.append(bbox_[i])
+                    bbox.append(bbox_[i].astype(int))
                     cam_f.append(cam_f_[i])
                     cam_c.append(cam_c_[i])
                     cam_R.append(cam_R_[i])
