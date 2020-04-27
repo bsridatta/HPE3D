@@ -7,6 +7,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+import albumentations
+
 
 class H36M(Dataset):
 
@@ -44,6 +46,10 @@ class H36M(Dataset):
         # load image directly in __getitem__
         self.image_path = image_path
 
+        self.augmentations = albumentations.Compose([
+            albumentations.Normalize(always_apply=True)
+        ])
+
     def __len__(self):
         # contains the index of the image files
         return len(self.annotations['idx'])
@@ -68,7 +74,10 @@ class H36M(Dataset):
 
         image_tmp = Image.open(image_file)
         image = image_tmp.copy()
-
+        image = np.array(image)
+        image = self.augmentations(image=image)['image']
+        # toTensor converts HWC to CHW so no need toe do explicitly
+        # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         # clear PIL
         image_tmp.close()
         del image_tmp
@@ -78,20 +87,10 @@ class H36M(Dataset):
 
 
 def test_h36m():
-    annotation_file = 'data/debug_h36m17.h5'
+    annotation_file = 'data/h36m17.h5'
     image_path = "../../HPE_datasets/h36m/"
 
-    dataset = H36M([1, 5, 6, 7], annotation_file, image_path)
-    print("Length of the dataset: ", len(dataset))
-
-    print("One sample -")
-    sample = dataset.__getitem__(0)
-    for k, v in zip(sample.keys(), sample.values()):
-        print(k, v.size, end=" ")
-    
-    print('\n Without Images')
-    
-    dataset = H36M([1, 5, 6, 7], annotation_file, image_path, no_images=True)
+    dataset = H36M([1, 5, 6], annotation_file, image_path)
     print("Length of the dataset: ", len(dataset))
 
     print("One sample -")
@@ -99,10 +98,10 @@ def test_h36m():
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size, end=" ")
 
-    print(sample['pose3d_global']-sample['pose3d'])
     del dataset
     del sample
     gc.collect()
-    
+
+
 if __name__ == "__main__":
     test_h36m()

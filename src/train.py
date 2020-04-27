@@ -38,7 +38,7 @@ def main():
     writer.add_text("config", str(config))
 
     # Data loading
-    config.train_subjects = [1, 5, 6, 7, 8]
+    config.train_subjects = [1,5] #[1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
@@ -48,9 +48,10 @@ def main():
     # combinations of Encoder, Decoder to train in an epoch
     variant_dic = {
         1: [['2d', '3d'], ['rgb', '3d']],
-        2: [['2d', '3d']]
+        2: [['2d', '3d']],
+        3: [['rgb','rgb']]
     }
-    variants = variant_dic[1]
+    variants = variant_dic[3]
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
     models = utils.get_models(variants, config)
@@ -82,7 +83,7 @@ def main():
     config.step = 0
     for epoch in range(1, config.epochs+1):
         for variant in range(len(variants)):
-            vae_type = "".join(variants[variant])
+            vae_type = "_2_".join(variants[variant])
             # Variant specific players
             model = models[variant]  # tuple of encoder decoder
             optimizer = optimizers[variant]
@@ -140,8 +141,9 @@ def training_specific_args():
     parser.add_argument('--learning_rate', default=1e-4, type=float)
 
     # training params
-    parser.add_argument('--epochs', default=3, type=int)
-    parser.add_argument('--batch_size', default=1, type=int)
+    parser.add_argument('--epochs', default=200, type=int)
+    ## more than 1 for training batch norm
+    parser.add_argument('--batch_size', default=7, type=int)
 
     parser.add_argument('--fast_dev_run', default=True,
                         type=lambda x: (str(x).lower() == 'true'))

@@ -62,7 +62,7 @@ def _training_step(batch, batch_idx, model):
     decoder = model[1]
     encoder.train()
     decoder.train()
-
+    
     inp, target = utils.get_inp_target(encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
