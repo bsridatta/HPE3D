@@ -50,7 +50,7 @@ def main():
         1: [['2d', '3d'], ['rgb', '3d']],
         2: [['2d', '3d']]
     }
-    variants = variant_dic[2]
+    variants = variant_dic[1]
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
     models = utils.get_models(variants, config)
@@ -82,15 +82,17 @@ def main():
     config.step = 0
     for epoch in range(1, config.epochs+1):
         for variant in range(len(variants)):
+            vae_type = "".join(variants[variant])
             # Variant specific players
             model = models[variant]  # tuple of encoder decoder
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
-
             # Train
             # TODO convert batch to tensors
-            training_epoch(config, model, train_loader, optimizer, epoch)
-            val_loss = validation_epoch(config, model, val_loader)
+            training_epoch(config, model, train_loader,
+                           optimizer, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, model, val_loader, vae_type)
             # scheduler.step(val_loss) # TODO verify if it knows the right optimizer
 
         # if val_loss < val_loss_min:
@@ -123,7 +125,7 @@ def training_specific_args():
 
     # data
     parser.add_argument(
-        '--annotation_file', default=f'data/h36m17.h5', type=str)
+        '--annotation_file', default=f'data/debug_h36m17.h5', type=str)
     parser.add_argument(
         '--image_path', default=f'../../HPE_datasets/h36m/', type=str)
 
@@ -138,7 +140,7 @@ def training_specific_args():
     parser.add_argument('--learning_rate', default=1e-4, type=float)
 
     # training params
-    parser.add_argument('--epochs', default=10, type=int)
+    parser.add_argument('--epochs', default=3, type=int)
     parser.add_argument('--batch_size', default=1, type=int)
 
     parser.add_argument('--fast_dev_run', default=True,

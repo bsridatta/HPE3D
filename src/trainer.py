@@ -5,18 +5,17 @@ from models import reparameterize, KLD, MPJPE
 import utils
 
 
-def training_epoch(config, model, train_loader, optimizer, epoch):
+def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     # model.train() inside training step
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).long()
         optimizer.zero_grad()
         output = _training_step(batch, batch_idx, model)
-        _log_training_metrics(config, output)
+        _log_training_metrics(config, output, vae_type)
         loss = output['loss_val']
         loss.backward()
         optimizer.step()
-        print("[trainer] loss", loss.item())
 
         # if batch_idx % 100 == 0:
         #     try:
@@ -31,15 +30,15 @@ def training_epoch(config, model, train_loader, optimizer, epoch):
         #     torch.save(state, f'{config.save_dir}/_backup_{config.exp_name}.pt')
 
         if batch_idx % config.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx *
+            print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                vae_type, epoch, batch_idx *
                 len(batch['pose2d']), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
 
         del loss
 
 
-def validation_epoch(config, model, val_loader):
+def validation_epoch(config, model, val_loader, vae_type):
     # model.eval() in validation step
     loss = 0
     acc = 0
@@ -48,13 +47,12 @@ def validation_epoch(config, model, val_loader):
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device).long()
-
             output = _validation_step(batch, batch_idx, model)
-            _log_validation_metrics(config, output)
+            _log_validation_metrics(config, output, vae_type)
             loss += output['loss_val'].item()
 
     avg_loss = loss/len(val_loader)
-    print(f'Val set: Average Loss: {avg_loss}')
+    print(f'{vae_type} - Val set: Average Loss: {avg_loss}')
 
     return avg_loss
 
@@ -105,11 +103,11 @@ def _validation_step(batch, batch_idx, model):
     return OrderedDict({'loss_val': loss_val, "log": logger_logs})
 
 
-def _log_training_metrics(config, output):
-    config.writer.add_scalars(f"Loss/Train_Loss", output['log'], 0)
-    config.writer.add_scalar("Total/Train_Loss", output['loss_val'])
+def _log_training_metrics(config, output, vae_type):
+    config.writer.add_scalars(f"Loss/{vae_type}/Train_Loss", output['log'], 0)
+    config.writer.add_scalar(f"Total/{vae_type}/Train_Loss", output['loss_val'])
 
 
-def _log_validation_metrics(config, output):
-    config.writer.add_scalars(f"Loss/Val_Loss", output['log'], 0)
-    config.writer.add_scalar("Total/Val_Loss", output["loss_val"])
+def _log_validation_metrics(config, output, vae_type):
+    config.writer.add_scalars(f"Loss/{vae_type}/Val_Loss", output['log'], 0)
+    config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])
