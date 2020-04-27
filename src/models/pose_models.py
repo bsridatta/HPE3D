@@ -1,8 +1,9 @@
-import torch.nn as nn
-import torch
+import sys
 
+import torch
+import torch.nn as nn
 import torchvision.models as models
-from data import plot_h36
+
 
 class Encoder2D(nn.Module):
 
@@ -96,7 +97,8 @@ def reparameterize(mean, logvar):
 def MPJPE(pred, target):
     # per sample in batch
     # mean(root(x2+y2+z2)) mean(PJPE)
-    mpjpe = torch.mean(torch.sqrt(torch.sum((pred-target).pow(2), dim=2)), dim=1)
+    mpjpe = torch.mean(torch.sqrt(
+        torch.sum((pred-target).pow(2), dim=2)), dim=1)
     # reduction = mean of mpjpe across batch
     return torch.mean(mpjpe)
 
@@ -130,7 +132,6 @@ def test(inp, target):
         # loss = nn.functional.l1_loss(pose3d, target)
         kld_loss = KLD(mean, logvar)
         print("2D -> 3D", recon_loss)
-        plot_h36(pose3d)
         exit()
         # 3D -> 3D
         mean, logvar = encoder_3d(target)

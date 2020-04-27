@@ -17,7 +17,7 @@ save_path = './'
 annot_name = 'matlab_meta_new.mat'
 
 # to get smaller subset of the data for dev
-debug = True
+debug = False
 
 if not os.path.exists(save_path):
     os.mkdir(save_path)

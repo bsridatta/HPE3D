@@ -5,7 +5,7 @@
 
 # other repo
 vae_hands
-
+vae_example.py
 # checkpoints
 /checkpoints/*.pt
 
