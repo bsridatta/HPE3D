@@ -38,7 +38,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         del loss
 
 
-def validation_epoch(config, model, val_loader, vae_type):
+def validation_epoch(config, model, val_loader, epoch, vae_type):
     # model.eval() in validation step
     loss = 0
     acc = 0
@@ -47,7 +47,7 @@ def validation_epoch(config, model, val_loader, vae_type):
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device).long()
-            output = _validation_step(batch, batch_idx, model)
+            output = _validation_step(batch, batch_idx, model, epoch)
             _log_validation_metrics(config, output, vae_type)
             loss += output['loss_val'].item()
 
@@ -62,52 +62,54 @@ def _training_step(batch, batch_idx, model):
     decoder = model[1]
     encoder.train()
     decoder.train()
-    
-    inp, target = utils.get_inp_target(encoder, decoder, batch)
+
+    inp, target, criterion = utils.get_inp_target_criterion(
+        encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
     output = output.view(target.shape)
 
-    recon_loss = MPJPE(output, target)
+    recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar)
     loss_val = kld_loss+recon_loss
 
     logger_logs = {"kld_loss": kld_loss,
-                   "recon_loss": recon_loss,
-                   "total_loss": loss_val}
+                   "recon_loss": recon_loss}
 
     return OrderedDict({'loss_val': loss_val, 'log': logger_logs})
 
 
-def _validation_step(batch, batch_idx, model):
+def _validation_step(batch, batch_idx, model, epoch):
     encoder = model[0]
     decoder = model[1]
     encoder.eval()
     decoder.eval()
 
-    inp, target = utils.get_inp_target(encoder, decoder, batch)
+    inp, target, criterion = utils.get_inp_target_criterion(encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
     output = output.view(target.shape)
-
-    recon_loss = MPJPE(output, target)
+    recon_loss = criterion(output, target)
     kld_loss = KLD(mean, logvar)
     loss_val = kld_loss+recon_loss
 
     logger_logs = {"kld_loss": kld_loss,
-                   "recon_loss": recon_loss,
-                   "total_loss": loss_val}
+                   "recon_loss": recon_loss}
 
-    return OrderedDict({'loss_val': loss_val, "log": logger_logs})
+    return OrderedDict({'loss_val': loss_val, "log": logger_logs,  "recon": output,
+                        "epoch": epoch})
 
 
 def _log_training_metrics(config, output, vae_type):
     config.writer.add_scalars(f"Loss/{vae_type}/Train_Loss", output['log'], 0)
-    config.writer.add_scalar(f"Total/{vae_type}/Train_Loss", output['loss_val'])
+    config.writer.add_scalar(
+        f"Total/{vae_type}/Train_Loss", output['loss_val'])
 
 
 def _log_validation_metrics(config, output, vae_type):
+    if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
+        config.writer.add_image(f"Images/{output['epoch']}", output['recon'][0])
     config.writer.add_scalars(f"Loss/{vae_type}/Val_Loss", output['log'], 0)
     config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])

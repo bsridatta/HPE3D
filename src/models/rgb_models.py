@@ -76,7 +76,7 @@ class DecoderRGB(nn.Module):
             self.activation(),
             nn.ConvTranspose2d(32, 16, 4, 2, 1),
             nn.BatchNorm2d(16),
-            self.activation(),
+            nn.Tanh(),
             nn.ConvTranspose2d(16, 3, 4, 2, 1)
         )
 
@@ -91,6 +91,10 @@ def reparameterize(mean, logvar):
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)
     return mean + eps*std
+
+
+def image_recon_loss(output, target):
+    return torch.nn.functional.binary_cross_entropy(output, target)
 
 
 def test():

@@ -50,6 +50,7 @@ class H36M(Dataset):
             albumentations.Normalize(always_apply=True)
         ])
 
+
     def __len__(self):
         # contains the index of the image files
         return len(self.annotations['idx'])
@@ -58,13 +59,13 @@ class H36M(Dataset):
         # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:
-            sample[key] = self.annotations[key][idx]
+            sample[key] = torch.tensor(self.annotations[key][idx], dtype=torch.float32)
         if not self.no_images:
-            image = self.get_image(sample)
-            sample['image'] = transforms.ToTensor()(image)
+            image = self.get_image_tensor(sample) 
+            sample['image'] = image
         return sample
 
-    def get_image(self, sample):
+    def get_image_tensor(self, sample):
         image_dir = 's_%02d_act_%02d_subact_%02d_ca_%02d'\
             % (sample['subject'], sample['action'],
                sample['subaction'], sample['camera'])
@@ -75,9 +76,15 @@ class H36M(Dataset):
         image_tmp = Image.open(image_file)
         image = image_tmp.copy()
         image = np.array(image)
-        image = self.augmentations(image=image)['image']
-        # toTensor converts HWC to CHW so no need toe do explicitly
-        # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+        # print("org max ", np.max(image), image.shape)
+        # image = self.augmentations(image=image)['image']
+        # print("aug max ", np.max(image), image.shape)
+        image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+        image = torch.tensor(image, dtype=torch.float32)
+     
+        # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
+        # But if you do torch.tensor() you have to do it manually
+
         # clear PIL
         image_tmp.close()
         del image_tmp
@@ -87,7 +94,7 @@ class H36M(Dataset):
 
 
 def test_h36m():
-    annotation_file = 'data/h36m17.h5'
+    annotation_file = 'data/debug_h36m17.h5'
     image_path = "../../HPE_datasets/h36m/"
 
     dataset = H36M([1, 5, 6], annotation_file, image_path)
@@ -96,7 +103,11 @@ def test_h36m():
     print("One sample -")
     sample = dataset.__getitem__(0)
     for k, v in zip(sample.keys(), sample.values()):
-        print(k, v.size, end=" ")
+        print(k, v.size(), v.dtype, end="\t")
+    print("")
+
+
+    print(torch.max(sample['image']))
 
     del dataset
     del sample
@@ -105,3 +116,5 @@ def test_h36m():
 
 if __name__ == "__main__":
     test_h36m()
+
+    # TODO is toTensor() implicit for vars, the sample are tensor without doing anything

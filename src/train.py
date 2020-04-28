@@ -38,7 +38,7 @@ def main():
     writer.add_text("config", str(config))
 
     # Data loading
-    config.train_subjects = [1,5] #[1, 5, 6, 7, 8]
+    config.train_subjects = [1, 5]  # [1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
@@ -47,11 +47,11 @@ def main():
 
     # combinations of Encoder, Decoder to train in an epoch
     variant_dic = {
-        1: [['2d', '3d'], ['rgb', '3d']],
+        1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
-        3: [['rgb','rgb']]
+        3: [['rgb', 'rgb']]
     }
-    variants = variant_dic[3]
+    variants = variant_dic[config.variant]
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
     models = utils.get_models(variants, config)
@@ -89,13 +89,11 @@ def main():
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
             # Train
-            # TODO convert batch to tensors
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
             val_loss = validation_epoch(
-                config, model, val_loader, vae_type)
-            # scheduler.step(val_loss) # TODO verify if it knows the right optimizer
-
+                config, model, val_loader, epoch, vae_type)
+            scheduler.step(val_loss)
         # if val_loss < val_loss_min:
         #     val_loss_min = val_loss
         #     try:
@@ -130,6 +128,8 @@ def training_specific_args():
     parser.add_argument(
         '--image_path', default=f'../../HPE_datasets/h36m/', type=str)
 
+    # Variant Choice
+    parser.add_argument('--variant', default=1, type=int)
     # RGB
     parser.add_argument('--latent_dim', default=30, type=int)
     parser.add_argument('--pretrained', default=False,
@@ -138,11 +138,11 @@ def training_specific_args():
                         type=lambda x: (str(x).lower() == 'true'))
     # Pose
     parser.add_argument('--n_joints', default=17, type=int)
-    parser.add_argument('--learning_rate', default=1e-4, type=float)
+    parser.add_argument('--learning_rate', default=1e-3, type=float)
 
     # training params
-    parser.add_argument('--epochs', default=200, type=int)
-    ## more than 1 for training batch norm
+    parser.add_argument('--epochs', default=4, type=int)
+    # more than 1 for training batch norm
     parser.add_argument('--batch_size', default=7, type=int)
 
     parser.add_argument('--fast_dev_run', default=True,

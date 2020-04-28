@@ -2,7 +2,8 @@ import sys
 
 import torch
 
-from models import (Decoder3D, DecoderRGB, Encoder2D, Encoder3D, EncoderRGB)
+from models import (Decoder3D, DecoderRGB, Encoder2D,
+                    Encoder3D, EncoderRGB, image_recon_loss, MPJPE)
 
 
 def get_models(variants, config):
@@ -35,19 +36,29 @@ def get_schedulers(optimizers):
     return schedulers
 
 
-def get_inp_target(encoder, decoder, batch):
+def get_inp_target_criterion(encoder, decoder, batch):
     if 'RGB' in encoder.__class__.__name__:
         inp = batch['image'].float()
     elif '2D' in encoder.__class__.__name__:
         inp = batch['pose2d'].float()
     elif '3D' in encoder.__class__.__name__:
         inp = batch['pose3d'].float()
+    else:
+        print("MODEL NOT DEFINED")
+        exit()
 
     if 'RGB' in decoder.__class__.__name__:
         target = batch['image'].float()
+        # criterion = torch.nn.BCELoss()
+        criterion = torch.nn.L1Loss()
     elif '2D' in decoder.__class__.__name__:
         target = batch['pose2d'].float()
+        criterion = torch.nn.L1Loss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
+        criterion = MPJPE
+    else:
+        print("MODEL NOT DEFINED")
+        exit()
 
-    return inp, target
+    return (inp, target, criterion)
