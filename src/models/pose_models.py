@@ -7,7 +7,7 @@ import torchvision.models as models
 
 class Encoder2D(nn.Module):
 
-    def __init__(self, latent_dim, n_joints=17, activation=nn.ReLU):
+    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
         super(Encoder2D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
@@ -36,7 +36,7 @@ class Encoder2D(nn.Module):
 
 class Encoder3D(nn.Module):
 
-    def __init__(self, latent_dim, n_joints=17, activation=nn.ReLU):
+    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
         super(Encoder3D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
@@ -64,7 +64,7 @@ class Encoder3D(nn.Module):
 
 
 class Decoder3D(nn.Module):
-    def __init__(self, latent_dim, n_joints=17, activation=nn.ReLU):
+    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
         super(Decoder3D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
@@ -99,7 +99,7 @@ def MPJPE(pred, target):
     # mean(root(x2+y2+z2)) mean(PJPE)
     mpjpe = torch.mean(torch.sqrt(
         torch.sum((pred-target).pow(2), dim=2)), dim=1)
-    # reduction = mean of mpjpe across batch
+    # reduction -> mean of mpjpe across batch
     return torch.mean(mpjpe)
 
 
@@ -108,11 +108,16 @@ def KLD(mean, logvar):
     return loss
 
 
+'''
+test function for sanity check only - ignore
+'''
+
+
 def test(inp, target):
     latent_dim = 2
 
-    # inp = torch.randn(2, 17, 2)  # [b, joints. 2]
-    # target = torch.randn(2, 17, 3)  # [b, joints, 3]
+    # inp = torch.randn(2, 16, 2)  # [b, joints. 2]
+    # target = torch.randn(2, 16, 3)  # [b, joints, 3]
 
     encoder_2d = Encoder2D(latent_dim)
     encoder_3d = Encoder3D(latent_dim)
@@ -127,7 +132,7 @@ def test(inp, target):
         mean, logvar = encoder_2d(inp)
         z = reparameterize(mean, logvar)
         pose3d = decoder_3d(z)
-        pose3d = pose3d.view(-1, 17, 3)
+        pose3d = pose3d.view(-1, 16, 3)
         recon_loss = MPJPE(pose3d, target)
         # loss = nn.functional.l1_loss(pose3d, target)
         kld_loss = KLD(mean, logvar)
@@ -137,47 +142,45 @@ def test(inp, target):
         mean, logvar = encoder_3d(target)
         z = reparameterize(mean, logvar)
         pose3d = decoder_3d(z)
-        pose3d = pose3d.view(-1, 17, 3)
+        pose3d = pose3d.view(-1, 16, 3)
         loss = nn.functional.l1_loss(pose3d, target)
         print("3D -> 3D", loss)
 
 
 if __name__ == "__main__":
 
-    pose2d = [[473.68356, 444.9424],
-              [500.9961, 448.02988],
-              [479.83926, 530.78564],
-              [506.21838, 622.56885],
-              [445.9001, 441.81586],
-              [456.18906, 537.1581],
-              [467.30923, 633.76935],
-              [488.18674, 397.43405],
-              [481.02847, 340.39694],
-              [478.51755, 318.808],
-              [485.76895, 297.57162],
-              [454.01608, 359.75955],
-              [430.05878, 415.7349],
-              [412.99722, 452.88666],
-              [508.13437, 356.49152],
-              [520.3154, 413.31827],
-              [515.4715, 456.42984]]
+    pose2d = [[-0.0520,  0.5179],
+              [-0.3927, -1.1830],
+              [0.0502, -1.4042],
+              [0.0635, -0.2084],
+              [0.2380, -1.2675],
+              [0.3716, -1.4058],
+              [0.2500,  0.5317],
+              [0.0531,  0.6651],
+              [0.1978,  0.6016],
+              [0.1708,  0.5921],
+              [0.1230,  0.8581],
+              [0.6800,  1.1669],
+              [1.3780,  0.6804],
+              [-0.0196,  0.7375],
+              [-0.3905,  1.2061],
+              [-0.5927,  0.7949]]
 
-    pose3d = [[-176.73077, -321.0486, 5203.882],
-              [-52.96191, -309.7045, 5251.083],
-              [-155.64156,   73.071754, 5448.807],
-              [-29.831573,  506.78445, 5400.138],
-              [-300.49985, -332.39276, 5156.681],
-              [-258.24048,   99.60905, 5244.6816],
-              [-209.48436,  548.8338, 5290.7637],
-              [-109.15762, -529.72815, 5123.8906],
-              [-140.19118, -780.1214, 5074.605],
-              [-153.18188, -886.97614, 5130.1655],
-              [-118.93483, -970.2283, 5058.599],
-              [-259.08997, -690.1336, 5050.5923],
-              [-370.6709, -448.5993, 5134.1772],
-              [-462.28662, -290.82947, 5307.6274],
-              [-19.760342, -716.9181, 5140.2725],
-              [35.79161, -470.14493, 5257.7383],
-              [13.892465, -279.85294, 5421.0684]]
-
+    pose3d = [[-0.0915,  1.4068,  0.9755],
+              [-1.4016, -0.9308,  1.3867],
+              [1.4055, -0.9582,  1.2904],
+              [0.0914, -1.4068, -0.9755],
+              [1.2805, -0.9814,  1.3715],
+              [1.3662, -0.8682,  1.3793],
+              [1.2664,  1.1126,  0.3048],
+              [0.7281,  0.4539,  0.8268],
+              [1.2756, -0.9743,  0.7223],
+              [0.9169, -0.1797, -0.4335],
+              [0.8026,  1.4129,  1.4049],
+              [0.9368,  0.6461,  1.3693],
+              [0.7160,  0.4598,  1.2660],
+              [0.8033,  1.3638,  0.7996],
+              [-0.9785,  0.6049,  0.6722],
+              [-0.9765,  0.5890,  0.8608]]
+              
     test(torch.FloatTensor([pose2d]), torch.FloatTensor([pose3d]))

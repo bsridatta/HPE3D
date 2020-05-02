@@ -3,9 +3,9 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
-# other repo
-vae_hands
-vae_example.py
+# other reference repo
+other
+
 # checkpoints
 /checkpoints/*.pt
 

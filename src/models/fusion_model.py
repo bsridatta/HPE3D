@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -27,6 +26,7 @@ def do_forward(encoder, decoder, inp, target):
         print("2D -> 3D", loss)
         loss.backward()
         optimizer.step()
+
 
 if __name__ == "__main__":
     latent_dim = 2

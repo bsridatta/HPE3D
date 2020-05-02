@@ -1,5 +1,6 @@
 import gc
 
+import albumentations
 import h5py
 import numpy as np
 import pandas as pd
@@ -7,7 +8,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-import albumentations
+
+from processing import preprocess
 
 
 class H36M(Dataset):
@@ -15,7 +17,9 @@ class H36M(Dataset):
     def __init__(self, subjects, annotation_file, image_path, no_images=False):
         self.no_images = no_images  # incase of only lifting 2D-3D
 
-        # Data Specific Information - Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
+        # Data Specific Information 
+        # Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
+
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
                          (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
         self.joints_name = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
@@ -26,8 +30,9 @@ class H36M(Dataset):
 
         # get labels and metadata including camera parameters
         all_annotations = h5py.File(annotation_file, 'r')
-        self.annotations = {}  # only the subjects of interest
+        self.annotations = {}  # to store only the subjects of interest
 
+        # get indices of subjects of interest and filter them
         filtered_indices = []
         for i, subject in enumerate(all_annotations['subject']):
             if subject in subjects:
@@ -35,6 +40,9 @@ class H36M(Dataset):
 
         for key in all_annotations.keys():
             self.annotations[key] = all_annotations[key][filtered_indices]
+
+        # further process to make the data learnable - zero3d and norm poses
+        self.annotations, norm_stats = preprocess(self.annotations, self.root_idx)
 
         # clear the HDF5 dataset
         all_annotations.close()
@@ -50,7 +58,6 @@ class H36M(Dataset):
             albumentations.Normalize(always_apply=True)
         ])
 
-
     def __len__(self):
         # contains the index of the image files
         return len(self.annotations['idx'])
@@ -59,9 +66,10 @@ class H36M(Dataset):
         # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:
-            sample[key] = torch.tensor(self.annotations[key][idx], dtype=torch.float32)
+            sample[key] = torch.tensor(
+                self.annotations[key][idx], dtype=torch.float32)
         if not self.no_images:
-            image = self.get_image_tensor(sample) 
+            image = self.get_image_tensor(sample)
             sample['image'] = image
         return sample
 
@@ -81,7 +89,7 @@ class H36M(Dataset):
         # print("aug max ", np.max(image), image.shape)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
-     
+
         # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
         # But if you do torch.tensor() you have to do it manually
 
@@ -92,6 +100,9 @@ class H36M(Dataset):
 
         return image
 
+'''
+test function for sanity check only - ignore
+'''
 
 def test_h36m():
     annotation_file = 'data/debug_h36m17.h5'
@@ -106,9 +117,9 @@ def test_h36m():
         print(k, v.size(), v.dtype, end="\t")
     print("")
 
-
-    print(torch.max(sample['image']))
-
+    print(sample['pose2d'], '\n\n\n')
+    print(sample['pose3d'])
+    
     del dataset
     del sample
     gc.collect()
@@ -117,4 +128,3 @@ def test_h36m():
 if __name__ == "__main__":
     test_h36m()
 
-    # TODO is toTensor() implicit for vars, the sample are tensor without doing anything

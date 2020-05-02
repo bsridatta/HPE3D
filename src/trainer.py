@@ -7,6 +7,8 @@ import utils
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     # model.train() inside training step
+
+    # TODO perform get_inp_target_criterion for the whole epoch directly
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).long()
@@ -14,6 +16,8 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         output = _training_step(batch, batch_idx, model)
         _log_training_metrics(config, output, vae_type)
         loss = output['loss_val']
+        kld_loss = output['log']['kld_loss']
+        recon_loss = output['log']['recon_loss']
         loss.backward()
         optimizer.step()
 
@@ -30,12 +34,13 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         #     torch.save(state, f'{config.save_dir}/_backup_{config.exp_name}.pt')
 
         if batch_idx % config.log_interval == 0:
-            print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
                 vae_type, epoch, batch_idx *
                 len(batch['pose2d']), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+                100. * batch_idx / len(train_loader), loss.item(),
+                recon_loss.item(), kld_loss.item()))
 
-        del loss
+        del loss, recon_loss, kld_loss
 
 
 def validation_epoch(config, model, val_loader, epoch, vae_type):
@@ -52,7 +57,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
             loss += output['loss_val'].item()
 
     avg_loss = loss/len(val_loader)
-    print(f'{vae_type} - Val set: Average Loss: {avg_loss}')
+    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}')
 
     return avg_loss
 
@@ -86,7 +91,8 @@ def _validation_step(batch, batch_idx, model, epoch):
     encoder.eval()
     decoder.eval()
 
-    inp, target, criterion = utils.get_inp_target_criterion(encoder, decoder, batch)
+    inp, target, criterion = utils.get_inp_target_criterion(
+        encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
@@ -110,6 +116,7 @@ def _log_training_metrics(config, output, vae_type):
 
 def _log_validation_metrics(config, output, vae_type):
     if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
-        config.writer.add_image(f"Images/{output['epoch']}", output['recon'][0])
+        config.writer.add_image(
+            f"Images/{output['epoch']}", output['recon'][0])
     config.writer.add_scalars(f"Loss/{vae_type}/Val_Loss", output['log'], 0)
     config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])

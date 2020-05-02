@@ -15,7 +15,8 @@ from trainer import training_epoch, validation_epoch
 def main():
     # Experiment Configuration
     parser = training_specific_args()
-    # Config would be distributed to all the modules
+    
+    # Config to distribute params to all the modules
     config = parser.parse_args()
     torch.manual_seed(config.seed)
     logging.getLogger().setLevel(logging.INFO)
@@ -34,6 +35,7 @@ def main():
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
     config.pin_memory = False if use_cuda else False
+    
     # easier to know what params are used in the runs
     writer.add_text("config", str(config))
 
@@ -52,6 +54,7 @@ def main():
         3: [['rgb', 'rgb']]
     }
     variants = variant_dic[config.variant]
+
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
     models = utils.get_models(variants, config)
@@ -64,6 +67,7 @@ def main():
         for vae in range(len(models)):
             models[vae][0] = torch.nn.DataParallel(models[vae][0])
             models[vae][1] = torch.nn.DataParallel(models[vae][1])
+
     # To CPU or GPU or TODO TPU
     for vae in range(len(models)):
         models[vae][0].to(device)
@@ -84,16 +88,19 @@ def main():
     for epoch in range(1, config.epochs+1):
         for variant in range(len(variants)):
             vae_type = "_2_".join(variants[variant])
+
             # Variant specific players
             model = models[variant]  # tuple of encoder decoder
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
+
             # Train
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
             val_loss = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
             scheduler.step(val_loss)
+
         # if val_loss < val_loss_min:
         #     val_loss_min = val_loss
         #     try:
@@ -130,6 +137,7 @@ def training_specific_args():
 
     # Variant Choice
     parser.add_argument('--variant', default=1, type=int)
+    
     # RGB
     parser.add_argument('--latent_dim', default=30, type=int)
     parser.add_argument('--pretrained', default=False,

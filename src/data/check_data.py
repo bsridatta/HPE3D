@@ -167,8 +167,12 @@ if __name__ == "__main__":
     save_path = './'
 
     h5name = save_path + 'debug_h36m17.h5'
+    h5name = "../../other/3d-pose-baseline/data/h36m/S5/MyPoses/3D_positions/Eating.h5"
 
     f = h5py.File(h5name, 'r')
+    # print(list(f.keys()))
+    print(f["3D_positions"][0].shape)
+    exit()
     
     i = 1
 
@@ -188,6 +192,6 @@ if __name__ == "__main__":
     print(pose3.shape)
     
 
-    may(pose3)
+    plot_h36(pose3)
     import gc
     gc.collect()

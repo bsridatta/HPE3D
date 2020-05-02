@@ -96,6 +96,9 @@ def reparameterize(mean, logvar):
 def image_recon_loss(output, target):
     return torch.nn.functional.binary_cross_entropy(output, target)
 
+'''
+test function for sanity check only - ignore
+'''
 
 def test():
     latent_dim = 2
