@@ -9,13 +9,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 import dataloader
 import utils
-from trainer import training_epoch, validation_epoch
+from trainer import training_epoch, validation_epoch, sample_manifold, evaluate_poses
 
 
 def main():
     # Experiment Configuration
     parser = training_specific_args()
-    
+
     # Config to distribute params to all the modules
     config = parser.parse_args()
     torch.manual_seed(config.seed)
@@ -28,6 +28,10 @@ def main():
     writer = SummaryWriter(f"../logs/{config.exp_name}_{suffix}")
     config.writer = writer
 
+    # log intervals
+    eval_interval = 1  # interval to get MPJPE of 3d decoder
+    manifold_interval = 1  # interval to visualize encoding in manifold
+
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -35,13 +39,14 @@ def main():
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
     config.pin_memory = False if use_cuda else False
-    
+
     # easier to know what params are used in the runs
     writer.add_text("config", str(config))
 
     # Data loading
-    config.train_subjects = [1, 5]  # [1, 5, 6, 7, 8]
-    config.val_subjects = [9, 11]
+    config.train_subjects = [1, 5, 6, 7, 8]
+    # config.train_subjects = [1, 5]
+    config.val_subjects = [1, 5]  # [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
@@ -97,8 +102,19 @@ def main():
             # Train
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
+
+            # Validation
             val_loss = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
+
+            # Latent Space Sampling
+            if epoch % manifold_interval == 0:
+                sample_manifold(config, model)
+
+            # Evaluate Performance
+            if variant[1] == '3d' and epoch % eval_interval == 0:
+                evaluate_poses(config, model, val_loader, epoch, vae_type)
+
             scheduler.step(val_loss)
 
         # if val_loss < val_loss_min:
@@ -131,25 +147,27 @@ def training_specific_args():
 
     # data
     parser.add_argument(
-        '--annotation_file', default=f'data/debug_h36m17.h5', type=str)
+        '--annotation_file', default=f'data/debug_h36m17.h5', type=str, )
     parser.add_argument(
         '--image_path', default=f'../../HPE_datasets/h36m/', type=str)
 
     # Variant Choice
-    parser.add_argument('--variant', default=1, type=int)
-    
+    parser.add_argument('--variant', default=2, type=int)
+
     # RGB
     parser.add_argument('--latent_dim', default=30, type=int)
     parser.add_argument('--pretrained', default=False,
                         type=lambda x: (str(x).lower() == 'true'))
     parser.add_argument('--train_last_block', default=False,
                         type=lambda x: (str(x).lower() == 'true'))
+
     # Pose
-    parser.add_argument('--n_joints', default=17, type=int)
+    parser.add_argument('--n_joints', default=16, type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
 
     # training params
-    parser.add_argument('--epochs', default=4, type=int)
+    parser.add_argument('--epochs', default=200, type=int)
+
     # more than 1 for training batch norm
     parser.add_argument('--batch_size', default=7, type=int)
 

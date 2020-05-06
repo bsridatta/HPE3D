@@ -1,8 +1,13 @@
-import torch.nn.functional as F
 from collections import OrderedDict
+
 import torch
-from models import reparameterize, KLD, MPJPE
+import torch.nn.functional as F
+
 import utils
+from models import KLD, MPJPE, reparameterize
+from processing import denormalize
+
+beta = 1  # KLD weight
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -11,7 +16,8 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     # TODO perform get_inp_target_criterion for the whole epoch directly
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
-            batch[key] = batch[key].to(config.device).long()
+            batch[key] = batch[key].to(config.device).float()
+
         optimizer.zero_grad()
         output = _training_step(batch, batch_idx, model)
         _log_training_metrics(config, output, vae_type)
@@ -73,11 +79,11 @@ def _training_step(batch, batch_idx, model):
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
-    output = output.view(target.shape)
 
+    output = output.view(target.shape)
     recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar)
-    loss_val = kld_loss+recon_loss
+    loss_val = recon_loss + beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
@@ -96,16 +102,49 @@ def _validation_step(batch, batch_idx, model, epoch):
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
+
     output = output.view(target.shape)
     recon_loss = criterion(output, target)
     kld_loss = KLD(mean, logvar)
-    loss_val = kld_loss+recon_loss
+    loss_val = recon_loss + beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
     return OrderedDict({'loss_val': loss_val, "log": logger_logs,  "recon": output,
                         "epoch": epoch})
+
+
+def evaluate_poses(config, model, val_loader, epoch, vae_type):
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
+            for key in batch.keys():
+                batch[key] = batch[key].to(config.device).long()
+
+            # batch['pose2d'] = denormalize(batch)
+
+            output = _validation_step(batch, batch_idx, model, epoch)
+
+            _log_validation_metrics(config, output, vae_type)
+            loss += output['loss_val'].item()
+
+    avg_loss = loss/len(val_loader)
+    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}')
+
+
+def sample_manifold(config, model):
+    decoder = model[1]
+    decoder.eval()
+    with torch.no_grad():
+        samples = torch.randn(10, 30).to(config.device)
+        samples = decoder(samples)
+        if '3D' in decoder.__class__.__name__:
+            samples = samples.reshape([-1, 16, 3])
+        elif 'RGB' in decoder.__class__.__name__:
+            samples = samples.reshape([-1, 256, 256])
+
+        # TODO save as images to tensorboard
 
 
 def _log_training_metrics(config, output, vae_type):

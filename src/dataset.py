@@ -44,7 +44,14 @@ class H36M(Dataset):
         # further process to make the data learnable - zero3d and norm poses
         self.annotations, norm_stats = preprocess(self.annotations, self.root_idx)
 
-        # clear the HDF5 dataset
+        # save norm_stats to denormalize data for evaluation
+        f = h5py.File("../norm_stats.h5", 'w')
+        for key in norm_stats.keys():
+            f[key] = norm_stats[key]
+
+        # clear the HDF5 datasets
+        f.close()
+        del f
         all_annotations.close()
         del all_annotations
         gc.collect()
@@ -85,7 +92,7 @@ class H36M(Dataset):
         image = image_tmp.copy()
         image = np.array(image)
         # print("org max ", np.max(image), image.shape)
-        # image = self.augmentations(image=image)['image']
+        image = self.augmentations(image=image)['image']
         # print("aug max ", np.max(image), image.shape)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)

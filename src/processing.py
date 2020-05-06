@@ -44,6 +44,14 @@ def normalize(pose):
 
     return pose_norm, mean, std
 
+def denormalize(pose, mean, std):
+    '''
+    Denormalize poses for evaluation of actual pose. Could also be obtained by just multiplying std
+    '''
+    pose *= std
+    pose += mean
+    
+    return pose
 
 def preprocess(annotations, root_idx):
     '''
@@ -69,7 +77,7 @@ def preprocess(annotations, root_idx):
     # normalize 2d and 3d poses
     pose2d_norm, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
         pose2d_16_joints)
-
+        
     pose3d_norm, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
         pose3d_zeroed)
 

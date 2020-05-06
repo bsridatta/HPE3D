@@ -17,10 +17,19 @@ class Encoder2D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(2*self.n_joints, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
         )
         self.fc_mean = nn.Linear(512, self.latent_dim)
@@ -46,10 +55,19 @@ class Encoder3D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(3*self.n_joints, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
         )
         self.fc_mean = nn.Linear(512, self.latent_dim)
@@ -74,10 +92,19 @@ class Decoder3D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(self.latent_dim, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            self.activation(),
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 3*self.n_joints)
         )
@@ -95,12 +122,24 @@ def reparameterize(mean, logvar):
 
 
 def MPJPE(pred, target):
-    # per sample in batch
-    # mean(root(x2+y2+z2)) mean(PJPE)
-    mpjpe = torch.mean(torch.sqrt(
-        torch.sum((pred-target).pow(2), dim=2)), dim=1)
-    # reduction -> mean of mpjpe across batch
-    return torch.mean(mpjpe)
+    '''
+    Calculation per sample per sample in batch 
+    PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2) 
+    
+    Arguments:
+        pred (tensor)-- predicted 3d poses [n,j,3]
+        target (tensor)-- taget 3d poses [n,j,3]
+    Returns:
+        MPJPE -- mean(PJPE, axis=0) for each joint across batch
+        MPE -- mean(MPJPE) 
+    '''
+    PJPE = torch.sqrt(
+        torch.sum((pred-target).pow(2), dim=2))
+
+    MPJPE = torch.mean(PJPE, dim=0)
+    MPE = torch.mean(MPJPE)
+
+    return MPJPE, MPE
 
 
 def KLD(mean, logvar):
@@ -182,5 +221,5 @@ if __name__ == "__main__":
               [0.8033,  1.3638,  0.7996],
               [-0.9785,  0.6049,  0.6722],
               [-0.9765,  0.5890,  0.8608]]
-              
+
     test(torch.FloatTensor([pose2d]), torch.FloatTensor([pose3d]))
