@@ -45,7 +45,7 @@ class H36M(Dataset):
         self.annotations, norm_stats = preprocess(self.annotations, self.root_idx)
 
         # save norm_stats to denormalize data for evaluation
-        f = h5py.File("../norm_stats.h5", 'w')
+        f = h5py.File("data/norm_stats.h5", 'w')
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 

@@ -44,9 +44,11 @@ def main():
     writer.add_text("config", str(config))
 
     # Data loading
-    config.train_subjects = [1, 5, 6, 7, 8]
-    # config.train_subjects = [1, 5]
-    config.val_subjects = [1, 5]  # [9, 11]
+    # config.train_subjects = [1, 5, 6, 7, 8]
+    config.train_subjects = [1, 5]
+    config.val_subjects = [1, 5]
+    # config.val_subjects = [9, 11]
+    # TODO option to disable bnorm
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
@@ -108,14 +110,16 @@ def main():
                 config, model, val_loader, epoch, vae_type)
 
             # Latent Space Sampling
-            if epoch % manifold_interval == 0:
-                sample_manifold(config, model)
+            # if epoch % manifold_interval == 0:
+                # sample_manifold(config, model)
 
             # Evaluate Performance
-            if variant[1] == '3d' and epoch % eval_interval == 0:
+            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
                 evaluate_poses(config, model, val_loader, epoch, vae_type)
 
+            # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
+
 
         # if val_loss < val_loss_min:
         #     val_loss_min = val_loss
@@ -147,7 +151,7 @@ def training_specific_args():
 
     # data
     parser.add_argument(
-        '--annotation_file', default=f'data/debug_h36m17.h5', type=str, )
+        '--annotation_file', default=f'data/debug_h36m17.h5', type=str)
     parser.add_argument(
         '--image_path', default=f'../../HPE_datasets/h36m/', type=str)
 
@@ -169,7 +173,7 @@ def training_specific_args():
     parser.add_argument('--epochs', default=200, type=int)
 
     # more than 1 for training batch norm
-    parser.add_argument('--batch_size', default=7, type=int)
+    parser.add_argument('--batch_size', default=5, type=int)
 
     parser.add_argument('--fast_dev_run', default=True,
                         type=lambda x: (str(x).lower() == 'true'))

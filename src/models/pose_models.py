@@ -17,19 +17,19 @@ class Encoder2D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(2*self.n_joints, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
         )
         self.fc_mean = nn.Linear(512, self.latent_dim)
@@ -92,19 +92,19 @@ class Decoder3D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(self.latent_dim, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            # nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 3*self.n_joints)
         )
@@ -115,7 +115,10 @@ class Decoder3D(nn.Module):
         return x
 
 
-def reparameterize(mean, logvar):
+def reparameterize(mean, logvar, eval=False):
+    # TODO not sure why few repos do that 
+    if eval: return mean 
+
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)
     return mean + eps*std
@@ -131,15 +134,13 @@ def MPJPE(pred, target):
         target (tensor)-- taget 3d poses [n,j,3]
     Returns:
         MPJPE -- mean(PJPE, axis=0) for each joint across batch
-        MPE -- mean(MPJPE) 
     '''
     PJPE = torch.sqrt(
         torch.sum((pred-target).pow(2), dim=2))
 
     MPJPE = torch.mean(PJPE, dim=0)
-    MPE = torch.mean(MPJPE)
 
-    return MPJPE, MPE
+    return MPJPE
 
 
 def KLD(mean, logvar):

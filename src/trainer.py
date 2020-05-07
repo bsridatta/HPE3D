@@ -2,12 +2,14 @@ from collections import OrderedDict
 
 import torch
 import torch.nn.functional as F
+import h5py
+import gc
 
 import utils
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
 
-beta = 1  # KLD weight
+beta = 10**-3  # KLD weight
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -52,7 +54,8 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 def validation_epoch(config, model, val_loader, epoch, vae_type):
     # model.eval() in validation step
     loss = 0
-    acc = 0
+    recon_loss = 0
+    kld_loss = 0
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -62,9 +65,15 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
             _log_validation_metrics(config, output, vae_type)
             loss += output['loss_val'].item()
 
-    avg_loss = loss/len(val_loader)
-    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}')
+            recon_loss += output['log']['recon_loss'].item()
+            kld_loss += output['log']['kld_loss'].item()
 
+    avg_loss = loss/len(val_loader)
+
+    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}',
+          f'ReCon: {round(recon_loss/len(val_loader), 4)} KLD: {round(kld_loss/len(val_loader), 4)}')
+
+    del loss, kld_loss, recon_loss
     return avg_loss
 
 
@@ -100,7 +109,7 @@ def _validation_step(batch, batch_idx, model, epoch):
     inp, target, criterion = utils.get_inp_target_criterion(
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
-    z = reparameterize(mean, logvar)
+    z = reparameterize(mean, logvar, eval=True)
     output = decoder(z)
 
     output = output.view(target.shape)
@@ -116,21 +125,53 @@ def _validation_step(batch, batch_idx, model, epoch):
 
 
 def evaluate_poses(config, model, val_loader, epoch, vae_type):
+    '''
+    Equivalent to merging validation epoch and validation step
+    But uses denormalized data to calculate MPJPE 
+    '''
+
+    norm_stats = h5py.File("data/norm_stats.h5", 'r')
+
+    mpjpes = []
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device).long()
 
-            # batch['pose2d'] = denormalize(batch)
+            # get models for eval
+            encoder = model[0]
+            decoder = model[1]
+            encoder.eval()
+            decoder.eval()
 
-            output = _validation_step(batch, batch_idx, model, epoch)
+            inp, target, _ = utils.get_inp_target_criterion(
+                encoder, decoder, batch)  # criterion - MSELoss not used
 
-            _log_validation_metrics(config, output, vae_type)
-            loss += output['loss_val'].item()
+            # forward pass
+            mean, logvar = encoder(inp)
+            z = reparameterize(mean, logvar, eval=True)
+            output = decoder(z)
+            output = output.view(target.shape)
 
-    avg_loss = loss/len(val_loader)
-    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}')
+            # de-normalize data to original positions
+            output = denormalize(
+                output, torch.tensor(norm_stats['mean3d']), torch.tensor(norm_stats['std3d']))
+            target = denormalize(
+                target, torch.tensor(norm_stats['mean3d']), torch.tensor(norm_stats['std3d']))
+
+            mpjpes.append(MPJPE(output, target))
+
+    mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
+    # TODO add 17th joint for mean
+    mean_mpjpe = torch.mean(mpjpe).item()
+    print(f'{vae_type} - * Mean MPJPE * : {round(mean_mpjpe,4)}')
+
+    del mpjpes
+    del mpjpe
+    norm_stats.close()
+    del norm_stats
+    gc.collect()
 
 
 def sample_manifold(config, model):
@@ -143,7 +184,6 @@ def sample_manifold(config, model):
             samples = samples.reshape([-1, 16, 3])
         elif 'RGB' in decoder.__class__.__name__:
             samples = samples.reshape([-1, 256, 256])
-
         # TODO save as images to tensorboard
 
 

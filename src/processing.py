@@ -10,10 +10,10 @@ def zero_the_root(pose3d, root_idx):
 
     Arguments:
         pose3d (array) -- array of 3d poses of shape [17,3]
-        root_idx -- index of root(pelvis)
+        root_idx (int) -- index of root(pelvis)
 
     Returns:
-        pose3d -- poses with root shifted to 0,0,0. 
+        pose3d (array) -- poses with root shifted to 0,0,0. 
                         w/o root as always 0 
     '''
     # center at root
@@ -31,12 +31,12 @@ def normalize(pose):
     with mean, std with pose.shape ie for (x,y,z) of each joint
 
     Arguments:
-        pose3d -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
+        pose3d (array) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
 
     Returns:
-        pose_norm -- array of normalized pose
-        mean -- mean of poses (mean pose) [16, 2/3]
-        std -- std of poses [16, 2/3]
+        pose_norm (array) -- array of normalized pose
+        mean (array) -- mean of poses (mean pose) [16, 2/3]
+        std (array) -- std of poses [16, 2/3]
     '''
     mean = np.mean(pose, axis=0)
     std = np.std(pose, axis=0)
@@ -60,11 +60,11 @@ def preprocess(annotations, root_idx):
     pose2d - 2d poses obtained by projection of above 3d pose using camera params
 
     Arguments:
-        annotations -- dictionary of all data excluding raw images
+        annotations (dic) -- dictionary of all data excluding raw images
 
     Returns:
-        annotations -- with normalized 16 joint 2d and 3d poses
-        norm_stats -- mean and std of 2d, 3d poses to use for de-norm
+        annotations (dic) -- with normalized 16 joint 2d and 3d poses
+        norm_stats (dic) -- mean and std of 2d, 3d poses to use for de-norm
     '''
     norm_stats = {}  # store mean and std of poses
     # center the 3d pose at the root and remove the root
