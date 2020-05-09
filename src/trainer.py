@@ -8,14 +8,15 @@ import gc
 import utils
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
+from viz import plot_diff
 
 beta = 10**-3  # KLD weight
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
-    # model.train() inside training step
 
     # TODO perform get_inp_target_criterion for the whole epoch directly
+    # or change variantion every batch
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
@@ -30,16 +31,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         optimizer.step()
 
         # if batch_idx % 100 == 0:
-        #     try:
-        #         state_dict = model.module.state_dict()
-        #     except AttributeError:
-        #         state_dict = model.state_dict()
-
-        #     state = {
-        #         'model_state_dict': state_dict,
-        #         'optimizer_state_dict': optimizer.state_dict()
-        #     }
-        #     torch.save(state, f'{config.save_dir}/_backup_{config.exp_name}.pt')
+        # save model
 
         if batch_idx % config.log_interval == 0:
             print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
@@ -70,8 +62,10 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
     avg_loss = loss/len(val_loader)
 
-    print(f'{vae_type} - Val set: Average Loss: {round(avg_loss,4)}',
-          f'ReCon: {round(recon_loss/len(val_loader), 4)} KLD: {round(kld_loss/len(val_loader), 4)}')
+    print(f'{vae_type} Validation:',
+          f'\t\tLoss: {round(avg_loss,4)}',
+          f'\tReCon: {round(recon_loss/len(val_loader), 4)}',
+          f'\tKLD: {round(kld_loss/len(val_loader), 4)}')
 
     del loss, kld_loss, recon_loss
     return avg_loss
@@ -160,12 +154,18 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             target = denormalize(
                 target, torch.tensor(norm_stats['mean3d']), torch.tensor(norm_stats['std3d']))
 
+            # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
+            # Not very fair, but the average is with 17 in the denom!
+            output = torch.cat((torch.zeros(output.shape[0], 1, 3), output), dim=1)
+            target = torch.cat((torch.zeros(target.shape[0], 1, 3), target), dim=1)
+            plot_diff(output[0].numpy(), target[0].numpy())
+            exit()
             mpjpes.append(MPJPE(output, target))
 
     mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
     # TODO add 17th joint for mean
-    mean_mpjpe = torch.mean(mpjpe).item()
-    print(f'{vae_type} - * Mean MPJPE * : {round(mean_mpjpe,4)}')
+    avg_mpjpe = torch.mean(mpjpe).item()
+    print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)}')
 
     del mpjpes
     del mpjpe

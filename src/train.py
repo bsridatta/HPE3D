@@ -46,20 +46,17 @@ def main():
     # Data loading
     # config.train_subjects = [1, 5, 6, 7, 8]
     config.train_subjects = [1, 5]
-    config.val_subjects = [1, 5]
-    # config.val_subjects = [9, 11]
-    # TODO option to disable bnorm
+    # config.val_subjects = [1, 5]
+    config.val_subjects = [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
-    # test_loader = dataloader.test_dataloader(config)
 
     # combinations of Encoder, Decoder to train in an epoch
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
-        3: [['rgb', 'rgb']],
-    }
+        3: [['rgb', 'rgb']]}
     variants = variant_dic[config.variant]
 
     # Intuition: Each variant is one model,
@@ -94,10 +91,11 @@ def main():
     config.step = 0
     for epoch in range(1, config.epochs+1):
         for variant in range(len(variants)):
+            # Variant specific players
             vae_type = "_2_".join(variants[variant])
 
-            # Variant specific players
-            model = models[variant]  # tuple of encoder decoder
+            # model -- tuple of encoder decoder
+            model = models[variant]
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
 
@@ -121,22 +119,6 @@ def main():
             # TODO implement fast_dev_run
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
-
-        # if val_loss < val_loss_min:
-        #     val_loss_min = val_loss
-        #     try:
-        #         state_dict = model.module.state_dict()
-        #     except AttributeError:
-        #         state_dict = model.state_dict()
-
-        #     state = {
-        #         'epoch': epoch,
-        #         'val_loss': val_loss,
-        #         'model_state_dict': state_dict,
-        #         'optimizer_state_dict': optimizer.state_dict()
-        #     }
-        #     torch.save(state, f'{config.save_dir}/{config.exp_name}.pt')
-        #     logging.info(f'Saved pt: {config.save_dir}/{config.exp_name}.pt')
 
     writer.close()
 
@@ -165,7 +147,7 @@ def training_specific_args():
     parser.add_argument('--resume_pt', default=0, type=str,
                         help='resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=2, type=int,
+    parser.add_argument('--variant', default=1, type=int,
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=30, type=int,
                         help='dimensions of the cross model latent space')
