@@ -58,7 +58,7 @@ def main():
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
-        3: [['rgb', 'rgb']]
+        3: [['rgb', 'rgb']],
     }
     variants = variant_dic[config.variant]
 
@@ -111,15 +111,16 @@ def main():
 
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
-                # sample_manifold(config, model)
+            # sample_manifold(config, model)
 
             # Evaluate Performance
             if variants[variant][1] == '3d' and epoch % eval_interval == 0:
                 evaluate_poses(config, model, val_loader, epoch, vae_type)
 
+            # TODO have different learning rates for all variants
+            # TODO implement fast_dev_run
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
-
 
         # if val_loss < val_loss_min:
         #     val_loss_min = val_loss
@@ -145,46 +146,44 @@ def training_specific_args():
     parser = ArgumentParser()
 
     # GPU
-    parser.add_argument('--cuda', default=True,
-                        type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--seed', default=400, type=int)
-
+    parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
+                        help='enable cuda if available')
+    parser.add_argument('--seed', default=400, type=int,
+                        help='random seed')
     # data
-    parser.add_argument(
-        '--annotation_file', default=f'data/debug_h36m17.h5', type=str)
-    parser.add_argument(
-        '--image_path', default=f'../../HPE_datasets/h36m/', type=str)
-
-    # Variant Choice
-    parser.add_argument('--variant', default=2, type=int)
-
-    # RGB
-    parser.add_argument('--latent_dim', default=30, type=int)
-    parser.add_argument('--pretrained', default=False,
-                        type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--train_last_block', default=False,
-                        type=lambda x: (str(x).lower() == 'true'))
-
-    # Pose
-    parser.add_argument('--n_joints', default=16, type=int)
-    parser.add_argument('--learning_rate', default=1e-3, type=float)
-
-    # training params
-    parser.add_argument('--epochs', default=200, type=int)
-
-    # more than 1 for training batch norm
-    parser.add_argument('--batch_size', default=5, type=int)
-
-    parser.add_argument('--fast_dev_run', default=True,
-                        type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--resume_pt', default=0, type=str)
-
+    parser.add_argument('--annotation_file', default=f'data/debug_h36m17.h5', type=str,
+                        help='path to the h5 file containing poses and camera data')
+    parser.add_argument('--image_path', default=f'../../HPE_datasets/h36m/', type=str,
+                        help='path to image folders with subject action etc as folder names')
+    # training specific
+    parser.add_argument('--epochs', default=200, type=int,
+                        help='number of epochs to train')
+    parser.add_argument('--batch_size', default=5, type=int,
+                        help='number of samples per step, have more than one for batch norm')
+    parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
+                        help='run all methods once to check integrity, not implemented!')
+    parser.add_argument('--resume_pt', default=0, type=str,
+                        help='resume training using the saved checkpoint')
+    # model specific
+    parser.add_argument('--variant', default=2, type=int,
+                        help='choose variant, the combination of VAEs to be trained')
+    parser.add_argument('--latent_dim', default=30, type=int,
+                        help='dimensions of the cross model latent space')
+    parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='use pretrained weights for RGB encoder')
+    parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='train last convolution block of the RGB encoder while rest is pre-trained')
+    parser.add_argument('--n_joints', default=16, type=int,
+                        help='number of joints to encode and decode')
+    parser.add_argument('--learning_rate', default=1e-3, type=float,
+                        help='learning rate for all optimizers')
     # output
-    parser.add_argument(
-        '--save_dir', default=f'{os.path.dirname(os.getcwd())}/checkpoints', type=str)
-    parser.add_argument('--exp_name', default=f'run_1', type=str)
+    parser.add_argument('--save_dir', default=f'{os.path.dirname(os.getcwd())}/checkpoints', type=str,
+                        help='path to save checkpoints')
+    parser.add_argument('--exp_name', default=f'run_1', type=str,
+                        help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
-                        help='how many batches to wait before logging training status')
+                        help='# of batches to wait before logging training status')
 
     return parser
 
