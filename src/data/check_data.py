@@ -33,7 +33,6 @@ import numpy as np
 import h5py
 import pandas as pd
 import plotly.graph_objects as go
-import skimage.io as sio
 from PIL import Image
 
 def plot_h36(pose):
@@ -184,7 +183,6 @@ if __name__ == "__main__":
 
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (subject_, action_, subaction_, camera_)
     img_file = image_path+dirname+"/"+dirname+"_"+("%06d"%(idx))+".jpg"
-    image = sio.imread(img_file)
     print(pose2.shape)
     print(pose3.shape)
 

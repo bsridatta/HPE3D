@@ -8,7 +8,7 @@ import gc
 import utils
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
-from viz import plot_diff
+from viz import plot_diff, plot_diff_3D
 
 beta = 10**-3  # KLD weight
 
@@ -123,7 +123,6 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     Equivalent to merging validation epoch and validation step
     But uses denormalized data to calculate MPJPE 
     '''
-
     norm_stats = h5py.File("data/norm_stats.h5", 'r')
 
     mpjpes = []
@@ -158,9 +157,11 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             # Not very fair, but the average is with 17 in the denom!
             output = torch.cat((torch.zeros(output.shape[0], 1, 3), output), dim=1)
             target = torch.cat((torch.zeros(target.shape[0], 1, 3), target), dim=1)
-            plot_diff(output[0].numpy(), target[0].numpy())
-            exit()
-            mpjpes.append(MPJPE(output, target))
+            mpjpe = MPJPE(output, target)
+            # TODO plot and save samples for say each action to see improvement
+            # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
+            
+            mpjpes.append(mpjpe)
 
     mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
     # TODO add 17th joint for mean
