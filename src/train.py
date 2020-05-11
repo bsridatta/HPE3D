@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -9,7 +8,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 import dataloader
 import utils
-from trainer import training_epoch, validation_epoch, sample_manifold, evaluate_poses
+from trainer import (evaluate_poses, sample_manifold, training_epoch,
+                     validation_epoch)
 
 
 def main():
@@ -23,9 +23,10 @@ def main():
 
     # Tensorboard Logs
     suffix = 0
-    while os.path.exists(f"../logs/{config.exp_name}_{suffix}"):
+    while os.path.exists(f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}"):
         suffix += 1
-    writer = SummaryWriter(f"../logs/{config.exp_name}_{suffix}")
+    writer = SummaryWriter(
+        f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}")
     config.writer = writer
 
     # log intervals
@@ -133,9 +134,9 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'data/debug_h36m17.h5', type=str,
-                        help='path to the h5 file containing poses and camera data')
-    parser.add_argument('--image_path', default=f'../../HPE_datasets/h36m/', type=str,
+    parser.add_argument('--annotation_file', default=f'debug_h36m17.h5', type=str,
+                        help='name of the h5 file containing poses and camera data')
+    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
     # training specific
     parser.add_argument('--epochs', default=200, type=int,

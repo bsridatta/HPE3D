@@ -1,4 +1,5 @@
 import gc
+import os
 
 import albumentations
 import h5py
@@ -17,7 +18,7 @@ class H36M(Dataset):
     def __init__(self, subjects, annotation_file, image_path, no_images=False):
         self.no_images = no_images  # incase of only lifting 2D-3D
 
-        # Data Specific Information 
+        # Data Specific Information
         # Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
 
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
@@ -29,7 +30,7 @@ class H36M(Dataset):
         self.root_idx = self.joints_name.index('Pelvis')
 
         # get labels and metadata including camera parameters
-        all_annotations = h5py.File(annotation_file, 'r')
+        all_annotations = h5py.File(f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}', 'r')
         self.annotations = {}  # to store only the subjects of interest
 
         # get indices of subjects of interest and filter them
@@ -42,10 +43,12 @@ class H36M(Dataset):
             self.annotations[key] = all_annotations[key][filtered_indices]
 
         # further process to make the data learnable - zero3d and norm poses
-        self.annotations, norm_stats = preprocess(self.annotations, self.root_idx)
+        self.annotations, norm_stats = preprocess(
+            self.annotations, self.root_idx)
 
         # save norm_stats to denormalize data for evaluation
-        f = h5py.File("data/norm_stats.h5", 'w')
+        f = h5py.File(
+            f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'w')
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
@@ -107,9 +110,11 @@ class H36M(Dataset):
 
         return image
 
+
 '''
 test function for sanity check only - ignore
 '''
+
 
 def test_h36m():
     annotation_file = 'data/debug_h36m17.h5'
@@ -126,7 +131,7 @@ def test_h36m():
 
     print(sample['pose2d'], '\n\n\n')
     print(sample['pose3d'])
-    
+
     del dataset
     del sample
     gc.collect()
@@ -134,4 +139,3 @@ def test_h36m():
 
 if __name__ == "__main__":
     test_h36m()
-

@@ -1,4 +1,5 @@
 import logging
+import os
 
 import torch
 from torch.utils.data import SubsetRandomSampler
@@ -76,9 +77,9 @@ def test():
     config.batch_size = 4
     config.num_workers = 0
     config.pin_memory = False
-      
+
     train_loader = train_dataloader(config)
-    for batch_idx, batch in enumerate(train_loader): 
+    for batch_idx, batch in enumerate(train_loader):
         print(batch_idx, len(batch))
 
 
