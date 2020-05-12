@@ -13,8 +13,8 @@ the dataloader is same for test/train/val
 
 
 def train_dataloader(config):
-    dataset = H36M(config.train_subjects,
-                   config.annotation_file, config.image_path)
+    dataset = H36M(config.train_subjects, config.annotation_file,
+                   config.image_path, config.ignore_images)
     # alterantive for debug dataset
     # sampler = SubsetRandomSampler(
     #     range(2*config.batch_size)) if config.fast_dev_run else None
@@ -34,8 +34,8 @@ def train_dataloader(config):
 
 
 def val_dataloader(config):
-    dataset = H36M(config.val_subjects,
-                   config.annotation_file, config.image_path)
+    dataset = H36M(config.val_subjects, config.annotation_file,
+                   config.image_path, config.ignore_images)
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,
@@ -52,7 +52,8 @@ def val_dataloader(config):
 
 
 def test_dataloader(config):
-    dataset = H36M(config.subjects, config.annotation_file, config.image_path)
+    dataset = H36M(config.subjects, config.annotation_file,
+                   config.image_path, config.ignore_images)
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,

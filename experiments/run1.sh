@@ -3,6 +3,7 @@ python3.7 ../src/train.py \
     --seed 400\
     --annotation_file debug_h36m17.h5\
     --image_path /home/datta/lab/HPE_datasets/h36m/\
+    --ignore_images True\
     --epochs 200\
     --batch_size 5\
     --fast_dev_run True\
