@@ -23,8 +23,6 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
 
     # Tensorboard Logs
-    # wandb.init(anonymous='allow', project="sklearn")
-
     wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
     suffix = 0
     while os.path.exists(f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}"):
@@ -43,7 +41,6 @@ def main():
     logging.info(f'using device: {device}')
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
-    config.pin_memory = False if use_cuda else False
 
     # easier to know what params are used in the runs
     writer.add_text("config", str(config))
@@ -117,8 +114,8 @@ def main():
             # sample_manifold(config, model)
 
             # Evaluate Performance
-            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-                evaluate_poses(config, model, val_loader, epoch, vae_type)
+            # if variants[variant][1] == '3d' and epoch % eval_interval == 0:
+            evaluate_poses(config, model, val_loader, epoch, vae_type)
 
             # TODO have different learning rates for all variants
             # TODO implement fast_dev_run
@@ -135,6 +132,8 @@ def training_specific_args():
     # GPU
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='enable cuda if available')
+    parser.add_argument('--pin_memory', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='pin memory to device')
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
@@ -158,6 +157,8 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=30, type=int,
                         help='dimensions of the cross model latent space')
+    parser.add_argument('--beta', default=10**-2, type=float,
+                        help='KLD weight')
     parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
     parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),

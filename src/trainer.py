@@ -11,8 +11,6 @@ from models import KLD, MPJPE, reparameterize
 from processing import denormalize
 from viz import plot_diff
 
-beta = 10**-3  # KLD weight
-
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 
@@ -87,7 +85,7 @@ def _training_step(batch, batch_idx, model):
     output = output.view(target.shape)
     recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar)
-    loss_val = recon_loss + beta * kld_loss
+    loss_val = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
@@ -110,7 +108,7 @@ def _validation_step(batch, batch_idx, model, epoch):
     output = output.view(target.shape)
     recon_loss = criterion(output, target)
     kld_loss = KLD(mean, logvar)
-    loss_val = recon_loss + beta * kld_loss
+    loss_val = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
