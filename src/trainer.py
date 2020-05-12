@@ -122,7 +122,7 @@ def _validation_step(batch, batch_idx, model, epoch):
 def evaluate_poses(config, model, val_loader, epoch, vae_type):
     '''
     Equivalent to merging validation epoch and validation step
-    But uses denormalized data to calculate MPJPE 
+    But uses denormalized data to calculate MPJPE
     '''
     norm_stats = h5py.File(
         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'r')
@@ -151,9 +151,13 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
 
             # de-normalize data to original positions
             output = denormalize(
-                output, torch.tensor(norm_stats['mean3d']), torch.tensor(norm_stats['std3d']))
+                output,
+                torch.tensor(norm_stats['mean3d'], device=config.device),
+                torch.tensor(norm_stats['std3d'], device=config.device))
             target = denormalize(
-                target, torch.tensor(norm_stats['mean3d']), torch.tensor(norm_stats['std3d']))
+                target,
+                torch.tensor(norm_stats['mean3d'], device=config.device),
+                torch.tensor(norm_stats['std3d'], device=config.device))
 
             # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
             # Not very fair, but the average is with 17 in the denom!
