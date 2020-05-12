@@ -1,0 +1,31 @@
+INFO:root:using device: cpu
+INFO:root:processing subjects: [1, 5, 6, 7, 8]
+INFO:root:Training data loader called. len - 5
+INFO:root:processing subjects: [9, 11]
+INFO:root:Validation data loader called. len - 5
+INFO:root:Start training procedure
+2d_2_3d Epoch: 1 [0/5 (0%)]	Loss: 1.1551	ReCon: 1.1359	KLD: 19.1827
+2d_2_3d Validation: 		Loss: 0.9589 	ReCon: 0.9589 	KLD: 0.0354
+2d_2_3d - * Mean MPJPE * : 21.4179 
+ tensor([ 0.0000,  7.4901, 19.5261, 27.3677,  7.4900, 10.1349, 30.6239,  5.5553,
+        10.6700, 26.4666, 30.0168, 27.2719, 41.7437, 51.7990,  6.5042, 21.9402,
+        39.5043])
+2d_2_3d Epoch: 2 [0/5 (0%)]	Loss: 1.2823	ReCon: 1.2560	KLD: 26.3148
+2d_2_3d Validation: 		Loss: 0.9592 	ReCon: 0.9591 	KLD: 0.0424
+2d_2_3d - * Mean MPJPE * : 21.4183 
+ tensor([ 0.0000,  7.4902, 19.5262, 27.3876,  7.4891, 10.1368, 30.6262,  5.5553,
+        10.6707, 26.4667, 30.0140, 27.2742, 41.7303, 51.7974,  6.5037, 21.9412,
+        39.5020])
+2d_2_3d Epoch: 3 [0/5 (0%)]	Loss: 1.0920	ReCon: 1.0582	KLD: 33.7658
+2d_2_3d Validation: 		Loss: 0.9595 	ReCon: 0.9595 	KLD: 0.0588
+2d_2_3d - * Mean MPJPE * : 21.4193 
+ tensor([ 0.0000,  7.4900, 19.5275, 27.4016,  7.4886, 10.1283, 30.6278,  5.5556,
+        10.6710, 26.4678, 30.0140, 27.2767, 41.7216, 51.8029,  6.5047, 21.9461,
+        39.5039])
+2d_2_3d Epoch: 4 [0/5 (0%)]	Loss: 1.0618	ReCon: 1.0143	KLD: 47.4208
+2d_2_3d Validation: 		Loss: 0.9598 	ReCon: 0.9597 	KLD: 0.0817
+2d_2_3d - * Mean MPJPE * : 21.4183 
+ tensor([ 0.0000,  7.4911, 19.5260, 27.4147,  7.4877, 10.1101, 30.6259,  5.5557,
+        10.6701, 26.4703, 30.0167, 27.2794, 41.7044, 51.7992,  6.5059, 21.9516,
+        39.5022])
+Epoch     3: reducing learning rate of group 0 to 1.0000e-04.

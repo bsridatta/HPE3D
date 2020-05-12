@@ -1,0 +1,57 @@
+2020-05-12 20:14:52,461 DEBUG   MainThread:7613 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+2020-05-12 20:14:52,476 DEBUG   MainThread:7613 [meta.py:setup():100] code probe starting
+2020-05-12 20:14:52,476 DEBUG   MainThread:7613 [meta.py:_setup_code_git():49] probe for git information
+2020-05-12 20:14:52,495 DEBUG   MainThread:7613 [meta.py:_setup_code_program():58] save program starting
+2020-05-12 20:14:52,496 DEBUG   MainThread:7613 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+2020-05-12 20:14:52,496 DEBUG   MainThread:7613 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/code/src/train.py
+2020-05-12 20:14:52,496 DEBUG   MainThread:7613 [meta.py:_setup_code_program():70] save program
+2020-05-12 20:14:52,496 DEBUG   MainThread:7613 [meta.py:setup():122] code probe done
+2020-05-12 20:14:52,517 DEBUG   MainThread:7613 [run_manager.py:__init__():546] Initialized sync for HPE3D-src/1ini5brw
+2020-05-12 20:14:52,524 INFO    MainThread:7613 [run_manager.py:wrap_existing_process():1148] wrapping existing process 7574
+2020-05-12 20:14:52,525 WARNING MainThread:7613 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+2020-05-12 20:14:52,587 INFO    MainThread:7613 [run_manager.py:init_run():927] system metrics and metadata threads started
+2020-05-12 20:14:52,588 INFO    MainThread:7613 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
+2020-05-12 20:14:52,898 INFO    Thread-14 :7613 [run_manager.py:_upsert_run():1051] saving patches
+2020-05-12 20:14:52,989 INFO    Thread-14 :7613 [run_manager.py:_upsert_run():1055] saving pip packages
+2020-05-12 20:14:52,990 INFO    Thread-14 :7613 [run_manager.py:_upsert_run():1057] initializing streaming files api
+2020-05-12 20:14:52,992 INFO    Thread-14 :7613 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
+2020-05-12 20:14:52,995 INFO    MainThread:7613 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+2020-05-12 20:14:53,005 INFO    MainThread:7613 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+2020-05-12 20:14:53,069 INFO    MainThread:7613 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589307293.Datta.7574.0", "policy": "live"}}
+2020-05-12 20:14:53,478 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/config.yaml
+2020-05-12 20:14:53,704 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/events.out.tfevents.1589307293.Datta.7574.0
+2020-05-12 20:14:53,707 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/requirements.txt
+2020-05-12 20:14:53,707 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-metadata.json
+2020-05-12 20:14:53,708 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/diff.patch
+2020-05-12 20:14:53,712 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:53,713 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/code/src/train.py
+2020-05-12 20:14:53,714 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/code/src
+2020-05-12 20:14:53,714 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/code
+2020-05-12 20:14:54,023 INFO    MainThread:7613 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Train_Loss_kld_loss/events.out.tfevents.1589307294.Datta.7574.1", "policy": "live"}}
+2020-05-12 20:14:54,026 INFO    MainThread:7613 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Train_Loss_recon_loss/events.out.tfevents.1589307294.Datta.7574.2", "policy": "live"}}
+2020-05-12 20:14:54,455 INFO    MainThread:7613 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Val_Loss_kld_loss/events.out.tfevents.1589307294.Datta.7574.3", "policy": "live"}}
+2020-05-12 20:14:54,457 INFO    MainThread:7613 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Val_Loss_recon_loss/events.out.tfevents.1589307294.Datta.7574.4", "policy": "live"}}
+2020-05-12 20:14:54,480 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:54,481 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/Loss_2d_2_3d_Train_Loss_recon_loss/events.out.tfevents.1589307294.Datta.7574.2
+2020-05-12 20:14:54,483 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/Loss_2d_2_3d_Val_Loss_recon_loss/events.out.tfevents.1589307294.Datta.7574.4
+2020-05-12 20:14:54,484 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/Loss_2d_2_3d_Train_Loss_recon_loss
+2020-05-12 20:14:54,485 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/Loss_2d_2_3d_Val_Loss_recon_loss
+2020-05-12 20:14:55,480 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:56,481 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:57,482 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:58,482 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:59,483 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:14:59,871 INFO    MainThread:7613 [run_manager.py:_sync_etc():1328] process received interrupt signal, shutting down
+2020-05-12 20:14:59,872 INFO    MainThread:7613 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+2020-05-12 20:14:59,874 INFO    MainThread:7613 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+2020-05-12 20:15:00,485 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-history.jsonl
+2020-05-12 20:15:00,486 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/output.log
+2020-05-12 20:15:00,487 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-events.jsonl
+2020-05-12 20:15:00,489 INFO    Thread-3  :7613 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-summary.json
+2020-05-12 20:15:00,616 INFO    MainThread:7613 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
+2020-05-12 20:15:01,486 INFO    Thread-3  :7613 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-metadata.json
+2020-05-12 20:15:04,456 INFO    MainThread:7613 [run_manager.py:_sync_etc():1393] process only ran for 12 seconds, not syncing files
+-20200512_181451-1ini5brw/wandb-summary.json
+2020-05-12 20:15:00,616 INFO    MainThread:7613 [1ini5brw:run_manager.py:shutdown():1085] stopping streaming files and file change observer
+2020-05-12 20:15:01,486 INFO    Thread-3  :7613 [1ini5brw:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_181451-1ini5brw/wandb-metadata.json
+2020-05-12 20:15:04,456 INFO    MainThread:7613 [1ini5brw:run_manager.py:_sync_etc():1393] process only ran for 12 seconds, not syncing files
