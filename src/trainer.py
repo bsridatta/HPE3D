@@ -9,7 +9,7 @@ import os
 import utils
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
-from viz import plot_diff, plot_diff_3D
+from viz import plot_diff
 
 beta = 10**-3  # KLD weight
 
