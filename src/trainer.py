@@ -162,9 +162,10 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
             # Not very fair, but the average is with 17 in the denom!
             output = torch.cat(
-                (torch.zeros(output.shape[0], 1, 3), output), dim=1)
+                (torch.zeros(output.shape[0], 1, 3, device=config.device), output), dim=1)
             target = torch.cat(
-                (torch.zeros(target.shape[0], 1, 3), target), dim=1)
+                (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
+                
             mpjpe = MPJPE(output, target)
             # TODO plot and save samples for say each action to see improvement
             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
