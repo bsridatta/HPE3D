@@ -17,19 +17,19 @@ class Encoder2D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(2*self.n_joints, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
         )
         self.fc_mean = nn.Linear(512, self.latent_dim)
@@ -92,19 +92,19 @@ class Decoder3D(nn.Module):
     def __build_model(self):
         self.dense_block = nn.Sequential(
             nn.Linear(self.latent_dim, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 512),
-            # nn.BatchNorm1d(512),
+            nn.BatchNorm1d(512),
             self.activation(),
             nn.Linear(512, 3*self.n_joints)
         )

@@ -165,7 +165,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
                 (torch.zeros(output.shape[0], 1, 3, device=config.device), output), dim=1)
             target = torch.cat(
                 (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
-                
+
             mpjpe = MPJPE(output, target)
             # TODO plot and save samples for say each action to see improvement
             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
@@ -173,9 +173,9 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             mpjpes.append(mpjpe)
 
     mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
-    # TODO add 17th joint for mean
     avg_mpjpe = torch.mean(mpjpe).item()
-    print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)}')
+
+    print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
     del mpjpes
     del mpjpe
