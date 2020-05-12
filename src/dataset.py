@@ -1,4 +1,5 @@
 import gc
+import logging
 import os
 
 import albumentations
@@ -43,6 +44,7 @@ class H36M(Dataset):
             self.annotations[key] = all_annotations[key][filtered_indices]
 
         # further process to make the data learnable - zero3d and norm poses
+        logging.info(f'processing subjects: {subjects}')
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
 

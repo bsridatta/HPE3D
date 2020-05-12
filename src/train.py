@@ -45,8 +45,8 @@ def main():
     writer.add_text("config", str(config))
 
     # Data loading
-    # config.train_subjects = [1, 5, 6, 7, 8]
-    config.train_subjects = [1, 5]
+    config.train_subjects = [1, 5, 6, 7, 8]
+    # config.train_subjects = [1, 5]
     # config.val_subjects = [1, 5]
     config.val_subjects = [9, 11]
 
