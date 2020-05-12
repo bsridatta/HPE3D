@@ -30,7 +30,7 @@ class H36M(Dataset):
         self.root_idx = self.joints_name.index('Pelvis')
 
         # get labels and metadata including camera parameters
-        all_annotations = h5py.File(f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}', 'r')
+        all_annotations = h5py.File(f'{annotation_file}', 'r')
         self.annotations = {}  # to store only the subjects of interest
 
         # get indices of subjects of interest and filter them
