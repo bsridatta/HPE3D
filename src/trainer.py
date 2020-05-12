@@ -21,7 +21,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
             batch[key] = batch[key].to(config.device).float()
 
         optimizer.zero_grad()
-        output = _training_step(batch, batch_idx, model)
+        output = _training_step(batch, batch_idx, model, config)
         _log_training_metrics(config, output, vae_type)
         loss = output['loss_val']
         kld_loss = output['log']['kld_loss']
@@ -52,7 +52,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device).long()
-            output = _validation_step(batch, batch_idx, model, epoch)
+            output = _validation_step(batch, batch_idx, model, epoch, config)
             _log_validation_metrics(config, output, vae_type)
             loss += output['loss_val'].item()
 
@@ -70,7 +70,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
     return avg_loss
 
 
-def _training_step(batch, batch_idx, model):
+def _training_step(batch, batch_idx, model, config):
     encoder = model[0]
     decoder = model[1]
     encoder.train()
@@ -93,7 +93,7 @@ def _training_step(batch, batch_idx, model):
     return OrderedDict({'loss_val': loss_val, 'log': logger_logs})
 
 
-def _validation_step(batch, batch_idx, model, epoch):
+def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0]
     decoder = model[1]
     encoder.eval()

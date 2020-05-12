@@ -1,0 +1,12 @@
+INFO:root:using device: cpu
+INFO:root:processing subjects: [1, 5, 6, 7, 8]
+INFO:root:Training data loader called. len - 5
+INFO:root:processing subjects: [9, 11]
+INFO:root:Validation data loader called. len - 5
+INFO:root:Start training procedure
+2d_2_3d Epoch: 1 [0/5 (0%)]	Loss: 1.3277	ReCon: 1.1359	KLD: 19.1827
+2d_2_3d Validation: 		Loss: 0.9592 	ReCon: 0.9589 	KLD: 0.0349
+2d_2_3d - * Mean MPJPE * : 21.4179 
+ tensor([ 0.0000,  7.4900, 19.5261, 27.3678,  7.4901, 10.1348, 30.6239,  5.5552,
+        10.6700, 26.4667, 30.0170, 27.2719, 41.7437, 51.7993,  6.5042, 21.9401,
+        39.5043])
