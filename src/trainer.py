@@ -173,6 +173,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
     avg_mpjpe = torch.mean(mpjpe).item()
 
+    config.writer.add_scalar(f"MPJPE", avg_mpjpe)
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
     del mpjpes
@@ -196,9 +197,12 @@ def sample_manifold(config, model):
 
 
 def _log_training_metrics(config, output, vae_type):
-    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/kld_loss", output['log']['kld_loss'])
-    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/recon_loss", output['log']['recon_loss'])
-    config.writer.add_scalar(f"Total/{vae_type}/Train_Loss", output['loss_val'])
+    config.writer.add_scalar(
+        f"Loss/{vae_type}/Train_Loss/kld_loss", output['log']['kld_loss'])
+    config.writer.add_scalar(
+        f"Loss/{vae_type}/Train_Loss/recon_loss", output['log']['recon_loss'])
+    config.writer.add_scalar(
+        f"Total/{vae_type}/Train_Loss", output['loss_val'])
 
 
 def _log_validation_metrics(config, output, vae_type):
@@ -206,6 +210,8 @@ def _log_validation_metrics(config, output, vae_type):
         config.writer.add_image(
             f"Images/{output['epoch']}", output['recon'][0])
 
-    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/kld_loss", output['log']['kld_loss'])
-    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/recon_loss", output['log']['recon_loss'])
+    config.writer.add_scalar(
+        f"Loss/{vae_type}/Val_Loss/kld_loss", output['log']['kld_loss'])
+    config.writer.add_scalar(
+        f"Loss/{vae_type}/Val_Loss/recon_loss", output['log']['recon_loss'])
     config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])
