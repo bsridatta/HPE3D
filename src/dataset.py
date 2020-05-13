@@ -49,8 +49,11 @@ class H36M(Dataset):
             self.annotations, self.root_idx)
 
         # save norm_stats to denormalize data for evaluation
+        ann_file_name = annotation_file.split('/')[-1].split('.')[0]
+        print(ann_file_name)
+        exit()
         f = h5py.File(
-            f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'w')
+            f"{os.path.dirname(os.path.abspath(__file__))}/data/{}norm_stats.h5", 'w')
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
