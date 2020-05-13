@@ -84,7 +84,7 @@ def _training_step(batch, batch_idx, model, config):
 
     output = output.view(target.shape)
     recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
-    kld_loss = KLD(mean, logvar)
+    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss_val = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
@@ -106,8 +106,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     output = decoder(z)
 
     output = output.view(target.shape)
-    recon_loss = criterion(output, target)
-    kld_loss = KLD(mean, logvar)
+    recon_loss = criterion(output, target) # 3D-MPJPE/ RGB/2D-L1/BCE
+    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss_val = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,

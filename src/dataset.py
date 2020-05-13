@@ -16,9 +16,9 @@ from processing import preprocess
 
 class H36M(Dataset):
 
-    def __init__(self, subjects, annotation_file, image_path, no_images=False):
+    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu'):
         self.no_images = no_images  # incase of only lifting 2D-3D
-
+        self.device = device
         # Data Specific Information
         # Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
 
@@ -41,7 +41,7 @@ class H36M(Dataset):
                 filtered_indices.append(i)
 
         for key in all_annotations.keys():
-            self.annotations[key] = all_annotations[key][filtered_indices]
+            self.annotations[key] = torch.tensor(all_annotations[key][filtered_indices], device=device)
 
         # further process to make the data learnable - zero3d and norm poses
         logging.info(f'processing subjects: {subjects}')
@@ -78,8 +78,7 @@ class H36M(Dataset):
         # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:
-            sample[key] = torch.tensor(
-                self.annotations[key][idx], dtype=torch.float32)
+            sample[key] = self.annotations[key][idx].type(torch.float32)
         if not self.no_images:
             image = self.get_image_tensor(sample)
             sample['image'] = image
@@ -100,7 +99,7 @@ class H36M(Dataset):
         image = self.augmentations(image=image)['image']
         # print("aug max ", np.max(image), image.shape)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
-        image = torch.tensor(image, dtype=torch.float32)
+        image = torch.tensor(image, dtype=torch.float32, device=self.device)
 
         # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
         # But if you do torch.tensor() you have to do it manually
@@ -119,8 +118,8 @@ test function for sanity check only - ignore
 
 
 def test_h36m():
-    annotation_file = 'data/debug_h36m17.h5'
-    image_path = "../../HPE_datasets/h36m/"
+    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/debug_h36m17.h5'
+    image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
     dataset = H36M([1, 5, 6], annotation_file, image_path)
     print("Length of the dataset: ", len(dataset))

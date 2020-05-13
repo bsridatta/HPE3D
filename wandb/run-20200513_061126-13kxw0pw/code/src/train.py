@@ -23,8 +23,7 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
 
     # Tensorboard Logs
-    if config.wandb:
-        wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
+    wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
     suffix = 0
     while os.path.exists(f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}"):
         suffix += 1
@@ -175,9 +174,6 @@ def training_specific_args():
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
                         help='# of batches to wait before logging training status')
-    parser.add_argument('--wandb', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='sync tb to wandb')
-    
 
     return parser
 

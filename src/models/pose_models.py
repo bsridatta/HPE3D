@@ -116,8 +116,9 @@ class Decoder3D(nn.Module):
 
 
 def reparameterize(mean, logvar, eval=False):
-    # TODO not sure why few repos do that 
-    if eval: return mean 
+    # TODO not sure why few repos do that
+    if eval:
+        return mean
 
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)
@@ -128,7 +129,7 @@ def MPJPE(pred, target):
     '''
     Calculation per sample per sample in batch 
     PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2) 
-    
+
     Arguments:
         pred (tensor)-- predicted 3d poses [n,j,3]
         target (tensor)-- taget 3d poses [n,j,3]
@@ -143,8 +144,13 @@ def MPJPE(pred, target):
     return MPJPE
 
 
-def KLD(mean, logvar):
+def KLD(mean, logvar, decoder_name):
     loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
+    if '3D' in decoder_name:
+        # normalize by same number in recon - b*j*dim
+        # from vae-hands local_utility_fn ln-108
+        loss /= mean.shape[0]*16*3
+
     return loss
 
 

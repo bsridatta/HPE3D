@@ -2,7 +2,7 @@
 Reference code - https://github.com/una-dinosauria/3d-pose-baseline
 '''
 import numpy as np
-
+import torch
 
 def zero_the_root(pose3d, root_idx):
     '''
@@ -38,8 +38,8 @@ def normalize(pose):
         mean (array) -- mean of poses (mean pose) [16, 2/3]
         std (array) -- std of poses [16, 2/3]
     '''
-    mean = np.mean(pose, axis=0)
-    std = np.std(pose, axis=0)
+    mean = torch.mean(pose, dim=0)
+    std = torch.std(pose, dim=0)
     pose_norm = (pose - mean)/std
 
     return pose_norm, mean, std
