@@ -24,7 +24,8 @@ def train_dataloader(config):
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
-        sampler=sampler
+        sampler=sampler,
+        shuffle=True
     )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data
     logging.info(
@@ -42,7 +43,8 @@ def val_dataloader(config):
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
-        sampler=sampler
+        sampler=sampler,
+        shuffle=True
     )
 
     logging.info(
@@ -60,7 +62,8 @@ def test_dataloader(config):
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
-        sampler=sampler
+        sampler=sampler,
+        shuffle=True
     )
 
     logging.info(

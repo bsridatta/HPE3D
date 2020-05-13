@@ -51,7 +51,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
-                batch[key] = batch[key].to(config.device).long()
+                batch[key] = batch[key].to(config.device)
             output = _validation_step(batch, batch_idx, model, epoch, config)
             _log_validation_metrics(config, output, vae_type)
             loss += output['loss_val'].item()
