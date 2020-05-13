@@ -41,12 +41,15 @@ class H36M(Dataset):
                 filtered_indices.append(i)
 
         for key in all_annotations.keys():
-            self.annotations[key] = torch.tensor(all_annotations[key][filtered_indices], device=device)
+            self.annotations[key] = all_annotations[key][filtered_indices]
 
         # further process to make the data learnable - zero3d and norm poses
         logging.info(f'processing subjects: {subjects}')
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
+
+        for key in self.annotations:
+            self.annotations[key] = torch.tensor(self.annotations[key], device=self.device)
 
         # save norm_stats to denormalize data for evaluation
         f = h5py.File(
