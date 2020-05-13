@@ -1,17 +1,18 @@
-python3.7 ../src/train.py \
+!python3.7 ../src/train.py \
     --cuda True\
+    --pin_memory True\
+    --wandb True\
     --seed 400\
+    --variant 2\
+    --latent_dim 50\
+    --beta 2\
     --annotation_file /kaggle/input/human36m/h36m17.h5\
     --image_path /kaggle/input/h36-images/\
     --ignore_images True\
-    --epochs 10\
-    --batch_size 256\
+    --epochs 30\
+    --batch_size 1024\
     --fast_dev_run True\
     --resume_pt 0\
-    --variant 2\
-    --latent_dim 30\
-    --beta 10**-2\
-    --pin_memory True\
     --pretrained False\
     --train_last_block False\
     --n_joints 16\

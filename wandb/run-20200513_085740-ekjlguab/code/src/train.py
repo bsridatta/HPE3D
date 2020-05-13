@@ -30,6 +30,7 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}")
     config.writer = writer
 
+
     # if config.wandb:
     wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
@@ -178,6 +179,7 @@ def training_specific_args():
                         help='# of batches to wait before logging training status')
     parser.add_argument('--wandb', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='sync tb to wandb')
+    
 
     return parser
 
