@@ -106,7 +106,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     output = decoder(z)
 
     output = output.view(target.shape)
-    recon_loss = criterion(output, target) # 3D-MPJPE/ RGB/2D-L1/BCE
+    recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss_val = recon_loss + config.beta * kld_loss
 
@@ -123,7 +123,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     But uses denormalized data to calculate MPJPE
     '''
     norm_stats = h5py.File(
-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'r')
+        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_h36m17_911.h5", 'r')
 
     mpjpes = []
 

@@ -50,10 +50,12 @@ class H36M(Dataset):
 
         # save norm_stats to denormalize data for evaluation
         ann_file_name = annotation_file.split('/')[-1].split('.')[0]
-        print(ann_file_name)
-        exit()
+        subj_name = "".join(str(sub) for sub in subjects)
+        norm_stats_name = f"norm_stats_{ann_file_name}_{subj_name}.h5"
         f = h5py.File(
-            f"{os.path.dirname(os.path.abspath(__file__))}/data/{}norm_stats.h5", 'w')
+            f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
+  
+
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
@@ -117,15 +119,16 @@ class H36M(Dataset):
 
 
 '''
-test function for sanity check only - ignore
+Can be used to get norm stats for all subjects
 '''
 
 
 def test_h36m():
-    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/debug_h36m17.h5'
+    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m17.h5'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
-    dataset = H36M([1, 5, 6], annotation_file, image_path)
+    # 
+    dataset = H36M([1, 5, 6, 7, 8, 9, 11], annotation_file, image_path)
     print("Length of the dataset: ", len(dataset))
 
     print("One sample -")

@@ -1,0 +1,130 @@
+diff --git a/src/dataset.py b/src/dataset.py
+index 6a87085..1bb2489 100644
+--- a/src/dataset.py
++++ b/src/dataset.py
+@@ -50,10 +50,12 @@ class H36M(Dataset):
+ 
+         # save norm_stats to denormalize data for evaluation
+         ann_file_name = annotation_file.split('/')[-1].split('.')[0]
+-        print(ann_file_name)
+-        exit()
++        subj_name = "".join(str(sub) for sub in subjects)
++        norm_stats_name = f"norm_stats_{ann_file_name}_{subj_name}.h5"
+         f = h5py.File(
+-            f"{os.path.dirname(os.path.abspath(__file__))}/data/{}norm_stats.h5", 'w')
++            f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
++  
++
+         for key in norm_stats.keys():
+             f[key] = norm_stats[key]
+ 
+@@ -117,15 +119,16 @@ class H36M(Dataset):
+ 
+ 
+ '''
+-test function for sanity check only - ignore
++Can be used to get norm stats for all subjects
+ '''
+ 
+ 
+ def test_h36m():
+-    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/debug_h36m17.h5'
++    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m17.h5'
+     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
+ 
+-    dataset = H36M([1, 5, 6], annotation_file, image_path)
++    # 
++    dataset = H36M([1, 5, 6, 7, 8, 9, 11], annotation_file, image_path)
+     print("Length of the dataset: ", len(dataset))
+ 
+     print("One sample -")
+diff --git a/src/trainer.py b/src/trainer.py
+index e567812..eb07554 100644
+--- a/src/trainer.py
++++ b/src/trainer.py
+@@ -106,7 +106,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
+     output = decoder(z)
+ 
+     output = output.view(target.shape)
+-    recon_loss = criterion(output, target) # 3D-MPJPE/ RGB/2D-L1/BCE
++    recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
+     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
+     loss_val = recon_loss + config.beta * kld_loss
+ 
+@@ -123,7 +123,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
+     But uses denormalized data to calculate MPJPE
+     '''
+     norm_stats = h5py.File(
+-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'r')
++        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_h36m17_911.h5", 'r')
+ 
+     mpjpes = []
+ 
+diff --git a/wandb/debug.log b/wandb/debug.log
+index 307e412..17cbfde 100644
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1,47 +1,16 @@
+-2020-05-13 10:57:41,250 DEBUG   MainThread:24636 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+-2020-05-13 10:57:41,255 DEBUG   MainThread:24636 [meta.py:setup():100] code probe starting
+-2020-05-13 10:57:41,256 DEBUG   MainThread:24636 [meta.py:_setup_code_git():49] probe for git information
+-2020-05-13 10:57:41,269 DEBUG   MainThread:24636 [meta.py:_setup_code_program():58] save program starting
+-2020-05-13 10:57:41,270 DEBUG   MainThread:24636 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+-2020-05-13 10:57:41,270 DEBUG   MainThread:24636 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/code/src/train.py
+-2020-05-13 10:57:41,270 DEBUG   MainThread:24636 [meta.py:_setup_code_program():70] save program
+-2020-05-13 10:57:41,271 DEBUG   MainThread:24636 [meta.py:setup():122] code probe done
+-2020-05-13 10:57:41,292 DEBUG   MainThread:24636 [run_manager.py:__init__():546] Initialized sync for hpe/ekjlguab
+-2020-05-13 10:57:41,295 INFO    MainThread:24636 [run_manager.py:wrap_existing_process():1148] wrapping existing process 24615
+-2020-05-13 10:57:41,296 WARNING MainThread:24636 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+-2020-05-13 10:57:41,343 INFO    MainThread:24636 [run_manager.py:init_run():927] system metrics and metadata threads started
+-2020-05-13 10:57:41,343 INFO    MainThread:24636 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
+-2020-05-13 10:57:41,571 INFO    Thread-14 :24636 [run_manager.py:_upsert_run():1051] saving patches
+-2020-05-13 10:57:41,623 INFO    Thread-14 :24636 [run_manager.py:_upsert_run():1055] saving pip packages
+-2020-05-13 10:57:41,624 INFO    Thread-14 :24636 [run_manager.py:_upsert_run():1057] initializing streaming files api
+-2020-05-13 10:57:41,626 INFO    Thread-14 :24636 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
+-2020-05-13 10:57:41,626 INFO    MainThread:24636 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+-2020-05-13 10:57:41,632 INFO    MainThread:24636 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+-2020-05-13 10:57:41,634 INFO    MainThread:24636 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589360260.Datta.24615.0", "policy": "live"}}
+-2020-05-13 10:57:42,256 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/config.yaml
+-2020-05-13 10:57:42,438 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/code/src/train.py
+-2020-05-13 10:57:42,443 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/events.out.tfevents.1589360260.Datta.24615.0
+-2020-05-13 10:57:42,444 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/diff.patch
+-2020-05-13 10:57:42,444 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:42,445 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/requirements.txt
+-2020-05-13 10:57:42,449 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-metadata.json
+-2020-05-13 10:57:42,450 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/code/src
+-2020-05-13 10:57:42,451 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/code
+-2020-05-13 10:57:43,259 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:44,264 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:45,264 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:46,265 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:47,267 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:47,456 INFO    MainThread:24636 [run_manager.py:_sync_etc():1328] process received interrupt signal, shutting down
+-2020-05-13 10:57:47,457 INFO    MainThread:24636 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-05-13 10:57:47,464 INFO    MainThread:24636 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+-2020-05-13 10:57:48,267 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-history.jsonl
+-2020-05-13 10:57:48,272 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/output.log
+-2020-05-13 10:57:48,273 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-summary.json
+-2020-05-13 10:57:48,274 INFO    Thread-3  :24636 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-events.jsonl
+-2020-05-13 10:57:48,371 INFO    MainThread:24636 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
+-2020-05-13 10:57:49,268 INFO    Thread-3  :24636 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-metadata.json
+-2020-05-13 10:57:50,613 INFO    MainThread:24636 [run_manager.py:_sync_etc():1393] process only ran for 9 seconds, not syncing files
+-Thread:24636 [ekjlguab:run_manager.py:shutdown():1085] stopping streaming files and file change observer
+-2020-05-13 10:57:49,268 INFO    Thread-3  :24636 [ekjlguab:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_085740-ekjlguab/wandb-metadata.json
+-2020-05-13 10:57:50,613 INFO    MainThread:24636 [ekjlguab:run_manager.py:_sync_etc():1393] process only ran for 9 seconds, not syncing files
++2020-05-13 12:01:53,978 DEBUG   MainThread:10063 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
++2020-05-13 12:01:53,983 DEBUG   MainThread:10063 [meta.py:setup():100] code probe starting
++2020-05-13 12:01:53,983 DEBUG   MainThread:10063 [meta.py:_setup_code_git():49] probe for git information
++2020-05-13 12:01:53,996 DEBUG   MainThread:10063 [meta.py:_setup_code_program():58] save program starting
++2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
++2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/code/src/train.py
++2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():70] save program
++2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:setup():122] code probe done
++2020-05-13 12:01:54,001 DEBUG   MainThread:10063 [run_manager.py:__init__():546] Initialized sync for hpe/1wlx8437
++2020-05-13 12:01:54,005 INFO    MainThread:10063 [run_manager.py:wrap_existing_process():1148] wrapping existing process 10033
++2020-05-13 12:01:54,005 WARNING MainThread:10063 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
++2020-05-13 12:01:54,049 INFO    MainThread:10063 [run_manager.py:init_run():927] system metrics and metadata threads started
++2020-05-13 12:01:54,050 INFO    MainThread:10063 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
++2020-05-13 12:01:54,253 INFO    Thread-14 :10063 [run_manager.py:_upsert_run():1051] saving patches
++rting run before process can begin, waiting at most 10 seconds
++2020-05-13 12:01:54,253 INFO    Thread-14 :10063 [1wlx8437:run_manager.py:_upsert_run():1051] saving patches
