@@ -31,8 +31,7 @@ def main():
     config.writer = writer
 
     # if config.wandb: # TODO
-    
-    # wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
+    wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder
@@ -51,8 +50,8 @@ def main():
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
     # config.train_subjects = [1, 5]
-    config.val_subjects = [1, 5, 6, 7, 8, 9, 11]
-    # config.val_subjects = [9, 11]
+    # config.val_subjects = [1, 5, 6, 7, 8, 9, 11]
+    config.val_subjects = [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
