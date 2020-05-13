@@ -79,7 +79,7 @@ class H36M(Dataset):
         sample = {}
         for key in self.annotation_keys:
             sample[key] = torch.tensor(
-                self.annotations[key][idx], dtype=torch.float32, device=self.device)
+                self.annotations[key][idx], dtype=torch.float32)
         if not self.no_images:
             image = self.get_image_tensor(sample)
             sample['image'] = image
