@@ -196,14 +196,16 @@ def sample_manifold(config, model):
 
 
 def _log_training_metrics(config, output, vae_type):
-    config.writer.add_scalars(f"Loss/{vae_type}/Train_Loss", output['log'], 0)
-    config.writer.add_scalar(
-        f"Total/{vae_type}/Train_Loss", output['loss_val'])
+    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/kld_loss", output['log']['kld_loss'])
+    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/recon_loss", output['log']['recon_loss'])
+    config.writer.add_scalar(f"Total/{vae_type}/Train_Loss", output['loss_val'])
 
 
 def _log_validation_metrics(config, output, vae_type):
     if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
         config.writer.add_image(
             f"Images/{output['epoch']}", output['recon'][0])
-    config.writer.add_scalars(f"Loss/{vae_type}/Val_Loss", output['log'], 0)
+
+    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/kld_loss", output['log']['kld_loss'])
+    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/recon_loss", output['log']['recon_loss'])
     config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])

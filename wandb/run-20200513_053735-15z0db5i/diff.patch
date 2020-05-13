@@ -1,0 +1,97 @@
+diff --git a/src/trainer.py b/src/trainer.py
+index d9138b1..3ee8382 100644
+--- a/src/trainer.py
++++ b/src/trainer.py
+@@ -196,14 +196,16 @@ def sample_manifold(config, model):
+ 
+ 
+ def _log_training_metrics(config, output, vae_type):
+-    config.writer.add_scalars(f"Loss/{vae_type}/Train_Loss", output['log'], 0)
+-    config.writer.add_scalar(
+-        f"Total/{vae_type}/Train_Loss", output['loss_val'])
++    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/kld_loss", output['log']['kld_loss'])
++    config.writer.add_scalar(f"Loss/{vae_type}/Train_Loss/recon_loss", output['log']['recon_loss'])
++    config.writer.add_scalar(f"Total/{vae_type}/Train_Loss", output['loss_val'])
+ 
+ 
+ def _log_validation_metrics(config, output, vae_type):
+     if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
+         config.writer.add_image(
+             f"Images/{output['epoch']}", output['recon'][0])
+-    config.writer.add_scalars(f"Loss/{vae_type}/Val_Loss", output['log'], 0)
++
++    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/kld_loss", output['log']['kld_loss'])
++    config.writer.add_scalar(f"Loss/{vae_type}/Val_Loss/recon_loss", output['log']['recon_loss'])
+     config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])
+diff --git a/wandb/debug.log b/wandb/debug.log
+index 14d6465..9cc83b1 100644
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1,51 +1,16 @@
+-2020-05-12 21:19:29,884 DEBUG   MainThread:23662 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+-2020-05-12 21:19:29,890 DEBUG   MainThread:23662 [meta.py:setup():100] code probe starting
+-2020-05-12 21:19:29,891 DEBUG   MainThread:23662 [meta.py:_setup_code_git():49] probe for git information
+-2020-05-12 21:19:29,905 DEBUG   MainThread:23662 [meta.py:_setup_code_program():58] save program starting
+-2020-05-12 21:19:29,905 DEBUG   MainThread:23662 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+-2020-05-12 21:19:29,905 DEBUG   MainThread:23662 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/code/src/train.py
+-2020-05-12 21:19:29,906 DEBUG   MainThread:23662 [meta.py:_setup_code_program():70] save program
+-2020-05-12 21:19:29,906 DEBUG   MainThread:23662 [meta.py:setup():122] code probe done
+-2020-05-12 21:19:29,911 DEBUG   MainThread:23662 [run_manager.py:__init__():546] Initialized sync for hpe/28zwrptx
+-2020-05-12 21:19:29,916 INFO    MainThread:23662 [run_manager.py:wrap_existing_process():1148] wrapping existing process 23624
+-2020-05-12 21:19:29,916 WARNING MainThread:23662 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+-2020-05-12 21:19:29,957 INFO    MainThread:23662 [run_manager.py:init_run():927] system metrics and metadata threads started
+-2020-05-12 21:19:29,958 INFO    MainThread:23662 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
+-2020-05-12 21:19:30,199 INFO    Thread-14 :23662 [run_manager.py:_upsert_run():1051] saving patches
+-2020-05-12 21:19:30,258 INFO    Thread-14 :23662 [run_manager.py:_upsert_run():1055] saving pip packages
+-2020-05-12 21:19:30,260 INFO    Thread-14 :23662 [run_manager.py:_upsert_run():1057] initializing streaming files api
+-2020-05-12 21:19:30,261 INFO    Thread-14 :23662 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
+-2020-05-12 21:19:30,262 INFO    MainThread:23662 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+-2020-05-12 21:19:30,270 INFO    MainThread:23662 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+-2020-05-12 21:19:30,272 INFO    MainThread:23662 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589311170.Datta.23624.0", "policy": "live"}}
+-2020-05-12 21:19:30,892 INFO    Thread-3  :23662 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/config.yaml
+-2020-05-12 21:19:31,114 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/events.out.tfevents.1589311170.Datta.23624.0
+-2020-05-12 21:19:31,114 INFO    MainThread:23662 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Train_Loss_kld_loss/events.out.tfevents.1589311171.Datta.23624.1", "policy": "live"}}
+-2020-05-12 21:19:31,116 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-metadata.json
+-2020-05-12 21:19:31,117 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/output.log
+-2020-05-12 21:19:31,118 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/code/src/train.py
+-2020-05-12 21:19:31,118 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/diff.patch
+-2020-05-12 21:19:31,119 INFO    MainThread:23662 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Train_Loss_recon_loss/events.out.tfevents.1589311171.Datta.23624.2", "policy": "live"}}
+-2020-05-12 21:19:31,119 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/requirements.txt
+-2020-05-12 21:19:31,120 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/code
+-2020-05-12 21:19:31,120 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/code/src
+-2020-05-12 21:19:31,570 INFO    MainThread:23662 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Val_Loss_kld_loss/events.out.tfevents.1589311171.Datta.23624.3", "policy": "live"}}
+-2020-05-12 21:19:31,574 INFO    MainThread:23662 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "Loss_2d_2_3d_Val_Loss_recon_loss/events.out.tfevents.1589311171.Datta.23624.4", "policy": "live"}}
+-2020-05-12 21:19:31,891 INFO    Thread-3  :23662 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/output.log
+-2020-05-12 21:19:31,892 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/Loss_2d_2_3d_Val_Loss_recon_loss/events.out.tfevents.1589311171.Datta.23624.4
+-2020-05-12 21:19:31,893 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/Loss_2d_2_3d_Val_Loss_kld_loss/events.out.tfevents.1589311171.Datta.23624.3
+-2020-05-12 21:19:31,894 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/Loss_2d_2_3d_Val_Loss_recon_loss
+-2020-05-12 21:19:31,894 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/Loss_2d_2_3d_Val_Loss_kld_loss
+-2020-05-12 21:19:32,094 INFO    MainThread:23662 [run_manager.py:_sync_etc():1328] process received interrupt signal, shutting down
+-2020-05-12 21:19:32,095 INFO    MainThread:23662 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-05-12 21:19:32,096 INFO    MainThread:23662 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+-2020-05-12 21:19:32,893 INFO    Thread-3  :23662 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-history.jsonl
+-2020-05-12 21:19:32,895 INFO    Thread-3  :23662 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/output.log
+-2020-05-12 21:19:32,898 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-summary.json
+-2020-05-12 21:19:32,899 INFO    Thread-3  :23662 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-events.jsonl
+-2020-05-12 21:19:32,971 INFO    MainThread:23662 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
+-2020-05-12 21:19:33,894 INFO    Thread-3  :23662 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-metadata.json
+-2020-05-12 21:19:35,310 INFO    MainThread:23662 [run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
+-2020-05-12 21:19:32,971 INFO    MainThread:23662 [28zwrptx:run_manager.py:shutdown():1085] stopping streaming files and file change observer
+-2020-05-12 21:19:33,894 INFO    Thread-3  :23662 [28zwrptx:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200512_191929-28zwrptx/wandb-metadata.json
+-2020-05-12 21:19:35,310 INFO    MainThread:23662 [28zwrptx:run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
++2020-05-13 07:37:36,148 DEBUG   MainThread:5413 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
++2020-05-13 07:37:36,153 DEBUG   MainThread:5413 [meta.py:setup():100] code probe starting
++2020-05-13 07:37:36,154 DEBUG   MainThread:5413 [meta.py:_setup_code_git():49] probe for git information
++2020-05-13 07:37:36,168 DEBUG   MainThread:5413 [meta.py:_setup_code_program():58] save program starting
++2020-05-13 07:37:36,169 DEBUG   MainThread:5413 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
++2020-05-13 07:37:36,169 DEBUG   MainThread:5413 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_053735-15z0db5i/code/src/train.py
++2020-05-13 07:37:36,169 DEBUG   MainThread:5413 [meta.py:_setup_code_program():70] save program
++2020-05-13 07:37:36,169 DEBUG   MainThread:5413 [meta.py:setup():122] code probe done
++2020-05-13 07:37:36,173 DEBUG   MainThread:5413 [run_manager.py:__init__():546] Initialized sync for hpe/15z0db5i
++2020-05-13 07:37:36,176 INFO    MainThread:5413 [run_manager.py:wrap_existing_process():1148] wrapping existing process 5386
++2020-05-13 07:37:36,176 WARNING MainThread:5413 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
++2020-05-13 07:37:36,221 INFO    MainThread:5413 [run_manager.py:init_run():927] system metrics and metadata threads started
++2020-05-13 07:37:36,221 INFO    MainThread:5413 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
++2020-05-13 07:37:36,479 INFO    Thread-14 :5413 [run_manager.py:_upsert_run():1051] saving patches
++ting run before process can begin, waiting at most 10 seconds
++2020-05-13 07:37:36,479 INFO    Thread-14 :5413 [15z0db5i:run_manager.py:_upsert_run():1051] saving patches
