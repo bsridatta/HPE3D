@@ -122,8 +122,9 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     Equivalent to merging validation epoch and validation step
     But uses denormalized data to calculate MPJPE
     '''
+    ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
     norm_stats = h5py.File(
-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_h36m17_911.h5", 'r')
+        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
     mpjpes = []
 
@@ -170,9 +171,9 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
 
             mpjpes.append(mpjpe)
 
-    mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
+    mpjpe = torch.stack(mpjpes, dim=0).mean(dim=0)
     avg_mpjpe = torch.mean(mpjpe).item()
-
+    
     config.writer.add_scalar(f"MPJPE", avg_mpjpe)
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 

@@ -1,0 +1,91 @@
+diff --git a/src/trainer.py b/src/trainer.py
+index eb07554..e1794b0 100644
+--- a/src/trainer.py
++++ b/src/trainer.py
+@@ -122,8 +122,9 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
+     Equivalent to merging validation epoch and validation step
+     But uses denormalized data to calculate MPJPE
+     '''
++    ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
+     norm_stats = h5py.File(
+-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_h36m17_911.h5", 'r')
++        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
+ 
+     mpjpes = []
+ 
+@@ -169,10 +170,10 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
+             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
+ 
+             mpjpes.append(mpjpe)
+-
++    print(len(mpjpes), mpjpes[0].shape)
+     mpjpe = torch.stack(mpjpes, dim=0).sum(dim=0)
+     avg_mpjpe = torch.mean(mpjpe).item()
+-
++    exit()
+     config.writer.add_scalar(f"MPJPE", avg_mpjpe)
+     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
+ 
+diff --git a/wandb/debug.log b/wandb/debug.log
+index 8904909..2c86b36 100644
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1,42 +1,16 @@
+-2020-05-13 12:13:51,951 DEBUG   MainThread:13436 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+-2020-05-13 12:13:51,957 DEBUG   MainThread:13436 [meta.py:setup():100] code probe starting
+-2020-05-13 12:13:51,958 DEBUG   MainThread:13436 [meta.py:_setup_code_git():49] probe for git information
+-2020-05-13 12:13:51,971 DEBUG   MainThread:13436 [meta.py:_setup_code_program():58] save program starting
+-2020-05-13 12:13:51,971 DEBUG   MainThread:13436 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+-2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src/train.py
+-2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:_setup_code_program():70] save program
+-2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:setup():122] code probe done
+-2020-05-13 12:13:51,976 DEBUG   MainThread:13436 [run_manager.py:__init__():546] Initialized sync for hpe/ypyatv5h
+-2020-05-13 12:13:51,979 INFO    MainThread:13436 [run_manager.py:wrap_existing_process():1148] wrapping existing process 13406
+-2020-05-13 12:13:51,979 WARNING MainThread:13436 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+-2020-05-13 12:13:52,020 INFO    MainThread:13436 [run_manager.py:init_run():927] system metrics and metadata threads started
+-2020-05-13 12:13:52,021 INFO    MainThread:13436 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
+-2020-05-13 12:13:52,256 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1051] saving patches
+-2020-05-13 12:13:52,316 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1055] saving pip packages
+-2020-05-13 12:13:52,317 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1057] initializing streaming files api
+-2020-05-13 12:13:52,318 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
+-2020-05-13 12:13:52,318 INFO    MainThread:13436 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+-2020-05-13 12:13:52,327 INFO    MainThread:13436 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+-2020-05-13 12:13:52,335 INFO    MainThread:13436 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589364831.Datta.13406.0", "policy": "live"}}
+-2020-05-13 12:13:52,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/config.yaml
+-2020-05-13 12:13:53,146 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/requirements.txt
+-2020-05-13 12:13:53,146 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/events.out.tfevents.1589364831.Datta.13406.0
+-2020-05-13 12:13:53,147 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src/train.py
+-2020-05-13 12:13:53,147 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/diff.patch
+-2020-05-13 12:13:53,148 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/output.log
+-2020-05-13 12:13:53,148 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+-2020-05-13 12:13:53,149 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code
+-2020-05-13 12:13:53,149 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src
+-2020-05-13 12:13:53,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-history.jsonl
+-2020-05-13 12:13:53,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/output.log
+-2020-05-13 12:13:53,959 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-summary.json
+-2020-05-13 12:13:54,344 INFO    MainThread:13436 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 1}
+-2020-05-13 12:13:54,344 INFO    MainThread:13436 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+-2020-05-13 12:13:54,348 INFO    MainThread:13436 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+-2020-05-13 12:13:54,963 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-events.jsonl
+-2020-05-13 12:13:55,032 INFO    MainThread:13436 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
+-2020-05-13 12:13:55,961 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+-2020-05-13 12:13:57,447 INFO    MainThread:13436 [run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
+-n():1085] stopping streaming files and file change observer
+-2020-05-13 12:13:55,961 INFO    Thread-3  :13436 [ypyatv5h:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+-2020-05-13 12:13:57,447 INFO    MainThread:13436 [ypyatv5h:run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
++2020-05-13 12:37:09,479 DEBUG   MainThread:19285 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
++2020-05-13 12:37:09,486 DEBUG   MainThread:19285 [meta.py:setup():100] code probe starting
++2020-05-13 12:37:09,495 DEBUG   MainThread:19285 [meta.py:_setup_code_git():49] probe for git information
++2020-05-13 12:37:09,520 DEBUG   MainThread:19285 [meta.py:_setup_code_program():58] save program starting
++2020-05-13 12:37:09,520 DEBUG   MainThread:19285 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
++2020-05-13 12:37:09,521 DEBUG   MainThread:19285 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_103708-1my90yof/code/src/train.py
++2020-05-13 12:37:09,521 DEBUG   MainThread:19285 [meta.py:_setup_code_program():70] save program
++2020-05-13 12:37:09,521 DEBUG   MainThread:19285 [meta.py:setup():122] code probe done
++2020-05-13 12:37:09,530 DEBUG   MainThread:19285 [run_manager.py:__init__():546] Initialized sync for hpe/1my90yof
++2020-05-13 12:37:09,534 INFO    MainThread:19285 [run_manager.py:wrap_existing_process():1148] wrapping existing process 19263
++2020-05-13 12:37:09,535 WARNING MainThread:19285 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
++2020-05-13 12:37:09,617 INFO    MainThread:19285 [run_manager.py:init_run():927] system metrics and metadata threads started
++2020-05-13 12:37:09,618 INFO    MainThread:19285 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
++2020-05-13 12:37:09,834 INFO    Thread-14 :19285 [run_manager.py:_upsert_run():1051] saving patches
++rting run before process can begin, waiting at most 10 seconds
++2020-05-13 12:37:09,834 INFO    Thread-14 :19285 [1my90yof:run_manager.py:_upsert_run():1051] saving patches

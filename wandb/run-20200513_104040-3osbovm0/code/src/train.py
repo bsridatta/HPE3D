@@ -31,8 +31,7 @@ def main():
     config.writer = writer
 
     # if config.wandb: # TODO
-    
-    # wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
+    wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder

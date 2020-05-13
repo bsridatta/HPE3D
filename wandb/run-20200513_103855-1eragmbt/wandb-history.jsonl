@@ -1,0 +1,1 @@
+{"global_step": 0, "_timestamp": 1589366337.6525478, "config/text_summary": null, "Loss/2d_2_3d/Train_Loss/kld_loss": 0.10846728831529617, "Loss/2d_2_3d/Train_Loss/recon_loss": 1.2671542167663574, "Total/2d_2_3d/Train_Loss": 1.2672626972198486, "_runtime": 4.5989179611206055, "_step": 0}

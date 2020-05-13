@@ -1,0 +1,10 @@
+INFO:root:using device: cpu
+INFO:root:processing subjects: [1, 5, 6, 7, 8]
+INFO:root:Training data loader called. len - 6
+INFO:root:processing subjects: [1, 5, 6, 7, 8, 9, 11]
+INFO:root:Validation data loader called. len - 9
+INFO:root:Start training procedure
+2d_2_3d Epoch: 1 [0/5 (0%)]	Loss: 0.9011	ReCon: 0.9011	KLD: 0.0698
+2d_2_3d Epoch: 1 [2/5 (50%)]	Loss: 1.8136	ReCon: 1.8136	KLD: 0.0734
+2d_2_3d Validation: 		Loss: 0.9741 	ReCon: 0.9741 	KLD: 0.0005
+3 torch.Size([17])

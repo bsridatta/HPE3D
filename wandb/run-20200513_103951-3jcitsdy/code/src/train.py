@@ -31,8 +31,7 @@ def main():
     config.writer = writer
 
     # if config.wandb: # TODO
-    
-    # wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
+    wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder
@@ -149,7 +148,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=3, type=int,
+    parser.add_argument('--batch_size', default=2, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
