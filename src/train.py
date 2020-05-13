@@ -52,9 +52,6 @@ def main():
     # config.val_subjects = [1, 5]
     config.val_subjects = [9, 11]
 
-    train_loader = dataloader.train_dataloader(config)
-    val_loader = dataloader.val_dataloader(config)
-
     # combinations of Encoder, Decoder to train in an epoch
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
@@ -89,6 +86,9 @@ def main():
 
     logging.info('Start training procedure')
     val_loss_min = float('inf')
+
+    train_loader = dataloader.train_dataloader(config)
+    val_loader = dataloader.val_dataloader(config)
 
     # Training
     config.step = 0
