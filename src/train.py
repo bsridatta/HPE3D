@@ -30,7 +30,7 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}")
     config.writer = writer
 
-    # if config.wandb:
+    # if config.wandb: # TODO
     wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
