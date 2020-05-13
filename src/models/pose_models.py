@@ -117,8 +117,8 @@ class Decoder3D(nn.Module):
 
 def reparameterize(mean, logvar, eval=False):
     # TODO not sure why few repos do that
-    if eval:
-        return mean
+    # if eval:
+    #     return mean
 
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)

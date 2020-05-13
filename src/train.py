@@ -49,9 +49,9 @@ def main():
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
+    config.val_subjects = [9, 11]
     # config.train_subjects = [1, 5]
     # config.val_subjects = [1, 5, 6, 7, 8, 9, 11]
-    config.val_subjects = [9, 11]
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
