@@ -100,7 +100,7 @@ class H36M(Dataset):
         image = self.augmentations(image=image)['image']
         # print("aug max ", np.max(image), image.shape)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
-        image = torch.tensor(image, dtype=torch.float32, device=self.device)
+        image = torch.tensor(image, dtype=torch.float32)
 
         # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
         # But if you do torch.tensor() you have to do it manually
