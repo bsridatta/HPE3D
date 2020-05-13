@@ -48,9 +48,6 @@ class H36M(Dataset):
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
 
-        for key in self.annotations:
-            self.annotations[key] = torch.tensor(self.annotations[key], dtype=torch.float32, device=self.device)
-
         # save norm_stats to denormalize data for evaluation
         f = h5py.File(
             f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5", 'w')
@@ -81,7 +78,8 @@ class H36M(Dataset):
         # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:
-            sample[key] = self.annotations[key][idx]
+            sample[key] = torch.tensor(
+                self.annotations[key][idx], dtype=torch.float32, device=self.device)
         if not self.no_images:
             image = self.get_image_tensor(sample)
             sample['image'] = image

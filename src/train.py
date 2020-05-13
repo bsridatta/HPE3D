@@ -14,8 +14,6 @@ from trainer import (evaluate_poses, sample_manifold, training_epoch,
 
 
 def main():
-    torch.multiprocessing.set_start_method('spawn', force="True")
-
     # Experiment Configuration
     parser = training_specific_args()
 
