@@ -1,43 +1,42 @@
-2020-05-13 12:01:53,978 DEBUG   MainThread:10063 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
-2020-05-13 12:01:53,983 DEBUG   MainThread:10063 [meta.py:setup():100] code probe starting
-2020-05-13 12:01:53,983 DEBUG   MainThread:10063 [meta.py:_setup_code_git():49] probe for git information
-2020-05-13 12:01:53,996 DEBUG   MainThread:10063 [meta.py:_setup_code_program():58] save program starting
-2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
-2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/code/src/train.py
-2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:_setup_code_program():70] save program
-2020-05-13 12:01:53,997 DEBUG   MainThread:10063 [meta.py:setup():122] code probe done
-2020-05-13 12:01:54,001 DEBUG   MainThread:10063 [run_manager.py:__init__():546] Initialized sync for hpe/1wlx8437
-2020-05-13 12:01:54,005 INFO    MainThread:10063 [run_manager.py:wrap_existing_process():1148] wrapping existing process 10033
-2020-05-13 12:01:54,005 WARNING MainThread:10063 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
-2020-05-13 12:01:54,049 INFO    MainThread:10063 [run_manager.py:init_run():927] system metrics and metadata threads started
-2020-05-13 12:01:54,050 INFO    MainThread:10063 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
-2020-05-13 12:01:54,253 INFO    Thread-14 :10063 [run_manager.py:_upsert_run():1051] saving patches
-2020-05-13 12:01:54,380 INFO    Thread-14 :10063 [run_manager.py:_upsert_run():1055] saving pip packages
-2020-05-13 12:01:54,381 INFO    Thread-14 :10063 [run_manager.py:_upsert_run():1057] initializing streaming files api
-2020-05-13 12:01:54,382 INFO    Thread-14 :10063 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
-2020-05-13 12:01:54,385 INFO    MainThread:10063 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
-2020-05-13 12:01:54,391 INFO    MainThread:10063 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
-2020-05-13 12:01:54,396 INFO    MainThread:10063 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589364113.Datta.10033.0", "policy": "live"}}
-2020-05-13 12:01:54,985 INFO    Thread-3  :10063 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/config.yaml
-2020-05-13 12:01:55,181 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/requirements.txt
-2020-05-13 12:01:55,182 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/output.log
-2020-05-13 12:01:55,182 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/code/src/train.py
-2020-05-13 12:01:55,183 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/events.out.tfevents.1589364113.Datta.10033.0
-2020-05-13 12:01:55,183 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-metadata.json
-2020-05-13 12:01:55,184 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/diff.patch
-2020-05-13 12:01:55,184 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/upstream_diff_f2508f0bbeff19a5ee6da8aa70acc2d8faf5d772.patch
-2020-05-13 12:01:55,185 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/code
-2020-05-13 12:01:55,185 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/code/src
-2020-05-13 12:01:55,984 INFO    Thread-3  :10063 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/output.log
-2020-05-13 12:01:55,985 INFO    Thread-3  :10063 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-history.jsonl
-2020-05-13 12:01:55,986 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-summary.json
-2020-05-13 12:01:56,404 INFO    MainThread:10063 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 1}
-2020-05-13 12:01:56,405 INFO    MainThread:10063 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
-2020-05-13 12:01:56,411 INFO    MainThread:10063 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
-2020-05-13 12:01:56,988 INFO    Thread-3  :10063 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-events.jsonl
-2020-05-13 12:01:57,062 INFO    MainThread:10063 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
-2020-05-13 12:01:57,989 INFO    Thread-3  :10063 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-metadata.json
-2020-05-13 12:01:59,473 INFO    MainThread:10063 [run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
-y:shutdown():1085] stopping streaming files and file change observer
-2020-05-13 12:01:57,989 INFO    Thread-3  :10063 [1wlx8437:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_100153-1wlx8437/wandb-metadata.json
-2020-05-13 12:01:59,473 INFO    MainThread:10063 [1wlx8437:run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
+2020-05-13 12:13:51,951 DEBUG   MainThread:13436 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+2020-05-13 12:13:51,957 DEBUG   MainThread:13436 [meta.py:setup():100] code probe starting
+2020-05-13 12:13:51,958 DEBUG   MainThread:13436 [meta.py:_setup_code_git():49] probe for git information
+2020-05-13 12:13:51,971 DEBUG   MainThread:13436 [meta.py:_setup_code_program():58] save program starting
+2020-05-13 12:13:51,971 DEBUG   MainThread:13436 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src/train.py
+2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:_setup_code_program():70] save program
+2020-05-13 12:13:51,972 DEBUG   MainThread:13436 [meta.py:setup():122] code probe done
+2020-05-13 12:13:51,976 DEBUG   MainThread:13436 [run_manager.py:__init__():546] Initialized sync for hpe/ypyatv5h
+2020-05-13 12:13:51,979 INFO    MainThread:13436 [run_manager.py:wrap_existing_process():1148] wrapping existing process 13406
+2020-05-13 12:13:51,979 WARNING MainThread:13436 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+2020-05-13 12:13:52,020 INFO    MainThread:13436 [run_manager.py:init_run():927] system metrics and metadata threads started
+2020-05-13 12:13:52,021 INFO    MainThread:13436 [run_manager.py:init_run():966] upserting run before process can begin, waiting at most 10 seconds
+2020-05-13 12:13:52,256 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1051] saving patches
+2020-05-13 12:13:52,316 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1055] saving pip packages
+2020-05-13 12:13:52,317 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1057] initializing streaming files api
+2020-05-13 12:13:52,318 INFO    Thread-14 :13436 [run_manager.py:_upsert_run():1064] unblocking file change observer, beginning sync with W&B servers
+2020-05-13 12:13:52,318 INFO    MainThread:13436 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+2020-05-13 12:13:52,327 INFO    MainThread:13436 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+2020-05-13 12:13:52,335 INFO    MainThread:13436 [run_manager.py:_sync_etc():1295] received message from user process: {"save_policy": {"glob": "events.out.tfevents.1589364831.Datta.13406.0", "policy": "live"}}
+2020-05-13 12:13:52,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/config.yaml
+2020-05-13 12:13:53,146 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/requirements.txt
+2020-05-13 12:13:53,146 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/events.out.tfevents.1589364831.Datta.13406.0
+2020-05-13 12:13:53,147 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src/train.py
+2020-05-13 12:13:53,147 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/diff.patch
+2020-05-13 12:13:53,148 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/output.log
+2020-05-13 12:13:53,148 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+2020-05-13 12:13:53,149 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code
+2020-05-13 12:13:53,149 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/code/src
+2020-05-13 12:13:53,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-history.jsonl
+2020-05-13 12:13:53,958 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/output.log
+2020-05-13 12:13:53,959 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-summary.json
+2020-05-13 12:13:54,344 INFO    MainThread:13436 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 1}
+2020-05-13 12:13:54,344 INFO    MainThread:13436 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+2020-05-13 12:13:54,348 INFO    MainThread:13436 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+2020-05-13 12:13:54,963 INFO    Thread-3  :13436 [run_manager.py:_on_file_created():680] file/dir created: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-events.jsonl
+2020-05-13 12:13:55,032 INFO    MainThread:13436 [run_manager.py:shutdown():1085] stopping streaming files and file change observer
+2020-05-13 12:13:55,961 INFO    Thread-3  :13436 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+2020-05-13 12:13:57,447 INFO    MainThread:13436 [run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files
+n():1085] stopping streaming files and file change observer
+2020-05-13 12:13:55,961 INFO    Thread-3  :13436 [ypyatv5h:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/run-20200513_101351-ypyatv5h/wandb-metadata.json
+2020-05-13 12:13:57,447 INFO    MainThread:13436 [ypyatv5h:run_manager.py:_sync_etc():1393] process only ran for 6 seconds, not syncing files

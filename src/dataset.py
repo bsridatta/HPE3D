@@ -124,11 +124,10 @@ Can be used to get norm stats for all subjects
 
 
 def test_h36m():
-    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m17.h5'
+    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/debug_h36m17.h5'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
-    # 
-    dataset = H36M([1, 5, 6, 7, 8, 9, 11], annotation_file, image_path)
+    dataset = H36M([ 9, 11], annotation_file, image_path)
     print("Length of the dataset: ", len(dataset))
 
     print("One sample -")
