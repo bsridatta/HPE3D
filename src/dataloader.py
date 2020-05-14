@@ -1,4 +1,3 @@
-import logging
 import os
 
 import torch
@@ -28,8 +27,8 @@ def train_dataloader(config):
         shuffle=True
     )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data
-    logging.info(
-        f'Training data loader called. len - {len(loader)*config.batch_size}')
+    print(
+        f'[INFO]: Training data loader called. len - {len(loader)*config.batch_size}')
 
     return loader
 
@@ -47,8 +46,8 @@ def val_dataloader(config):
         shuffle=True
     )
 
-    logging.info(
-        f'Validation data loader called. len - {len(loader)*config.batch_size}')
+    print(
+        f'[INFO]: Validation data loader called. len - {len(loader)*config.batch_size}')
 
     return loader
 
@@ -66,8 +65,8 @@ def test_dataloader(config):
         shuffle=True
     )
 
-    logging.info(
-        f'Test data loader called. len - {len(loader)*config.batch_size}')
+    print(
+        f'[INFO]: Test data loader called. len - {len(loader)*config.batch_size}')
 
     return loader
 

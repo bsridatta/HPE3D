@@ -134,14 +134,14 @@ def MPJPE(pred, target):
         pred (tensor)-- predicted 3d poses [n,j,3]
         target (tensor)-- taget 3d poses [n,j,3]
     Returns:
-        MPJPE -- mean(PJPE, axis=0) for each joint across batch
+        PJPE -- calc MPJPE - mean(PJPE, axis=0) for each joint across batch
     '''
     PJPE = torch.sqrt(
         torch.sum((pred-target).pow(2), dim=2))
 
-    MPJPE = torch.mean(PJPE, dim=0)
+    # MPJPE = torch.mean(PJPE, dim=0)
 
-    return MPJPE
+    return PJPE
 
 
 def KLD(mean, logvar, decoder_name):

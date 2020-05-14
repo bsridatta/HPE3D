@@ -126,7 +126,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     norm_stats = h5py.File(
         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
-    mpjpes = []
+    pjpes = []
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -165,19 +165,19 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             target = torch.cat(
                 (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
 
-            mpjpe = MPJPE(output, target)
+            pjpe = MPJPE(output, target)
             # TODO plot and save samples for say each action to see improvement
             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
 
-            mpjpes.append(mpjpe)
+            pjpes.append(pjpe)
 
-    mpjpe = torch.stack(mpjpes, dim=0).mean(dim=0)
+    mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
     avg_mpjpe = torch.mean(mpjpe).item()
     
     config.writer.add_scalar(f"MPJPE", avg_mpjpe)
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
-    del mpjpes
+    del pjpes
     del mpjpe
     norm_stats.close()
     del norm_stats

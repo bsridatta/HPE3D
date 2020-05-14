@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 from argparse import ArgumentParser
@@ -20,7 +19,6 @@ def main():
     # Config to distribute params to all the modules
     config = parser.parse_args()
     torch.manual_seed(config.seed)
-    logging.getLogger().setLevel(logging.INFO)
 
     # Tensorboard Logs
     suffix = 0
@@ -30,8 +28,9 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}")
     config.writer = writer
 
-    # if config.wandb: # TODO
-    wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
+    if config.wandb: # TODO
+        print("[INFO]: using wandb")
+        wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder
@@ -40,7 +39,7 @@ def main():
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
-    logging.info(f'using device: {device}')
+    print(f'[INFO]: using device: {device}')
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
@@ -71,7 +70,7 @@ def main():
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
-        logging.info(f'Using {torch.cuda.device_count()} GPUs')
+        print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
         for vae in range(len(models)):
             models[vae][0] = torch.nn.DataParallel(models[vae][0])
             models[vae][1] = torch.nn.DataParallel(models[vae][1])
@@ -88,7 +87,7 @@ def main():
     #     model.load_state_dict(state['state_dict'])
     #     optimizer.load_state_dict(state['optimizer'])
 
-    logging.info('Start training procedure')
+    print(f'[INFO]: Start training procedure')
     val_loss_min = float('inf')
 
     # Training
