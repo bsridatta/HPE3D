@@ -127,7 +127,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
     pjpes = []
-
+    n_samples = 0
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
@@ -168,12 +168,12 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             pjpe = MPJPE(output, target)
             # TODO plot and save samples for say each action to see improvement
             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
+            pjpes.append(torch.sum(pjpe, dim=0))
+            n_samples += pjpe.shape[0]  # to calc overall mean
 
-            pjpes.append(pjpe)
-
-    mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
+    # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
+    mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
     avg_mpjpe = torch.mean(mpjpe).item()
-    
     config.writer.add_scalar(f"MPJPE", avg_mpjpe)
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
