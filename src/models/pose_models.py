@@ -15,31 +15,43 @@ class Encoder2D(nn.Module):
         self.__build_model()
 
     def __build_model(self):
-        self.dense_block = nn.Sequential(
-            nn.Linear(2*self.n_joints, 512),
-            nn.BatchNorm1d(512),
+        self.enc_inp_block = nn.Sequential(
+            nn.Linear(2*self.n_joints, 1024),  # expand features
+            nn.BatchNorm1d(1024),
             self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
+            nn.Dropout()
         )
-        self.fc_mean = nn.Linear(512, self.latent_dim)
-        self.fc_logvar = nn.Linear(512, self.latent_dim)
+
+        self.residual_block = nn.Sequential(
+            self.activation(),
+            nn.Dropout(),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024)
+        )
+
+        self.fc_mean = nn.Linear(1024, self.latent_dim)
+        self.fc_logvar = nn.Linear(1024, self.latent_dim)
+
+        self.enc_out_block = nn.Sequential(
+            nn.BatchNorm1d(self.latent_dim),
+            self.activation(),
+            nn.Dropout()
+        )
 
     def forward(self, x):
         x = x.view(-1, 2*self.n_joints)
-        x = self.dense_block(x)
+        x = self.enc_inp_block(x)
+        x = self.residual_block(x) + x
+        x = self.residual_block(x) + x
+
         mean = self.fc_mean(x)
+        mean = self.enc_out_block(mean)
+
         logvar = self.fc_logvar(x)
+        logvar = self.enc_out_block(logvar)
+
         return mean, logvar
 
 
@@ -90,28 +102,35 @@ class Decoder3D(nn.Module):
         self.__build_model()
 
     def __build_model(self):
-        self.dense_block = nn.Sequential(
-            nn.Linear(self.latent_dim, 512),
-            nn.BatchNorm1d(512),
+        self.dec_inp_block = nn.Sequential(
+            nn.Linear(self.latent_dim, 1024),
+            nn.BatchNorm1d(1024),
             self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
+            nn.Dropout()
+        )
+
+        self.residual_block = nn.Sequential(
             self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 3*self.n_joints)
+            nn.Dropout(),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024)
+        )
+
+        self.dec_out_block = nn.Sequential(
+            # TODO is it good idea to have activation \
+            # and drop out at the end for enc or dec
+            nn.Linear(1024, 3*self.n_joints)
         )
 
     def forward(self, x):
         x = x.view(-1, self.latent_dim)
-        x = self.dense_block(x)
+        x = self.dec_inp_block(x)
+        x = self.residual_block(x) + x
+        x = self.residual_block(x) + x
+        x = self.dec_out_block(x)
+
         return x
 
 
@@ -127,8 +146,8 @@ def reparameterize(mean, logvar, eval=False):
 
 def MPJPE(pred, target):
     '''
-    Calculation per sample per sample in batch 
-    PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2) 
+    Calculation per sample per sample in batch
+    PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2)
 
     Arguments:
         pred (tensor)-- predicted 3d poses [n,j,3]
@@ -181,7 +200,7 @@ def test(inp, target):
         pose3d = pose3d.view(-1, 16, 3)
         recon_loss = MPJPE(pose3d, target)
         # loss = nn.functional.l1_loss(pose3d, target)
-        kld_loss = KLD(mean, logvar)
+        kld_loss = KLD(mean, logvar, decoder_3d.__class__.__name__)
         print("2D -> 3D", recon_loss)
         exit()
         # 3D -> 3D
