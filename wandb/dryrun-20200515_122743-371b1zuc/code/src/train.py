@@ -31,7 +31,8 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring, ignore when debugging on cpu
-    if not use_cuda:
+    if ~use_cuda:
+        print(use_cuda, ~use_cuda)
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
     config.logger = wandb

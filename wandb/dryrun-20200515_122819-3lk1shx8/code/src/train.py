@@ -32,6 +32,7 @@ def main():
 
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
+        print(use_cuda, (not use_cuda))
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
     config.logger = wandb
