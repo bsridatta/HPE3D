@@ -14,6 +14,8 @@ from viz import plot_diff
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 
+    config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
+
     # TODO perform get_inp_target_criterion for the whole epoch directly
     # or change variantion every batch
     for batch_idx, batch in enumerate(train_loader):
@@ -43,7 +45,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 
 
 def validation_epoch(config, model, val_loader, epoch, vae_type):
-    # model.eval() in validation step
+    # note -- model.eval() in validation step
     loss = 0
     recon_loss = 0
     kld_loss = 0
@@ -113,6 +115,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
+    # TODO change loss_val to loss_value or just loss
     return OrderedDict({'loss_val': loss_val, "log": logger_logs,  "recon": output,
                         "epoch": epoch})
 
@@ -174,7 +177,9 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
     mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
     avg_mpjpe = torch.mean(mpjpe).item()
-    config.writer.add_scalar(f"MPJPE", avg_mpjpe)
+
+    config.logger.log({"MPJPE_AVG": avg_mpjpe})
+    
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
     del pjpes
@@ -198,12 +203,15 @@ def sample_manifold(config, model):
 
 
 def _log_training_metrics(config, output, vae_type):
-    config.writer.add_scalar(
-        f"Loss/{vae_type}/Train_Loss/kld_loss", output['log']['kld_loss'])
-    config.writer.add_scalar(
-        f"Loss/{vae_type}/Train_Loss/recon_loss", output['log']['recon_loss'])
-    config.writer.add_scalar(
-        f"Total/{vae_type}/Train_Loss", output['loss_val'])
+    config.logger.log({
+        f"{vae_type}": {
+            "train": {
+                "kld_loss": output['log']['kld_loss'],
+                "recon_loss": output['log']['recon_loss'],
+                "total_train": output['loss_val']
+            }
+        }
+    })
 
 
 def _log_validation_metrics(config, output, vae_type):
@@ -211,8 +219,12 @@ def _log_validation_metrics(config, output, vae_type):
         config.writer.add_image(
             f"Images/{output['epoch']}", output['recon'][0])
 
-    config.writer.add_scalar(
-        f"Loss/{vae_type}/Val_Loss/kld_loss", output['log']['kld_loss'])
-    config.writer.add_scalar(
-        f"Loss/{vae_type}/Val_Loss/recon_loss", output['log']['recon_loss'])
-    config.writer.add_scalar(f"Total/{vae_type}/Val_Loss", output["loss_val"])
+    config.logger.log({
+        f"{vae_type}": {
+            "val": {
+                "kld_loss": output['log']['kld_loss'],
+                "recon_loss": output['log']['recon_loss'],
+                "total_val": output['loss_val']
+            }
+        }
+    })

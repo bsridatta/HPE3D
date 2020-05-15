@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 
 import torch
 import wandb
-from torch.utils.tensorboard import SummaryWriter
 
 import dataloader
 import utils
@@ -16,21 +15,9 @@ def main():
     # Experiment Configuration
     parser = training_specific_args()
 
-    # Config to distribute params to all the modules
+    # Config is distributed to all the other modules
     config = parser.parse_args()
     torch.manual_seed(config.seed)
-
-    # Tensorboard Logs
-    suffix = 0
-    while os.path.exists(f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}"):
-        suffix += 1
-    writer = SummaryWriter(
-        f"{os.path.dirname(os.path.abspath(__file__))}/logs/{config.exp_name}_{suffix}")
-    config.writer = writer
-
-    if config.wandb: # TODO
-        print("[INFO]: using wandb")
-        wandb.init(anonymous='allow', project="hpe", sync_tensorboard=True)
 
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder
@@ -43,12 +30,16 @@ def main():
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
-    # easier to know what params are used in the runs
-    writer.add_text("config", str(config))
+    # wandb for experiment monitoring, ignore when debugging on cpu
+    if ~use_cuda:
+        os.environ['WANDB_MODE'] = 'dryrun'
+    wandb.init(anonymous='allow', project="hpe-try")
+    config.logger = wandb
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
+
     # config.train_subjects = [1, 5]
     # config.val_subjects = [1, 5, 6, 7, 8, 9, 11]
 
@@ -110,20 +101,22 @@ def main():
             val_loss = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
 
-            # Latent Space Sampling
+            # Latent Space Sampling 
+            # TODO itegrate with evaluate_poses
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)
 
             # Evaluate Performance
-            # if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-            evaluate_poses(config, model, val_loader, epoch, vae_type)
+            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
+                evaluate_poses(config, model, val_loader, epoch, vae_type)
 
             # TODO have different learning rates for all variants
-            # TODO implement fast_dev_run
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
 
-    writer.close()
+    # sync config with wandb for easy experiment comparision
+    config.logger = None  # wandb cant have objects in its config
+    wandb.config.update(config)
 
 
 def training_specific_args():
@@ -145,7 +138,7 @@ def training_specific_args():
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # training specific
-    parser.add_argument('--epochs', default=200, type=int,
+    parser.add_argument('--epochs', default=1, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=3, type=int,
                         help='number of samples per step, have more than one for batch norm')
@@ -175,8 +168,6 @@ def training_specific_args():
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
                         help='# of batches to wait before logging training status')
-    parser.add_argument('--wandb', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='sync tb to wandb')
 
     return parser
 
