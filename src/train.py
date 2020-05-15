@@ -26,7 +26,6 @@ def main():
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
-    print(f'[INFO]: using device: {device}')
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
@@ -35,6 +34,9 @@ def main():
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
     config.logger = wandb
+
+    # prints after init, so its logged in wandb
+    print(f'[INFO]: using device: {device}') 
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
