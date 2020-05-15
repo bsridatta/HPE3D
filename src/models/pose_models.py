@@ -164,12 +164,18 @@ def MPJPE(pred, target):
 
 
 def KLD(mean, logvar, decoder_name):
+    '''
+    Returns:
+        loss -- averaged with the same denom as of recon
+    '''
     loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
     if '3D' in decoder_name:
         # normalize by same number in recon - b*j*dim
         # from vae-hands local_utility_fn ln-108
         loss /= mean.shape[0]*16*3
-
+    else:
+        print("[WARNING] fix KLD loss normalization for current decoder")
+        
     return loss
 
 

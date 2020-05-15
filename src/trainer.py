@@ -1,14 +1,14 @@
-from collections import OrderedDict
-
-import torch
-import torch.nn.functional as F
-import h5py
 import gc
 import os
+from collections import OrderedDict
 
-import utils
+import h5py
+import torch
+import torch.nn.functional as F
+
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
+from utils import get_inp_target_criterion
 from viz import plot_diff
 
 
@@ -22,9 +22,11 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         optimizer.zero_grad()
         output = _training_step(batch, batch_idx, model, config)
         _log_training_metrics(config, output, vae_type)
-        loss = output['loss_val']
+
         kld_loss = output['log']['kld_loss']
         recon_loss = output['log']['recon_loss']
+        loss = output['loss']
+
         loss.backward()
         optimizer.step()
 
@@ -33,10 +35,10 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 
         if batch_idx % config.log_interval == 0:
             print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
-                vae_type, epoch, batch_idx *
-                len(batch['pose2d']), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item(),
-                recon_loss.item(), kld_loss.item()))
+                vae_type, epoch, batch_idx * len(batch['pose2d']),
+                len(train_loader.dataset), 100. *
+                batch_idx / len(train_loader),
+                loss.item(), recon_loss.item(), kld_loss.item()))
 
         del loss, recon_loss, kld_loss
 
@@ -51,14 +53,16 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device)
-            output = _validation_step(batch, batch_idx, model, epoch, config)
-            _log_validation_metrics(config, output, vae_type)
-            loss += output['loss_val'].item()
 
+            output = _validation_step(batch, batch_idx, model, epoch, config)
+            # TODO no one logs val!
+            # _log_validation_metrics(config, output, vae_type)
+
+            loss += output['loss'].item()
             recon_loss += output['log']['recon_loss'].item()
             kld_loss += output['log']['kld_loss'].item()
 
-    avg_loss = loss/len(val_loader)
+    avg_loss = loss/len(val_loader)  # return for scheduler
 
     print(f'{vae_type} Validation:',
           f'\t\tLoss: {round(avg_loss,4)}',
@@ -75,21 +79,21 @@ def _training_step(batch, batch_idx, model, config):
     encoder.train()
     decoder.train()
 
-    inp, target, criterion = utils.get_inp_target_criterion(
+    inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
     output = decoder(z)
-
     output = output.view(target.shape)
-    recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
+
+    recon_loss = criterion(output, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
-    loss_val = recon_loss + config.beta * kld_loss
+    loss = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
-    return OrderedDict({'loss_val': loss_val, 'log': logger_logs})
+    return OrderedDict({'loss': loss, 'log': logger_logs})
 
 
 def _validation_step(batch, batch_idx, model, epoch, config):
@@ -98,22 +102,22 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     encoder.eval()
     decoder.eval()
 
-    inp, target, criterion = utils.get_inp_target_criterion(
+    inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar, eval=True)
     output = decoder(z)
-
     output = output.view(target.shape)
-    recon_loss = criterion(output, target)  # 3D-MPJPE/ RGB/2D-L1/BCE
+
+    recon_loss = criterion(output, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
-    loss_val = recon_loss + config.beta * kld_loss
+    loss = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
-    # TODO change loss_val to loss_value or just loss
-    return OrderedDict({'loss_val': loss_val, "log": logger_logs,  "recon": output,
+    # TODO could remove epoch and recon
+    return OrderedDict({'loss': loss, "log": logger_logs,  "recon": output,
                         "epoch": epoch})
 
 
@@ -139,7 +143,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             encoder.eval()
             decoder.eval()
 
-            inp, target, _ = utils.get_inp_target_criterion(
+            inp, target, _ = get_inp_target_criterion(
                 encoder, decoder, batch)  # criterion - MSELoss not used
 
             # forward pass
@@ -205,15 +209,17 @@ def _log_training_metrics(config, output, vae_type):
             "train": {
                 "kld_loss": output['log']['kld_loss'],
                 "recon_loss": output['log']['recon_loss'],
-                "total_train": output['loss_val']
+                "total_train": output['loss']
             }
         }
     })
 
 
 def _log_validation_metrics(config, output, vae_type):
+    # TODO can have this in eval instead and skip logging val
     if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
-        config.writer.add_image(
+        # TODO change code to wandb
+        config.logger.log(
             f"Images/{output['epoch']}", output['recon'][0])
 
     config.logger.log({
@@ -221,7 +227,7 @@ def _log_validation_metrics(config, output, vae_type):
             "val": {
                 "kld_loss": output['log']['kld_loss'],
                 "recon_loss": output['log']['recon_loss'],
-                "total_val": output['loss_val']
+                "total_val": output['loss']
             }
         }
     })

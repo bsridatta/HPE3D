@@ -1,20 +1,20 @@
-2020-05-15 14:36:18,210 DEBUG   MainThread:12898 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
-2020-05-15 14:36:18,216 DEBUG   MainThread:12898 [meta.py:setup():100] code probe starting
-2020-05-15 14:36:18,218 DEBUG   MainThread:12898 [meta.py:_setup_code_git():49] probe for git information
-2020-05-15 14:36:18,233 DEBUG   MainThread:12898 [meta.py:_setup_code_program():58] save program starting
-2020-05-15 14:36:18,233 DEBUG   MainThread:12898 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
-2020-05-15 14:36:18,234 DEBUG   MainThread:12898 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/dryrun-20200515_123617-2p7qqy8f/code/src/train.py
-2020-05-15 14:36:18,235 DEBUG   MainThread:12898 [meta.py:_setup_code_program():70] save program
-2020-05-15 14:36:18,236 DEBUG   MainThread:12898 [meta.py:setup():122] code probe done
-2020-05-15 14:36:18,241 DEBUG   MainThread:12898 [run_manager.py:__init__():546] Initialized sync for hpe3d/2p7qqy8f
-2020-05-15 14:36:18,246 INFO    MainThread:12898 [run_manager.py:wrap_existing_process():1148] wrapping existing process 12875
-2020-05-15 14:36:18,247 WARNING MainThread:12898 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
-2020-05-15 14:36:18,292 INFO    MainThread:12898 [run_manager.py:init_run():927] system metrics and metadata threads started
-2020-05-15 14:36:18,292 INFO    MainThread:12898 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
-2020-05-15 14:36:18,293 INFO    MainThread:12898 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
-2020-05-15 14:36:18,392 INFO    MainThread:12898 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
-2020-05-15 14:36:18,393 INFO    MainThread:12898 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
-2020-05-15 14:36:18,393 INFO    MainThread:12898 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
-2020-05-15 14:36:19,221 INFO    Thread-3  :12898 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/dryrun-20200515_123617-2p7qqy8f/config.yaml
- metadata service
-2020-05-15 14:36:19,221 INFO    Thread-3  :12898 [2p7qqy8f:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/dryrun-20200515_123617-2p7qqy8f/config.yaml
+2020-05-15 21:27:02,659 DEBUG   MainThread:31799 [wandb_config.py:_load_defaults():122] no defaults not found in config-defaults.yaml
+2020-05-15 21:27:02,663 DEBUG   MainThread:31799 [meta.py:setup():100] code probe starting
+2020-05-15 21:27:02,664 DEBUG   MainThread:31799 [meta.py:_setup_code_git():49] probe for git information
+2020-05-15 21:27:02,677 DEBUG   MainThread:31799 [meta.py:_setup_code_program():58] save program starting
+2020-05-15 21:27:02,677 DEBUG   MainThread:31799 [meta.py:_setup_code_program():60] save program starting: /home/datta/lab/HPE3D/src/train.py
+2020-05-15 21:27:02,678 DEBUG   MainThread:31799 [meta.py:_setup_code_program():68] save program saved: /home/datta/lab/HPE3D/wandb/dryrun-20200515_192701-27r8a60c/code/src/train.py
+2020-05-15 21:27:02,678 DEBUG   MainThread:31799 [meta.py:_setup_code_program():70] save program
+2020-05-15 21:27:02,678 DEBUG   MainThread:31799 [meta.py:setup():122] code probe done
+2020-05-15 21:27:02,683 DEBUG   MainThread:31799 [run_manager.py:__init__():546] Initialized sync for hpe3d/27r8a60c
+2020-05-15 21:27:02,686 INFO    MainThread:31799 [run_manager.py:wrap_existing_process():1148] wrapping existing process 31785
+2020-05-15 21:27:02,686 WARNING MainThread:31799 [io_wrap.py:register():104] SIGWINCH handler was not None: <Handlers.SIG_DFL: 0>
+2020-05-15 21:27:02,721 INFO    MainThread:31799 [run_manager.py:init_run():927] system metrics and metadata threads started
+2020-05-15 21:27:02,722 INFO    MainThread:31799 [run_manager.py:wrap_existing_process():1165] informing user process we are ready to proceed
+2020-05-15 21:27:02,722 INFO    MainThread:31799 [run_manager.py:_sync_etc():1272] entering loop for messages from user process
+2020-05-15 21:27:03,316 INFO    MainThread:31799 [run_manager.py:_sync_etc():1295] received message from user process: {"exitcode": 0}
+2020-05-15 21:27:03,316 INFO    MainThread:31799 [run_manager.py:_sync_etc():1381] closing log streams and sending exitcode to W&B
+2020-05-15 21:27:03,316 INFO    MainThread:31799 [run_manager.py:shutdown():1071] shutting down system stats and metadata service
+2020-05-15 21:27:03,665 INFO    Thread-3  :31799 [run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/dryrun-20200515_192701-27r8a60c/wandb-history.jsonl
+a service
+2020-05-15 21:27:03,665 INFO    Thread-3  :31799 [27r8a60c:run_manager.py:_on_file_modified():691] file/dir modified: /home/datta/lab/HPE3D/wandb/dryrun-20200515_192701-27r8a60c/wandb-history.jsonl
