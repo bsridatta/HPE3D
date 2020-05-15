@@ -64,12 +64,22 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
     avg_loss = loss/len(val_loader)  # return for scheduler
 
+    # from val_step to val_epoch
+    avg = {} 
+    avg['log'] = {}
+    avg['loss'] = avg_loss
+    avg['log']['recon_loss'] = recon_loss/len(val_loader)
+    avg['log']['kld_loss'] = kld_loss/len(val_loader)
+
+    _log_validation_metrics(config, avg, vae_type)
+
     print(f'{vae_type} Validation:',
           f'\t\tLoss: {round(avg_loss,4)}',
           f'\tReCon: {round(recon_loss/len(val_loader), 4)}',
           f'\tKLD: {round(kld_loss/len(val_loader), 4)}')
 
-    del loss, kld_loss, recon_loss
+    del loss, kld_loss, recon_loss, avg
+
     return avg_loss
 
 
@@ -217,10 +227,10 @@ def _log_training_metrics(config, output, vae_type):
 
 def _log_validation_metrics(config, output, vae_type):
     # TODO can have this in eval instead and skip logging val
-    if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
-        # TODO change code to wandb
-        config.logger.log(
-            f"Images/{output['epoch']}", output['recon'][0])
+    # if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
+    #     # TODO change code to wandb
+    #     config.logger.log(
+    #         f"Images/{output['epoch']}", output['recon'][0])
 
     config.logger.log({
         f"{vae_type}": {

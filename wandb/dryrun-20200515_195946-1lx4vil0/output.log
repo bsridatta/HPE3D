@@ -1,0 +1,20 @@
+[INFO]: using device: cpu
+[INFO]: Training data loader called
+[INFO]: processing subjects: [1, 5, 6, 7, 8]
+samples - 5
+[INFO]: Validation data loader called
+[INFO]: processing subjects: [9, 11]
+samples - 2
+[INFO]: Start training procedure
+2d_2_3d Epoch: 1 [0/5 (0%)]	Loss: 4.7326	ReCon: 2.1119	KLD: 2.6206
+2d_2_3d Epoch: 1 [2/5 (50%)]	Loss: 4.5478	ReCon: 2.2083	KLD: 2.3395
+Traceback (most recent call last):
+  File "/home/datta/lab/HPE3D/src/train.py", line 180, in <module>
+    main()
+  File "/home/datta/lab/HPE3D/src/train.py", line 106, in main
+    config, model, val_loader, epoch, vae_type)
+  File "/home/datta/lab/HPE3D/src/trainer.py", line 74, in validation_epoch
+    _log_validation_metrics(config, avg, vae_type)
+  File "/home/datta/lab/HPE3D/src/trainer.py", line 230, in _log_validation_metrics
+    if output['epoch'] % 2 == 0 and "rgb" in vae_type.split('_')[-1]:
+KeyError: 'epoch'
