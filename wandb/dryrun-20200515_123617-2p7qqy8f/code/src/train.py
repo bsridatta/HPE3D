@@ -92,7 +92,6 @@ def main():
             model = models[variant]
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
-            config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
 
             # Train
             training_epoch(config, model, train_loader,

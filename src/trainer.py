@@ -13,9 +13,6 @@ from viz import plot_diff
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
-
-    config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
-
     # TODO perform get_inp_target_criterion for the whole epoch directly
     # or change variantion every batch
     for batch_idx, batch in enumerate(train_loader):
@@ -179,7 +176,7 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
     avg_mpjpe = torch.mean(mpjpe).item()
 
     config.logger.log({"MPJPE_AVG": avg_mpjpe})
-    
+
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
     del pjpes

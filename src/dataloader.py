@@ -12,6 +12,7 @@ the dataloader is same for test/train/val
 
 
 def train_dataloader(config):
+    print(f'[INFO]: Training data loader called')
     dataset = H36M(config.train_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device)
     # alterantive for debug dataset
@@ -26,14 +27,13 @@ def train_dataloader(config):
         sampler=sampler,
         shuffle=True
     )
-    # if enabling the fastdev method len(dataset) doesnt reflect actual data
-    print(
-        f'[INFO]: Training data loader called. len - {len(loader)*config.batch_size}')
-
+    # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
+    print("samples -", len(loader.dataset))
     return loader
 
 
 def val_dataloader(config):
+    print(f'[INFO]: Validation data loader called')
     dataset = H36M(config.val_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device)
     sampler = None
@@ -45,14 +45,13 @@ def val_dataloader(config):
         sampler=sampler,
         shuffle=True
     )
-
-    print(
-        f'[INFO]: Validation data loader called. len - {len(loader)*config.batch_size}')
+    print("samples -", len(loader.dataset))
 
     return loader
 
 
 def test_dataloader(config):
+    print(f'[INFO]: Test data loader called')
     dataset = H36M(config.subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device)
     sampler = None
@@ -64,9 +63,7 @@ def test_dataloader(config):
         sampler=sampler,
         shuffle=True
     )
-
-    print(
-        f'[INFO]: Test data loader called. len - {len(loader)*config.batch_size}')
+    print("samples -", len(loader.dataset))
 
     return loader
 

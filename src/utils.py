@@ -63,8 +63,8 @@ def get_schedulers(optimizers):
     schedulers = []
     for optimizer in optimizers:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min',
-                                                               patience=2,
-                                                               factor=0.1, verbose=True)
+                                                               patience=3, threshold=1e-2,
+                                                               factor=0.3, verbose=True)
         schedulers.append(scheduler)
 
     return schedulers
