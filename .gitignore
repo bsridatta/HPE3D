@@ -12,6 +12,8 @@ other
 # data pickles
 *.h5
 
+wandb
+
 # cache
 __pycache__/
 
