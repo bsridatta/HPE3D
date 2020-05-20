@@ -13,6 +13,8 @@ from viz import plot_diff
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
+    # note -- model.train() in training step
+
     # TODO perform get_inp_target_criterion for the whole epoch directly
     # or change variantion every batch
     for batch_idx, batch in enumerate(train_loader):
