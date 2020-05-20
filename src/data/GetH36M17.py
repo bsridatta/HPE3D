@@ -7,8 +7,13 @@ import os
 import scipy.io as sio
 import h5py
 
-inds = range(17)
+# to get smaller subset of the data for dev
+debug = True
 subject_list = [1, 5, 6, 7, 8, 9, 11]
+subj_str = "".join(str(x) for x in subject_list)
+h5name = 'h36m17_' + subj_str + '.h5'
+
+inds = range(17)
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
@@ -16,8 +21,6 @@ img_path = '../../../HPE_datasets/h36m/'
 save_path = './'
 annot_name = 'matlab_meta_new.mat'
 
-# to get smaller subset of the data for dev
-debug = False
 
 if not os.path.exists(save_path):
     os.mkdir(save_path)
@@ -77,18 +80,18 @@ for subject_ in subject_list:
                     camera.append(camera_)
                     num_samples += 1
 
+                    print(subject_, action_, pose3d_.shape)
+
                     if debug:
                         break
                 if debug:
                     break
             if debug:
                 break
-        if debug:
-            break
+
 
 print('number of samples = %d' % num_samples)
 
-h5name = 'h36m17.h5'
 if debug:
     h5name = "debug_" + h5name
 

@@ -135,8 +135,8 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'/home/datta/lab/HPE3D/src/data/debug_h36m17.h5', type=str,
-                        help='path of the h5 file containing poses and camera data')
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+                        help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),

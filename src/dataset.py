@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 from processing import preprocess
-
+import time
 
 class H36M(Dataset):
 
@@ -30,39 +30,33 @@ class H36M(Dataset):
         self.root_idx = self.joints_name.index('Pelvis')
 
         # get labels and metadata including camera parameters
-        all_annotations = h5py.File(f'{annotation_file}', 'r')
+        subj_name = "".join(str(sub) for sub in subjects)
+        annotations_h5 = h5py.File(f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}_{subj_name}.h5', 'r')
+
         self.annotations = {}  # to store only the subjects of interest
-
-        # get indices of subjects of interest and filter them
-        filtered_indices = []
-        for i, subject in enumerate(all_annotations['subject']):
-            if subject in subjects:
-                filtered_indices.append(i)
-
-        for key in all_annotations.keys():
-            self.annotations[key] = all_annotations[key][filtered_indices]
+        for key in annotations_h5.keys():
+            self.annotations[key] = annotations_h5[key][:]
 
         # further process to make the data learnable - zero3d and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
 
+
         # save norm_stats to denormalize data for evaluation
-        ann_file_name = annotation_file.split('/')[-1].split('.')[0]
         subj_name = "".join(str(sub) for sub in subjects)
-        norm_stats_name = f"norm_stats_{ann_file_name}_{subj_name}.h5"
+        norm_stats_name = f"norm_stats_{annotation_file}_{subj_name}.h5"
         f = h5py.File(
             f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
-  
 
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
         # clear the HDF5 datasets
+        annotations_h5.close()
         f.close()
+        del annotations_h5
         del f
-        all_annotations.close()
-        del all_annotations
         gc.collect()
 
         # to avoid query for every __getitem__
@@ -100,9 +94,7 @@ class H36M(Dataset):
         image_tmp = Image.open(image_file)
         image = image_tmp.copy()
         image = np.array(image)
-        # print("org max ", np.max(image), image.shape)
         image = self.augmentations(image=image)['image']
-        # print("aug max ", np.max(image), image.shape)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
 
@@ -123,20 +115,24 @@ Can be used to get norm stats for all subjects
 
 
 def test_h36m():
-    annotation_file = f'{os.path.dirname(os.path.abspath(__file__))}/data/debug_h36m17.h5'
+    annotation_file = f'h36m17'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
-
-    dataset = H36M([ 9, 11], annotation_file, image_path)
-    print("Length of the dataset: ", len(dataset))
-
-    print("One sample -")
+    
+    
+    dataset = H36M([1,5,6,7,8,9,11], annotation_file, image_path)
+    
+    print("[INFO]: Length of the dataset: ", len(dataset))
+    print("[INFO]: One sample -")
+    
     sample = dataset.__getitem__(0)
+
+    
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
-    print("")
+        pass
 
-    print(sample['pose2d'], '\n\n\n')
-    print(sample['pose3d'])
+    # print(sample['pose2d'], '\n\n\n')
+    # print(sample['pose3d'])
 
     del dataset
     del sample

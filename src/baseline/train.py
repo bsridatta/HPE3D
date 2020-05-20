@@ -5,10 +5,8 @@ from argparse import ArgumentParser
 import torch
 import wandb
 
-import dataloader
-import utils
-from trainer import (evaluate_poses, sample_manifold, training_epoch,
-                     validation_epoch)
+import ..dataloader
+import ..utils
 
 
 def main():
@@ -26,16 +24,17 @@ def main():
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
-    print(f'[INFO]: using device: {device}')
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring, ignore when debugging on cpu
-    if ~use_cuda:
-        print(use_cuda, ~use_cuda)
+    if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
     config.logger = wandb
+
+    # prints after init, so its logged in wandb
+    print(f'[INFO]: using device: {device}') 
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
@@ -47,15 +46,6 @@ def main():
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
 
-    # combinations of Encoder, Decoder to train in an epoch
-    variant_dic = {
-        1: [['2d', '3d'], ['rgb', 'rgb']],
-        2: [['2d', '3d']],
-        3: [['rgb', 'rgb']]}
-    variants = variant_dic[config.variant]
-
-    # Intuition: Each variant is one model,
-    # except they use the same weights and same latent_dim
     models = utils.get_models(variants, config)
     optimizers = utils.get_optims(models, config)
     schedulers = utils.get_schedulers(optimizers)
@@ -93,7 +83,9 @@ def main():
             model = models[variant]
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
-
+            config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
+            # TODO add bad epochs
+            
             # Train
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
