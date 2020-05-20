@@ -23,12 +23,14 @@ class Encoder2D(nn.Module):
         )
 
         self.residual_block = nn.Sequential(
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
             self.activation(),
             nn.Dropout(),
             nn.Linear(1024, 1024),
             nn.BatchNorm1d(1024),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024)
+            self.activation(),
+            nn.Dropout(),
         )
 
         self.fc_mean = nn.Linear(1024, self.latent_dim)
@@ -110,12 +112,14 @@ class Decoder3D(nn.Module):
         )
 
         self.residual_block = nn.Sequential(
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
             self.activation(),
             nn.Dropout(),
             nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024)
+            nn.BatchNorm1d(1024),            
+            self.activation(),
+            nn.Dropout()
         )
 
         self.dec_out_block = nn.Sequential(
@@ -191,12 +195,12 @@ def test(inp, target):
     # target = torch.randn(2, 16, 3)  # [b, joints, 3]
 
     encoder_2d = Encoder2D(latent_dim)
-    encoder_3d = Encoder3D(latent_dim)
     decoder_3d = Decoder3D(latent_dim)
     encoder_2d.eval()
-    encoder_3d.eval()
     decoder_3d.eval()
 
+    # print(encoder_2d.parameters)
+    
     with torch.no_grad():
 
         # 2D -> 3D
@@ -208,16 +212,8 @@ def test(inp, target):
         # loss = nn.functional.l1_loss(pose3d, target)
         kld_loss = KLD(mean, logvar, decoder_3d.__class__.__name__)
         print("2D -> 3D", recon_loss)
-        exit()
-        # 3D -> 3D
-        mean, logvar = encoder_3d(target)
-        z = reparameterize(mean, logvar)
-        pose3d = decoder_3d(z)
-        pose3d = pose3d.view(-1, 16, 3)
-        loss = nn.functional.l1_loss(pose3d, target)
-        print("3D -> 3D", loss)
-
-
+        
+        
 if __name__ == "__main__":
 
     pose2d = [[-0.0520,  0.5179],
