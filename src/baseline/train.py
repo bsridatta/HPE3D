@@ -13,6 +13,7 @@ import utils
 import dataloader
 from processing import denormalize
 from models.pose_models import MPJPE
+
 def main():
     # Experiment Configuration
     parser = training_specific_args()
@@ -89,6 +90,9 @@ def main():
                 len(train_loader.dataset), 100. *
                 batch_idx / len(train_loader),
                 loss.item()))
+
+            config.logger.log({"loss": loss.item()})
+
 
             loss.backward()
             optimizer.step()

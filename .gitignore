@@ -12,7 +12,7 @@ other
 # data pickles
 *.h5
 
-wandb
+wandb/*
 
 # cache
 __pycache__/
