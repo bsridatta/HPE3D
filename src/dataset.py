@@ -15,7 +15,7 @@ import time
 
 class H36M(Dataset):
 
-    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu'):
+    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None):
         self.no_images = no_images  # incase of only lifting 2D-3D
         self.device = device
         # Data Specific Information
@@ -31,7 +31,10 @@ class H36M(Dataset):
 
         # get labels and metadata including camera parameters
         subj_name = "".join(str(sub) for sub in subjects)
-        annotations_h5 = h5py.File(f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}_{subj_name}.h5', 'r')
+        if annotation_path:
+            annotations_h5 = h5py.File(f'{annotation_path}/{annotation_file}_{subj_name}.h5', 'r')
+        else:
+            annotations_h5 = h5py.File(f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}_{subj_name}.h5', 'r')
 
         self.annotations = {}  # to store only the subjects of interest
         for key in annotations_h5.keys():
