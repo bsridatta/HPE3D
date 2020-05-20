@@ -1,0 +1,24 @@
+{
+    "root": "/home/datta/lab/HPE3D",
+    "program": "/home/datta/lab/HPE3D/src/baseline/train.py",
+    "git": {
+        "remote": "https://github.com/bsridatta/HPE3D",
+        "commit": "cbe0a05f0dccb3aa131fd35b1e40b329bd253d67"
+    },
+    "email": "b.sridatta@gmail.com",
+    "codePath": "src/baseline/train.py",
+    "startedAt": "2020-05-20T23:27:51.037825",
+    "host": "Datta",
+    "username": "datta",
+    "executable": "/home/datta/miniconda3/envs/ml/bin/python",
+    "os": "Linux-4.15.0-99-generic-x86_64-with-debian-buster-sid",
+    "python": "3.7.6",
+    "cpu_count": 4,
+    "args": [],
+    "state": "finished",
+    "jobType": null,
+    "mode": "dryrun",
+    "project": "hpe3d",
+    "heartbeatAt": "2020-05-20T23:27:52.772279",
+    "exitcode": 0
+}
