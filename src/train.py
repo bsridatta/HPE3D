@@ -103,8 +103,8 @@ def main():
                            optimizer, epoch, vae_type)
 
             # Validation
-            val_loss = validation_epoch(
-                config, model, val_loader, epoch, vae_type)
+            # val_loss = validation_epoch(
+            #     config, model, val_loader, epoch, vae_type)
 
             # Latent Space Sampling 
             # TODO itegrate with evaluate_poses
@@ -112,12 +112,12 @@ def main():
             # sample_manifold(config, model)
 
             # Evaluate Performance
-            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-                evaluate_poses(config, model, val_loader, epoch, vae_type)
+            # if variants[variant][1] == '3d' and epoch % eval_interval == 0:
+            #     evaluate_poses(config, model, val_loader, epoch, vae_type)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            scheduler.step(val_loss)
+            # scheduler.step(val_loss)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
