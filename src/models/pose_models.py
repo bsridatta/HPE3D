@@ -60,85 +60,47 @@ class Encoder2D(nn.Module):
         return mean, logvar
 
 
-class Encoder3D(nn.Module):
-
-    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
-        super(Encoder3D, self).__init__()
-        self.latent_dim = latent_dim
-        self.activation = activation
-        self.n_joints = n_joints
-        self.__build_model()
-
-    def __build_model(self):
-        self.dense_block = nn.Sequential(
-            nn.Linear(3*self.n_joints, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-            nn.Linear(512, 512),
-            nn.BatchNorm1d(512),
-            self.activation(),
-        )
-        self.fc_mean = nn.Linear(512, self.latent_dim)
-        self.fc_logvar = nn.Linear(512, self.latent_dim)
-
-    def forward(self, x):
-        x = x.view(-1, 3*self.n_joints)
-        x = self.dense_block(x)
-        mean = self.fc_mean(x)
-        logvar = self.fc_logvar(x)
-        return mean, logvar
-
-
 # class Decoder3D(nn.Module):
-    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
-        super(Decoder3D, self).__init__()
-        self.latent_dim = latent_dim
-        self.activation = activation
-        self.n_joints = n_joints
-        self.__build_model()
+#     def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
+#         super(Decoder3D, self).__init__()
+#         self.latent_dim = latent_dim
+#         self.activation = activation
+#         self.n_joints = n_joints
+#         self.__build_model()
 
-    def __build_model(self):
-        self.dec_inp_block = nn.Sequential(
-            nn.Linear(self.latent_dim, 1024),
-            nn.BatchNorm1d(1024),
-            self.activation(),
-            nn.Dropout()
-        )
+#     def __build_model(self):
+#         self.dec_inp_block = nn.Sequential(
+#             nn.Linear(self.latent_dim, 1024),
+#             nn.BatchNorm1d(1024),
+#             self.activation(),
+#             nn.Dropout()
+#         )
 
-        self.residual_block = nn.Sequential(
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
-            self.activation(),
-            nn.Dropout(),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),            
-            self.activation(),
-            nn.Dropout()
-        )
+#         self.residual_block = nn.Sequential(
+#             nn.Linear(1024, 1024),
+#             nn.BatchNorm1d(1024),
+#             self.activation(),
+#             nn.Dropout(),
+#             nn.Linear(1024, 1024),
+#             nn.BatchNorm1d(1024),            
+#             self.activation(),
+#             nn.Dropout()
+#         )
 
-        self.dec_out_block = nn.Sequential(
-            # TODO is it good idea to have activation \
-            # and drop out at the end for enc or dec
-            nn.Linear(1024, 3*self.n_joints)
-        )
+#         self.dec_out_block = nn.Sequential(
+#             # TODO is it good idea to have activation \
+#             # and drop out at the end for enc or dec
+#             nn.Linear(1024, 3*self.n_joints)
+#         )
 
-    def forward(self, x):
-        x = x.view(-1, self.latent_dim)
-        x = self.dec_inp_block(x)
-        x = self.residual_block(x) + x
-        x = self.residual_block(x) + x
-        x = self.dec_out_block(x)
+#     def forward(self, x):
+#         x = x.view(-1, self.latent_dim)
+#         x = self.dec_inp_block(x)
+#         x = self.residual_block(x) + x
+#         x = self.residual_block(x) + x
+#         x = self.dec_out_block(x)
 
-        return x
+#         return x
 
 
 class Decoder3D(nn.Module):

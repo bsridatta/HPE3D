@@ -122,6 +122,7 @@ def main():
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
+    wandb.save(f"{os.path.dirname(os.getcwd())}/models/pose_models.py")
 
 
 def training_specific_args():
@@ -136,7 +137,7 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
@@ -145,9 +146,9 @@ def training_specific_args():
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # training specific
-    parser.add_argument('--epochs', default=1, type=int,
+    parser.add_argument('--epochs', default=100, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=3, type=int,
+    parser.add_argument('--batch_size', default=10, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -156,9 +157,9 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=100, type=int,
+    parser.add_argument('--latent_dim', default=512, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta', default=1, type=float,
+    parser.add_argument('--beta', default=0, type=float,
                         help='KLD weight')
     parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

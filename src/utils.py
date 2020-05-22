@@ -2,8 +2,9 @@ import sys
 
 import torch
 
-from models import (Decoder3D, DecoderRGB, Encoder2D,
-                    Encoder3D, EncoderRGB, image_recon_loss, MPJPE)
+from models import (Decoder3D, DecoderRGB, 
+                    Encoder2D, EncoderRGB, 
+                    image_recon_loss, MPJPE)
 
 
 def get_models(variants, config):
