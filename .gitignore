@@ -12,11 +12,11 @@ other
 # data pickles
 *.h5
 
-wandb/*
-
 # cache
 __pycache__/
 
+# logs
+wandb/
 
 
 
