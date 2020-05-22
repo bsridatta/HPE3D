@@ -50,7 +50,7 @@ class Encoder2D(nn.Module):
 
         x = self.residual_block(x) + x
         x = self.residual_block(x) + x
-        
+
         mean = self.fc_mean(x)
         mean = self.enc_out_block(mean)
 
@@ -60,7 +60,7 @@ class Encoder2D(nn.Module):
         return mean, logvar
 
 
-# class Encoder3D(nn.Module):
+class Encoder3D(nn.Module):
 
     def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
         super(Encoder3D, self).__init__()
