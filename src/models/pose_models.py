@@ -50,7 +50,7 @@ class Encoder2D(nn.Module):
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(1024, 2 * z_dim),
+            nn.Linear(1024, 1024),
             nn.ReLU()
         )
 
@@ -134,7 +134,7 @@ class Decoder3D(nn.Module):
 
         #remove 
         x = self.lin_lays(x)
-        
+
         x = self.dec_out_block(x)
 
         return x
