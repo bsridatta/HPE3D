@@ -117,14 +117,14 @@ def main():
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            # scheduler.step(val_loss)
+            scheduler.step(val_loss)
     
-    evaluate_poses(config, model, val_loader, epoch, vae_type)
+    # evaluate_poses(config, model, val_loader, epoch, vae_type)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
-    wandb.save(f"{os.path.dirname(os.getcwd())}/models/pose_models.py")
+    wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
 
 def training_specific_args():
