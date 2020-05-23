@@ -103,8 +103,8 @@ def main():
                            optimizer, epoch, vae_type)
 
             # Validation
-            # val_loss = validation_epoch(
-            #     config, model, val_loader, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, model, val_loader, epoch, vae_type)
 
             # Latent Space Sampling 
             # TODO itegrate with evaluate_poses
@@ -118,6 +118,8 @@ def main():
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             # scheduler.step(val_loss)
+    
+    evaluate_poses(config, model, val_loader, epoch, vae_type)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -146,7 +148,7 @@ def training_specific_args():
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # training specific
-    parser.add_argument('--epochs', default=100, type=int,
+    parser.add_argument('--epochs', default=2, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=10, type=int,
                         help='number of samples per step, have more than one for batch norm')
