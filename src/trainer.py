@@ -35,12 +35,11 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         # if batch_idx % 100 == 0:
         # save model
 
-        if batch_idx % config.log_interval == 0:
-            print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
-                vae_type, epoch, batch_idx * len(batch['pose2d']),
-                len(train_loader.dataset), 100. *
-                batch_idx / len(train_loader),
-                loss.item(), recon_loss.item(), kld_loss.item()))
+        print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
+            vae_type, epoch, batch_idx * len(batch['pose2d']),
+            len(train_loader.dataset), 100. *
+            batch_idx / len(train_loader),
+            loss.item(), recon_loss.item(), kld_loss.item()))
 
         del loss, recon_loss, kld_loss
 
@@ -57,7 +56,8 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
                 batch[key] = batch[key].to(config.device)
 
             output = _validation_step(batch, batch_idx, model, epoch, config)
-            _log_validation_metrics(config, output, vae_type)
+            # logging for val steps..skews the plot as wandb steps increase
+            # _log_validation_metrics(config, output, vae_type)
 
             loss += output['loss'].item()
             recon_loss += output['log']['recon_loss'].item()
@@ -69,6 +69,15 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
           f'\t\tLoss: {round(avg_loss,4)}',
           f'\tReCon: {round(recon_loss/len(val_loader), 4)}',
           f'\tKLD: {round(kld_loss/len(val_loader), 4)}')
+
+    # use _log_validation_metrics per epoch rather than batch
+    avg_output = {}
+    avg_output['loss'] = avg_loss
+    avg_output['log']= {}
+    avg_output['log']['recon_loss'] = recon_loss/len(val_loader)
+    avg_output['log']['kld_loss'] = kld_loss/len(val_loader)
+
+    _log_validation_metrics(config, avg_output, vae_type)
 
     del loss, kld_loss, recon_loss
 
