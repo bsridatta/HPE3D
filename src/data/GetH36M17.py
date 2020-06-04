@@ -8,13 +8,13 @@ import scipy.io as sio
 import h5py
 
 # to get smaller subset of the data for dev
-debug = True
+debug = False
 subject_list = [1, 5, 6, 7, 8, 9, 11]
 subj_str = "".join(str(x) for x in subject_list)
-h5name = 'h36m17_' + subj_str + '.h5'
+h5name = 'h36m_eating_' + subj_str + '.h5'
 
 inds = range(17)
-action_list = np.arange(2, 17)
+action_list = np.arange(2, 3) # 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 img_path = '../../../HPE_datasets/h36m/'
