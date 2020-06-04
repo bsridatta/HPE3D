@@ -88,8 +88,9 @@ def main():
     val_loss_min = float('inf')
 
     # Training
-    config.step = 0
     for epoch in range(1, config.epochs+1):
+        config.logger.log({"epoch": epoch})
+
         for variant in range(len(variants)):
             # Variant specific players
             vae_type = "_2_".join(variants[variant])
