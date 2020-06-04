@@ -12,19 +12,21 @@ class Encoder2D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
+        self.neurons = 512
+
         self.__build_model()
 
     def __build_model(self):
 
         self.enc_inp_block = nn.Sequential(
-            nn.Linear(2*self.n_joints, 1024),  # expand features
-            nn.BatchNorm1d(1024),
+            nn.Linear(2*self.n_joints, self.neurons),  # expand features
+            nn.BatchNorm1d(self.neurons),
             self.activation(),
             nn.Dropout()
         )
 
-        self.fc_mean = nn.Linear(1024, self.latent_dim)
-        self.fc_logvar = nn.Linear(1024, self.latent_dim)
+        self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
+        self.fc_logvar = nn.Linear(self.neurons, self.latent_dim)
 
         self.enc_out_block = nn.Sequential(
             nn.BatchNorm1d(self.latent_dim),
@@ -33,14 +35,14 @@ class Encoder2D(nn.Module):
         )
 
         self.LBAD_block = nn.Sequential(
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(self.neurons, self.neurons),
+            nn.BatchNorm1d(self.neurons),
             self.activation(),
             nn.Dropout()
         )
 
         self.LA_block = nn.Sequential(
-            nn.Linear(1024, 1024),
+            nn.Linear(self.neurons, self.neurons),
             self.activation()
         )
 
@@ -77,13 +79,15 @@ class Decoder3D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
+        self.neurons = 512
+
         self.__build_model()
 
     def __build_model(self):
 
         self.dec_inp_block = nn.Sequential(
-            nn.Linear(self.latent_dim, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(self.latent_dim, self.neurons),
+            nn.BatchNorm1d(self.neurons),
             self.activation(),
             nn.Dropout()
         )
@@ -91,18 +95,18 @@ class Decoder3D(nn.Module):
         self.dec_out_block = nn.Sequential(
             # TODO is it good idea to have activation \
             # and drop out at the end for enc or dec
-            nn.Linear(1024, 3*self.n_joints)
+            nn.Linear(self.neurons, 3*self.n_joints)
         )
 
         self.LBAD_block = nn.Sequential(
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
+            nn.Linear(self.neurons, self.neurons),
+            nn.BatchNorm1d(self.neurons),
             self.activation(),
             nn.Dropout()
         )
 
         self.LA_block = nn.Sequential(
-            nn.Linear(1024, 1024),
+            nn.Linear(self.neurons, self.neurons),
             self.activation()
         )
 
