@@ -52,7 +52,9 @@ def main():
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
-        3: [['rgb', 'rgb']]}
+        3: [['rgb', 'rgb']],
+        4: [['rgb','3d'],['rgb','rgb'],['2d','3d']]}
+        
     variants = variant_dic[config.variant]
 
     # Intuition: Each variant is one model,
@@ -81,6 +83,8 @@ def main():
     #     optimizer.load_state_dict(state['optimizer'])
 
     print(f'[INFO]: Start training procedure')
+    wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
+
     val_loss_min = float('inf')
 
     # Training
@@ -124,7 +128,6 @@ def main():
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
-    wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
 
 def training_specific_args():

@@ -23,15 +23,11 @@ class Encoder2D(nn.Module):
             nn.Dropout()
         )
 
-        self.residual_block = nn.Sequential(
+        self.LBAD_block = nn.Sequential(
             nn.Linear(1024, 1024),
             nn.BatchNorm1d(1024),
             self.activation(),
-            nn.Dropout(),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
-            self.activation(),
-            nn.Dropout(),
+            nn.Dropout()
         )
 
         self.fc_mean = nn.Linear(1024, self.latent_dim)
@@ -46,8 +42,14 @@ class Encoder2D(nn.Module):
     def forward(self, x):
         x = x.view(-1, 2*self.n_joints)
         x = self.enc_inp_block(x)
-        x = self.residual_block(x) + x
-        x = self.residual_block(x) + x
+
+        # to explore
+        residual = x
+        x = self.LBAD_block(x)
+        x = self.LBAD_block(x) + residual
+            # residual = x
+            # x = self.LBAD_block(x)
+            # x = self.LBAD_block(x) + residual
 
         mean = self.fc_mean(x)
         mean = self.enc_out_block(mean)
@@ -75,13 +77,9 @@ class Decoder3D(nn.Module):
             nn.Dropout()
         )
 
-        self.residual_block = nn.Sequential(
+        self.LBAD_block = nn.Sequential(
             nn.Linear(1024, 1024),
             nn.BatchNorm1d(1024),
-            self.activation(),
-            nn.Dropout(),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),            
             self.activation(),
             nn.Dropout()
         )
@@ -95,8 +93,15 @@ class Decoder3D(nn.Module):
     def forward(self, x):
         x = x.view(-1, self.latent_dim)
         x = self.dec_inp_block(x)
-        x = self.residual_block(x) + x
-        x = self.residual_block(x) + x
+
+        # To explore
+        residual = x
+        x = self.LBAD_block(x)
+        x = self.LBAD_block(x) + residual
+            # residual = x
+            # x = self.LBAD_block(x)
+            # x = self.LBAD_block(x) + residual
+
         x = self.dec_out_block(x)
 
         return x
