@@ -33,7 +33,11 @@ def main():
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
+    wandb.save("*.pt")
     config.logger = wandb
+    config.logger.run.save()
+    run_name = config.logger.run.name
+
 
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}') 
@@ -77,10 +81,11 @@ def main():
 
     # Resume training
     # if config.resume_pt:
-    #     logging.info(f'Loading {config.resume_pt}')
-    #     state = torch.load(f'{config.save_dir}/{config.resume_pt}')
-    #     model.load_state_dict(state['state_dict'])
-    #     optimizer.load_state_dict(state['optimizer'])
+    #     for model in models:
+    #         print(f'[INFO] Loading {config.resume_pt}')
+    #         state = torch.load(f'{config.save_dir}/{config.resume_pt}_')
+    #         model.load_state_dict(state['state_dict'])
+    #         optimizer.load_state_dict(state['optimizer'])
 
     print(f'[INFO]: Start training procedure')
     wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
@@ -123,7 +128,27 @@ def main():
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             # scheduler.step(val_loss)
-    
+
+            if val_loss < val_loss_min:
+                val_loss_min = val_loss
+                
+                for model_ in model:
+                    try:
+                        state_dict = model_.module.state_dict()
+                    except AttributeError:
+                        state_dict = model_.state_dict()
+
+                    state = {
+                        'epoch': epoch,
+                        'val_loss': val_loss,
+                        'model_state_dict': state_dict,
+                        'optimizer_state_dict': optimizer.state_dict()
+                    }
+
+                    torch.save(state, f'{config.logger.run.dir}/{run_name}_{model_.__class__.__name__}.pt')
+                    # wandb.save'{run_name}_{model_.__class__.__name__}.pt'
+                    print(f'[INFO] Saved pt: {config.logger.run.dir}/{run_name}_{model_.__class__.__name__}.pt')
+        
     # evaluate_poses(config, model, val_loader, epoch, vae_type)
 
     # sync config with wandb for easy experiment comparision
