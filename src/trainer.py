@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from models import KLD, MPJPE, reparameterize
 from processing import denormalize
 from utils import get_inp_target_criterion
-from viz import plot_diff
+from viz import plot_diff, plot_diffs
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -73,7 +73,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
     # use _log_validation_metrics per epoch rather than batch
     avg_output = {}
     avg_output['loss'] = avg_loss
-    avg_output['log']= {}
+    avg_output['log'] = {}
     avg_output['log']['recon_loss'] = recon_loss/len(val_loader)
     avg_output['log']['kld_loss'] = kld_loss/len(val_loader)
 
@@ -142,6 +142,14 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
     pjpes = []
+
+    zs = []
+    actions = []
+
+    outputs = []
+    targets = []
+    errors = []
+
     n_samples = 0
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -186,6 +194,27 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             pjpes.append(torch.sum(pjpe, dim=0))
             n_samples += pjpe.shape[0]  # to calc overall mean
 
+            # Poses Viz
+            if batch_idx < 1:
+                outputs.append(output)
+                targets.append(target)
+                errors.append(pjpe.mean(dim=1))
+
+            # UMAP
+            if batch_idx < 10:
+                zs.append(z)
+                actions.append(batch['action'])
+            else:
+                break
+
+    # Poses Viz
+    plot_diffs(outputs, targets, errors, grid=5)
+
+    # UMAP
+    zs = torch.cat(zs, 0)
+    actions = torch.cat(actions, 0)
+    plot_umap(zs, actions)
+
     # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
     mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
     avg_mpjpe = torch.mean(mpjpe).item()
@@ -194,10 +223,8 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
 
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
-    del pjpes
-    del mpjpe
+    del pjpes, mpjpe, zs, actions, norm_stats
     norm_stats.close()
-    del norm_stats
     gc.collect()
 
 
@@ -242,3 +269,18 @@ def _log_validation_metrics(config, output, vae_type):
             }
         }
     })
+
+
+def plot_umap(zs, actions):
+    import umap
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    print("[INFO] UMAP reducing ", zs.shape)
+    reducer = umap.UMAP()
+    embedding = reducer.fit_transform(zs)
+    print(embedding.shape)
+    plt.scatter(embedding[:, 0], embedding[:, 1], c=[
+                sns.color_palette("husl", 17)[x] for x in actions.tolist()])
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP projection of Z', fontsize=24)
+    plt.show()

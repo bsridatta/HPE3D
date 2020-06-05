@@ -1,6 +1,9 @@
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
+from mpl_toolkits.axes_grid1 import ImageGrid
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
@@ -65,10 +68,29 @@ def plot_diff(pose, target, error):
     # ax.set_ylabel('Y Label')
     # ax.set_zlabel('Z Label')
     # ax.axis = 'off'
-    
-    plt.show()
+
+    return ax
+#     plt.show()
 
     # for angle in range(0, 360):
     #     ax.view_init(30, angle)
     #     plt.draw()
     #     plt.pause(.001)
+
+
+def plot_diffs(poses, targets, errors, grid=5):
+
+    fig = plt.figure(figsize=(15., 12.))
+
+    rows = cols = grid  # math.ceil(math.sqrt(len(poses)))
+
+    image_grid = ImageGrid(fig, 111,  # similar to subplot(111)
+                     nrows_ncols=(rows, cols),  # creates 5x5 grid of axes
+                     axes_pad=0.3,  # pad between axes in inch.
+                     )
+
+    for ax, pose, target, error in zip(image_grid, poses[:grid**2], targets[:grid**2], errors[:grid**2]):
+        # Iterating over the grid returns the Axes.
+        ax = plot_diff(pose, target, error)
+
+    plt.show()

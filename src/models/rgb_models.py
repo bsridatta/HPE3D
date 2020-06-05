@@ -15,6 +15,7 @@ class EncoderRGB(nn.Module):
         self.latent_dim = latent_dim
         self.pretrained = pretrained
         self.set_requires_grad = False if self.pretrained else True
+        self.name = "EncoderRGB"
 
         self.train_last_block = train_last_block
         # build model
@@ -54,6 +55,7 @@ class DecoderRGB(nn.Module):
         # hidden/linear layer between latent space and deconv block
         self.hidden_dim = 256*8*8
         self.activation = activation
+        self.name = "DecoderRGB"
 
         self.__build_model()
 

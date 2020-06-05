@@ -33,11 +33,10 @@ def main():
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
     wandb.init(anonymous='allow', project="hpe3d")
-    wandb.save("*.pt")
+
     config.logger = wandb
     config.logger.run.save()
     run_name = config.logger.run.name
-
 
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}') 
@@ -45,9 +44,6 @@ def main():
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
-
-    # config.train_subjects = [1, 5]
-    # config.val_subjects = [1, 5, 6, 7, 8, 9, 11]
 
     train_loader = dataloader.train_dataloader(config)
     val_loader = dataloader.val_dataloader(config)
@@ -80,12 +76,14 @@ def main():
         models[vae][1].to(device)
 
     # Resume training
-    # if config.resume_pt:
-    #     for model in models:
-    #         print(f'[INFO] Loading {config.resume_pt}')
-    #         state = torch.load(f'{config.save_dir}/{config.resume_pt}_')
-    #         model.load_state_dict(state['state_dict'])
-    #         optimizer.load_state_dict(state['optimizer'])
+    if config.resume_run:
+        for vae in range(len(models)):
+            for model_ in models[vae]:
+                print(f'[INFO] Loading Checkpoint {config.resume_run}: {model_.name}')
+                state = torch.load(f'{config.save_dir}/{config.resume_run}_{model_.name}.pt')
+                model_.load_state_dict(state['model_state_dict'])
+                optimizers[vae].load_state_dict(state['optimizer_state_dict'])
+                # TODO load optimizer state seperately w.r.t variant
 
     print(f'[INFO]: Start training procedure')
     wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
@@ -107,6 +105,7 @@ def main():
             config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
             # TODO add bad epochs
             
+            break
             # Train
             # TODO init criterion once with .to(cuda)
             training_epoch(config, model, train_loader,
@@ -144,12 +143,13 @@ def main():
                         'model_state_dict': state_dict,
                         'optimizer_state_dict': optimizer.state_dict()
                     }
-
-                    torch.save(state, f'{config.logger.run.dir}/{run_name}_{model_.__class__.__name__}.pt')
-                    # wandb.save'{run_name}_{model_.__class__.__name__}.pt'
-                    print(f'[INFO] Saved pt: {config.logger.run.dir}/{run_name}_{model_.__class__.__name__}.pt')
-        
-    # evaluate_poses(config, model, val_loader, epoch, vae_type)
+                    # TODO save optimizer state seperately
+                    torch.save(state, f'{config.save_dir}/{run_name}_{model_.name}.pt')
+                    wandb.save(f'{config.save_dir}/{run_name}_{model_.name}.pt')
+                    print(f'[INFO] Saved pt: {config.save_dir}/{run_name}_{model_.name}.pt')
+    
+    print("[INFO] Evaluating poses")
+    evaluate_poses(config, model, val_loader, epoch, vae_type)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -177,14 +177,14 @@ def training_specific_args():
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # training specific
-    parser.add_argument('--epochs', default=2, type=int,
+    parser.add_argument('--epochs', default=1, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=10, type=int,
+    parser.add_argument('--batch_size', default=30, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_pt', default=0, type=str,
-                        help='resume training using the saved checkpoint')
+    parser.add_argument('--resume_run', default="avid-firebrand-70", type=str,
+                        help='wandb run name to resume training using the saved checkpoint')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
@@ -201,7 +201,7 @@ def training_specific_args():
     parser.add_argument('--learning_rate', default=1e-3, type=float,
                         help='learning rate for all optimizers')
     # output
-    parser.add_argument('--save_dir', default=f'{os.path.dirname(os.getcwd())}/checkpoints', type=str,
+    parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')
     parser.add_argument('--exp_name', default=f'run_1', type=str,
                         help='name of the current run, used to id checkpoint and other logs')

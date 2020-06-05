@@ -13,6 +13,7 @@ class Encoder2D(nn.Module):
         self.activation = activation
         self.n_joints = n_joints
         self.neurons = 512
+        self.name = "Encoder2D"
 
         self.__build_model()
 
@@ -80,6 +81,7 @@ class Decoder3D(nn.Module):
         self.activation = activation
         self.n_joints = n_joints
         self.neurons = 512
+        self.name = "Decoder3D"
 
         self.__build_model()
 

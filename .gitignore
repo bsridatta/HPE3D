@@ -7,7 +7,7 @@
 other
 
 # checkpoints
-/checkpoints/*.pt
+*/checkpoints/*.pt
 
 # data pickles
 *.h5
