@@ -76,7 +76,7 @@ def main():
         models[vae][1].to(device)
 
     # Resume training
-    if config.resume_run:
+    if config.resume_run is not "None":
         for vae in range(len(models)):
             for model_ in models[vae]:
                 print(f'[INFO] Loading Checkpoint {config.resume_run}: {model_.name}')
@@ -183,8 +183,8 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    # parser.add_argument('--resume_run', default="solar-puddle-55", type=str,
-    #                   help='wandb run name to resume training using the saved checkpoint')
+    parser.add_argument('--resume_run', default="solar-puddle-55", type=str,
+                      help='wandb run name to resume training using the saved checkpoint')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
