@@ -76,7 +76,7 @@ def main():
         models[vae][1].to(device)
 
     # Resume training
-    if config.resume_run is not "None":
+    if config.resume_run not in "None":
         for vae in range(len(models)):
             for model_ in models[vae]:
                 print(f'[INFO] Loading Checkpoint {config.resume_run}: {model_.name}')
