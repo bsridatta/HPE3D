@@ -105,7 +105,6 @@ def main():
             config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
             # TODO add bad epochs
             
-            break
             # Train
             # TODO init criterion once with .to(cuda)
             training_epoch(config, model, train_loader,
