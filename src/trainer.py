@@ -228,8 +228,8 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
 
     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
 
-    del pjpes, mpjpe, zs, actions, norm_stats
     norm_stats.close()
+    del pjpes, mpjpe, zs, actions, norm_stats
     gc.collect()
 
 
