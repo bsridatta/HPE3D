@@ -80,7 +80,7 @@ def main():
         for vae in range(len(models)):
             for model_ in models[vae]:
                 print(f'[INFO] Loading Checkpoint {config.resume_run}: {model_.name}')
-                state = torch.load(f'{config.save_dir}/{config.resume_run}_{model_.name}.pt')
+                state = torch.load(f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=device)
                 model_.load_state_dict(state['model_state_dict'])
                 optimizers[vae].load_state_dict(state['optimizer_state_dict'])
                 # TODO load optimizer state seperately w.r.t variant
@@ -168,7 +168,7 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
@@ -183,14 +183,14 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="avid-firebrand-70", type=str,
+    parser.add_argument('--resume_run', default="solar-puddle-55", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=512, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta', default=0, type=float,
+    parser.add_argument('--beta', default=0.1, type=float,
                         help='KLD weight')
     parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

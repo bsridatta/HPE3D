@@ -6,6 +6,8 @@
 # other reference repo
 other
 
+reports
+
 # checkpoints
 */checkpoints/*.pt
 

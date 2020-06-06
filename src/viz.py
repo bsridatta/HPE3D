@@ -3,20 +3,19 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
-from mpl_toolkits.axes_grid1 import ImageGrid
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
-def plot_diff(pose, target, error):
+def plot_diff(ax, pose, target, error):
     # info to connect joints
     skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
                 (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
     labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
-    fig = plt.figure(1)
-    ax = fig.gca(projection='3d')
+    # fig = plt.figure(1)
+    # ax = fig.gca(projection='3d')
     ax._axis3don = False
 
     x = pose[:, 0]
@@ -28,7 +27,7 @@ def plot_diff(pose, target, error):
     z1 = -1*target[:, 1]
 
     ax.scatter(x, y, z, alpha=0.6, s=2)
-    ax.scatter(x1, y1, z1, c='grey', s=1, alpha=0.5)
+    ax.scatter(x1, y1, z1, c='grey', s=1, alpha=0)
 
     verts = []
 
@@ -39,7 +38,7 @@ def plot_diff(pose, target, error):
 
         ax.plot(x1[([link[0], link[1]])],
                 y1[([link[0], link[1]])], z1[([link[0], link[1]])],
-                c='grey', alpha=0.5, lw=1)
+                c='grey', alpha=0, lw=1)
 
         area = [(x[link[0]], y[link[0]], z[link[0]]),
                 (x[link[1]], y[link[1]], z[link[1]]),
@@ -50,7 +49,7 @@ def plot_diff(pose, target, error):
         verts.append(area)
 
     ax.add_collection3d(Poly3DCollection(verts, facecolors=[
-                        'r', 'r'], alpha=0.5, zorder='max'))
+                        'r', 'r'], alpha=0, zorder='max'))
 
     # for i, j, k, l in zip(x, y, z, labels):
     #     ax.text(i, j, k, s=l, size=8, zorder=1, color='k')
@@ -81,16 +80,13 @@ def plot_diff(pose, target, error):
 def plot_diffs(poses, targets, errors, grid=5):
 
     fig = plt.figure(figsize=(15., 12.))
+    plt.rcParams['savefig.dpi'] = 300
 
-    rows = cols = grid  # math.ceil(math.sqrt(len(poses)))
+    rows = cols = grid # math.ceil(math.sqrt(len(poses)))
 
-    image_grid = ImageGrid(fig, 111,  # similar to subplot(111)
-                     nrows_ncols=(rows, cols),  # creates 5x5 grid of axes
-                     axes_pad=0.3,  # pad between axes in inch.
-                     )
+    for i in range(0, rows*cols):
+        ax = fig.add_subplot(rows, cols, i+1, projection='3d')
+        ax = plot_diff(ax, poses[i].numpy(), targets[i].numpy(), errors[i].item())
 
-    for ax, pose, target, error in zip(image_grid, poses[:grid**2], targets[:grid**2], errors[:grid**2]):
-        # Iterating over the grid returns the Axes.
-        ax = plot_diff(pose, target, error)
 
     plt.show()

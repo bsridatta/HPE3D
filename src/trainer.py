@@ -199,7 +199,8 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
                 outputs.append(output)
                 targets.append(target)
                 errors.append(pjpe.mean(dim=1))
-
+            else:
+                break
             # UMAP
             if batch_idx < 10:
                 zs.append(z)
@@ -208,12 +209,16 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
                 break
 
     # Poses Viz
-    plot_diffs(outputs, targets, errors, grid=5)
+    outputs = torch.cat(outputs, 0)
+    targets = torch.cat(targets, 0)
+    errors = torch.cat(errors, 0)
+
+    plot_diffs(outputs, targets, errors, grid=4)
 
     # UMAP
     zs = torch.cat(zs, 0)
     actions = torch.cat(actions, 0)
-    plot_umap(zs, actions)
+    # plot_umap(zs, actions)
 
     # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
     mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
