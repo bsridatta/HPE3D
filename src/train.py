@@ -36,7 +36,6 @@ def main():
 
     config.logger = wandb
     config.logger.run.save()
-    run_name = config.logger.run.name
 
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}') 
@@ -88,7 +87,7 @@ def main():
     print(f'[INFO]: Start training procedure')
     wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
-    val_loss_min = float('inf')
+    config.val_loss_min = float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
@@ -125,28 +124,11 @@ def main():
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            # scheduler.step(val_loss)
+            scheduler.step(val_loss)
 
-            if val_loss < val_loss_min:
-                val_loss_min = val_loss
-                
-                for model_ in model:
-                    try:
-                        state_dict = model_.module.state_dict()
-                    except AttributeError:
-                        state_dict = model_.state_dict()
+            # Model Chechpoint
+            utils.model_checkpoint(config, val_loss, model, optimizer, epoch)
 
-                    state = {
-                        'epoch': epoch,
-                        'val_loss': val_loss,
-                        'model_state_dict': state_dict,
-                        'optimizer_state_dict': optimizer.state_dict()
-                    }
-                    # TODO save optimizer state seperately
-                    torch.save(state, f'{config.save_dir}/{run_name}_{model_.name}.pt')
-                    wandb.save(f'{config.save_dir}/{run_name}_{model_.name}.pt')
-                    print(f'[INFO] Saved pt: {config.save_dir}/{run_name}_{model_.name}.pt')
-    
     print("[INFO] Evaluating poses")
     evaluate_poses(config, model, val_loader, epoch, vae_type)
 
@@ -167,7 +149,7 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
@@ -182,8 +164,9 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="solar-puddle-55", type=str,
+    parser.add_argument('--resume_run', default="None", type=str,
                       help='wandb run name to resume training using the saved checkpoint')
+                      
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')

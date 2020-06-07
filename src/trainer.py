@@ -195,18 +195,18 @@ def evaluate_poses(config, model, val_loader, epoch, vae_type):
             n_samples += pjpe.shape[0]  # to calc overall mean
 
             # Poses Viz
-            if batch_idx < 1:
-                outputs.append(output)
-                targets.append(target)
-                errors.append(pjpe.mean(dim=1))
-            else:
-                break
-            # UMAP
-            if batch_idx < 10:
-                zs.append(z)
-                actions.append(batch['action'])
-            else:
-                break
+            # if batch_idx < 1:
+            #     outputs.append(output)
+            #     targets.append(target)
+            #     errors.append(pjpe.mean(dim=1))
+            # else:
+            #     break
+            # # UMAP
+            # if batch_idx < 10:
+            #     zs.append(z)
+            #     actions.append(batch['action'])
+            # else:
+            #     break
 
     # # Poses Viz
     # outputs = torch.cat(outputs, 0)

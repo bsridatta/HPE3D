@@ -64,6 +64,10 @@ class Encoder2D(nn.Module):
         x = self.LA_block(x)
         x = self.LA_block(x)
 
+        # extra
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
 

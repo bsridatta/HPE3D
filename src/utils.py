@@ -2,8 +2,8 @@ import sys
 
 import torch
 
-from models import (Decoder3D, DecoderRGB, 
-                    Encoder2D, EncoderRGB, 
+from models import (Decoder3D, DecoderRGB,
+                    Encoder2D, EncoderRGB,
                     image_recon_loss, MPJPE)
 
 
@@ -63,9 +63,8 @@ def get_schedulers(optimizers):
     '''
     schedulers = []
     for optimizer in optimizers:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min',
-                                                               patience=3, threshold=1e-2,
-                                                               factor=0.3, verbose=True)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5,
+                                                               factor=0.01, verbose=True)
         schedulers.append(scheduler)
 
     return schedulers
@@ -113,3 +112,26 @@ def get_inp_target_criterion(encoder, decoder, batch):
         exit()
 
     return (inp, target, criterion)
+
+def model_checkpoint(config, val_loss, model, optimizer, epoch):
+    if val_loss < config.val_loss_min:
+        config.val_loss_min = val_loss
+
+        for model_ in model:
+            try:
+                state_dict = model_.module.state_dict()
+            except AttributeError:
+                state_dict = model_.state_dict()
+
+            state = {
+                'epoch': epoch,
+                'val_loss': val_loss,
+                'model_state_dict': state_dict,
+                'optimizer_state_dict': optimizer.state_dict()
+            }
+            # TODO save optimizer state seperately
+            torch.save(state, f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+            config.logger.save(f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+            print(f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+
+            del state

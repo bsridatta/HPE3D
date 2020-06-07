@@ -27,7 +27,7 @@ def plot_diff(ax, pose, target, error):
     z1 = -1*target[:, 1]
 
     ax.scatter(x, y, z, alpha=0.6, s=2)
-    ax.scatter(x1, y1, z1, c='grey', s=1, alpha=0)
+    ax.scatter(x1, y1, z1, c='grey', s=1, alpha=0.7)
 
     verts = []
 
@@ -38,7 +38,7 @@ def plot_diff(ax, pose, target, error):
 
         ax.plot(x1[([link[0], link[1]])],
                 y1[([link[0], link[1]])], z1[([link[0], link[1]])],
-                c='grey', alpha=0, lw=1)
+                c='grey', alpha=0.6, lw=1)
 
         area = [(x[link[0]], y[link[0]], z[link[0]]),
                 (x[link[1]], y[link[1]], z[link[1]]),
@@ -49,7 +49,7 @@ def plot_diff(ax, pose, target, error):
         verts.append(area)
 
     ax.add_collection3d(Poly3DCollection(verts, facecolors=[
-                        'r', 'r'], alpha=0, zorder='max'))
+                        'r', 'r'], alpha=0.2, zorder='max'))
 
     # for i, j, k, l in zip(x, y, z, labels):
     #     ax.text(i, j, k, s=l, size=8, zorder=1, color='k')
