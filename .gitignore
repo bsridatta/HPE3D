@@ -10,7 +10,10 @@ reports
 
 # checkpoints
 */checkpoints/*.pt
+
+# Exceptions
 !solar-puddle-55*
+
 # data pickles
 *.h5
 
