@@ -1,5 +1,5 @@
 # TODO replace . with module path
-from .pose_models import (KLD, MPJPE, Decoder3D,
+from .pose_models import (KLD, PJPE, Decoder3D,
                           Encoder2D, reparameterize)
 from .rgb_models import DecoderRGB, EncoderRGB, image_recon_loss
 
@@ -11,6 +11,6 @@ __all__ = [
     'DecoderRGB',
     'reparameterize',
     'KLD',
-    'MPJPE',
+    'PJPE',
     'image_recon_loss'
 ]

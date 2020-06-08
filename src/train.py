@@ -1,13 +1,15 @@
 import os
 import sys
 from argparse import ArgumentParser
+import gc
 
 import torch
 import wandb
 
 import dataloader
 import utils
-from trainer import (evaluate_poses, sample_manifold, training_epoch,
+from models import PJPE
+from trainer import (sample_manifold, training_epoch,
                      validation_epoch)
 
 
@@ -32,6 +34,7 @@ def main():
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_TAGS'] = 'CPU'
     wandb.init(anonymous='allow', project="hpe3d")
 
     config.logger = wandb
@@ -102,7 +105,7 @@ def main():
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
             config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
-            # TODO add bad epochs
+            # TODO print bad epochs to optimize lr factor and patience
             
             # Train
             # TODO init criterion once with .to(cuda)
@@ -110,27 +113,31 @@ def main():
                            optimizer, epoch, vae_type)
 
             # Validation
-            val_loss = validation_epoch(
+            val_loss, recon, target = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
 
+            # for x in range(len(recon)):
+            #     print(torch.mean(abs(recon[x]-target[x])), x)
+            # Evaluate Performance
+            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
+                print(PJPE(recon, target))
+                pjpe = torch.mean(PJPE(recon, target), dim=0)
+                mpjpe = torch.mean(pjpe).item()
+                print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
             # Latent Space Sampling 
-            # TODO itegrate with evaluate_poses
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)
 
-            # Evaluate Performance
-            # if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-            #     evaluate_poses(config, model, val_loader, epoch, vae_type)
-
+            del recon, target
+            gc.collect()
+            
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
-
+            
             # Model Chechpoint
-            utils.model_checkpoint(config, val_loss, model, optimizer, epoch)
-
-    print("[INFO] Evaluating poses")
-    evaluate_poses(config, model, val_loader, epoch, vae_type)
+            if use_cuda:
+                utils.model_checkpoint(config, val_loss, model, optimizer, epoch)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -140,6 +147,31 @@ def main():
 def training_specific_args():
 
     parser = ArgumentParser()
+
+    # training specific
+    parser.add_argument('--epochs', default=1, type=int,
+                        help='number of epochs to train')
+    parser.add_argument('--batch_size', default=30, type=int,
+                        help='number of samples per step, have more than one for batch norm')
+    parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
+                        help='run all methods once to check integrity, not implemented!')
+    parser.add_argument('--resume_run', default="solar-puddle-55", type=str,
+                      help='wandb run name to resume training using the saved checkpoint')
+    # model specific
+    parser.add_argument('--variant', default=2, type=int,
+                        help='choose variant, the combination of VAEs to be trained')
+    parser.add_argument('--latent_dim', default=512, type=int,
+                        help='dimensions of the cross model latent space')
+    parser.add_argument('--beta', default=0.1, type=float,
+                        help='KLD weight')
+    parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='use pretrained weights for RGB encoder')
+    parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='train last convolution block of the RGB encoder while rest is pre-trained')
+    parser.add_argument('--n_joints', default=16, type=int,
+                        help='number of joints to encode and decode')
+    parser.add_argument('--learning_rate', default=1e-3, type=float,
+                        help='learning rate for all optimizers')
 
     # GPU
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
@@ -157,31 +189,6 @@ def training_specific_args():
                         help='path to image folders with subject action etc as folder names')
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
-    # training specific
-    parser.add_argument('--epochs', default=1, type=int,
-                        help='number of epochs to train')
-    parser.add_argument('--batch_size', default=30, type=int,
-                        help='number of samples per step, have more than one for batch norm')
-    parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="None", type=str,
-                      help='wandb run name to resume training using the saved checkpoint')
-                      
-    # model specific
-    parser.add_argument('--variant', default=2, type=int,
-                        help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=512, type=int,
-                        help='dimensions of the cross model latent space')
-    parser.add_argument('--beta', default=0.1, type=float,
-                        help='KLD weight')
-    parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='use pretrained weights for RGB encoder')
-    parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='train last convolution block of the RGB encoder while rest is pre-trained')
-    parser.add_argument('--n_joints', default=16, type=int,
-                        help='number of joints to encode and decode')
-    parser.add_argument('--learning_rate', default=1e-3, type=float,
-                        help='learning rate for all optimizers')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')

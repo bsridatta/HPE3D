@@ -6,8 +6,8 @@ import h5py
 import torch
 import torch.nn.functional as F
 
-from models import KLD, MPJPE, reparameterize
-from processing import denormalize
+from models import KLD, PJPE, reparameterize
+from processing import post_process
 from utils import get_inp_target_criterion
 from viz import plot_diff, plot_diffs
 
@@ -33,7 +33,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         optimizer.step()
 
         # if batch_idx % 100 == 0:
-        # save model
+        # backup model?
 
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
             vae_type, epoch, batch_idx * len(batch['pose2d']),
@@ -41,7 +41,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
             batch_idx / len(train_loader),
             loss.item(), recon_loss.item(), kld_loss.item()))
 
-        del loss, recon_loss, kld_loss
+    del loss, recon_loss, kld_loss, output
 
 
 def validation_epoch(config, model, val_loader, epoch, vae_type):
@@ -50,27 +50,38 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
     recon_loss = 0
     kld_loss = 0
 
+    all_recons = []
+    all_targets = []
+
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
             for key in batch.keys():
                 batch[key] = batch[key].to(config.device)
 
             output = _validation_step(batch, batch_idx, model, epoch, config)
-            # logging for val steps..skews the plot as wandb steps increase
-            # _log_validation_metrics(config, output, vae_type)
 
+            all_recons.append(output["recon"])
+            all_targets.append(output['target'])
+            
             loss += output['loss'].item()
             recon_loss += output['log']['recon_loss'].item()
             kld_loss += output['log']['kld_loss'].item()
 
     avg_loss = loss/len(val_loader)  # return for scheduler
 
+    # Return Predictions and Target for performace visualization
+    all_recons = torch.cat(all_recons, 0)
+    all_targets = torch.cat(all_targets, 0)
+    
+    if '3D' in model[1].name:
+        all_recons, all_targets = post_process(config, all_recons, all_targets) 
+
+    # Logging
     print(f'{vae_type} Validation:',
           f'\t\tLoss: {round(avg_loss,4)}',
           f'\tReCon: {round(recon_loss/len(val_loader), 4)}',
           f'\tKLD: {round(kld_loss/len(val_loader), 4)}')
 
-    # use _log_validation_metrics per epoch rather than batch
     avg_output = {}
     avg_output['loss'] = avg_loss
     avg_output['log'] = {}
@@ -79,9 +90,9 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
     _log_validation_metrics(config, avg_output, vae_type)
 
-    del loss, kld_loss, recon_loss
+    del loss, kld_loss, recon_loss, avg_output
 
-    return avg_loss
+    return avg_loss, all_recons, all_targets
 
 
 def _training_step(batch, batch_idx, model, config):
@@ -94,10 +105,10 @@ def _training_step(batch, batch_idx, model, config):
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar)
-    output = decoder(z)
-    output = output.view(target.shape)
+    recon = decoder(z)
+    recon = recon.view(target.shape)
 
-    recon_loss = criterion(output, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
+    recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss
 
@@ -117,120 +128,122 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar, eval=True)
-    output = decoder(z)
-    output = output.view(target.shape)
+    recon = decoder(z)
+    recon = recon.view(target.shape)
 
-    recon_loss = criterion(output, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
+    recon_loss = criterion(recon, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
-    # TODO could remove epoch and recon
-    return OrderedDict({'loss': loss, "log": logger_logs,  "recon": output,
+    # TODO could remove epoch
+    return OrderedDict({'loss': loss, "log": logger_logs,
+                        "recon": recon, "target": target,
                         "epoch": epoch})
 
 
-def evaluate_poses(config, model, val_loader, epoch, vae_type):
-    '''
-    Equivalent to merging validation epoch and validation step
-    But uses denormalized data to calculate MPJPE
-    '''
-    ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
-    norm_stats = h5py.File(
-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
-    pjpes = []
+# def evaluate_poses(config, model, val_loader, epoch, vae_type):
+#     '''
+#     Equivalent to merging validation epoch and validation step
+#     But uses denormalized data to calculate MPJPE
+#     '''
+#     ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
+#     norm_stats = h5py.File(
+#         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
 
-    zs = []
-    actions = []
+#     pjpes = []
 
-    outputs = []
-    targets = []
-    errors = []
+#     zs = []
+#     actions = []
 
-    n_samples = 0
-    with torch.no_grad():
-        for batch_idx, batch in enumerate(val_loader):
-            for key in batch.keys():
-                batch[key] = batch[key].to(config.device).long()
+#     outputs = []
+#     targets = []
+#     errors = []
 
-            # get models for eval
-            encoder = model[0]
-            decoder = model[1]
-            encoder.eval()
-            decoder.eval()
+#     n_samples = 0
+#     with torch.no_grad():
+#         for batch_idx, batch in enumerate(val_loader):
+#             for key in batch.keys():
+#                 batch[key] = batch[key].to(config.device).long()
 
-            inp, target, _ = get_inp_target_criterion(
-                encoder, decoder, batch)  # criterion - MSELoss not used
+#             # get models for eval
+#             encoder = model[0]
+#             decoder = model[1]
+#             encoder.eval()
+#             decoder.eval()
 
-            # forward pass
-            mean, logvar = encoder(inp)
-            z = reparameterize(mean, logvar, eval=True)
-            output = decoder(z)
-            output = output.view(target.shape)
+#             inp, target, _ = get_inp_target_criterion(
+#                 encoder, decoder, batch)  # criterion - MSELoss not used
 
-            # de-normalize data to original positions
-            output = denormalize(
-                output,
-                torch.tensor(norm_stats['mean3d'], device=config.device),
-                torch.tensor(norm_stats['std3d'], device=config.device))
-            target = denormalize(
-                target,
-                torch.tensor(norm_stats['mean3d'], device=config.device),
-                torch.tensor(norm_stats['std3d'], device=config.device))
+#             # forward pass
+#             mean, logvar = encoder(inp)
+#             z = reparameterize(mean, logvar, eval=True)
+#             output = decoder(z)
+#             output = output.view(target.shape)
 
-            # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
-            # Not very fair, but the average is with 17 in the denom!
-            output = torch.cat(
-                (torch.zeros(output.shape[0], 1, 3, device=config.device), output), dim=1)
-            target = torch.cat(
-                (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
+#             # de-normalize data to original positions
+#             output = denormalize(
+#                 output,
+#                 torch.tensor(norm_stats['mean3d'], device=config.device),
+#                 torch.tensor(norm_stats['std3d'], device=config.device))
+#             target = denormalize(
+#                 target,
+#                 torch.tensor(norm_stats['mean3d'], device=config.device),
+#                 torch.tensor(norm_stats['std3d'], device=config.device))
 
-            pjpe = MPJPE(output, target)
-            # TODO plot and save samples for say each action to see improvement
-            # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
-            pjpes.append(torch.sum(pjpe, dim=0))
-            n_samples += pjpe.shape[0]  # to calc overall mean
+#             # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
+#             # Not very fair, but the average is with 17 in the denom!
+#             output = torch.cat(
+#                 (torch.zeros(output.shape[0], 1, 3, device=config.device), output), dim=1)
+#             target = torch.cat(
+#                 (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
 
-            # Poses Viz
-            # if batch_idx < 1:
-            #     outputs.append(output)
-            #     targets.append(target)
-            #     errors.append(pjpe.mean(dim=1))
-            # else:
-            #     break
-            # # UMAP
-            # if batch_idx < 10:
-            #     zs.append(z)
-            #     actions.append(batch['action'])
-            # else:
-            #     break
+#             pjpe = MPJPE(output, target)
+#             # TODO plot and save samples for say each action to see improvement
+#             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
+#             pjpes.append(torch.sum(pjpe, dim=0))
+#             n_samples += pjpe.shape[0]  # to calc overall mean
 
-    # # Poses Viz
-    # outputs = torch.cat(outputs, 0)
-    # targets = torch.cat(targets, 0)
-    # errors = torch.cat(errors, 0)
+#             # Poses Viz
+#             # if batch_idx < 1:
+#             #     outputs.append(output)
+#             #     targets.append(target)
+#             #     errors.append(pjpe.mean(dim=1))
+#             # else:
+#             #     break
+#             # # UMAP
+#             # if batch_idx < 10:
+#             #     zs.append(z)
+#             #     actions.append(batch['action'])
+#             # else:
+#             #     break
 
-    # plot_diffs(outputs, targets, errors, grid=4)
+#     # # Poses Viz
+#     # outputs = torch.cat(outputs, 0)
+#     # targets = torch.cat(targets, 0)
+#     # errors = torch.cat(errors, 0)
 
-    # # UMAP
-    # zs = torch.cat(zs, 0)
-    # actions = torch.cat(actions, 0)
-    # plot_umap(zs, actions)
+#     # plot_diffs(outputs, targets, errors, grid=4)
 
-    # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
-    mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
-    avg_mpjpe = torch.mean(mpjpe).item()
+#     # # UMAP
+#     # zs = torch.cat(zs, 0)
+#     # actions = torch.cat(actions, 0)
+#     # plot_umap(zs, actions)
 
-    config.logger.log({"MPJPE_AVG": avg_mpjpe})
+#     # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
+#     mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
+#     avg_mpjpe = torch.mean(mpjpe).item()
 
-    print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
+#     config.logger.log({"MPJPE_AVG": avg_mpjpe})
 
-    norm_stats.close()
-    del pjpes, mpjpe, zs, actions, norm_stats
-    gc.collect()
+#     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
+
+#     norm_stats.close()
+#     del pjpes, mpjpe, zs, actions, norm_stats
+#     gc.collect()
 
 
 def sample_manifold(config, model):

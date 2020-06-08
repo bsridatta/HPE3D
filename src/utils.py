@@ -4,7 +4,7 @@ import torch
 
 from models import (Decoder3D, DecoderRGB,
                     Encoder2D, EncoderRGB,
-                    image_recon_loss, MPJPE)
+                    image_recon_loss, PJPE)
 
 
 def get_models(variants, config):
@@ -64,7 +64,7 @@ def get_schedulers(optimizers):
     schedulers = []
     for optimizer in optimizers:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5,
-                                                               factor=0.01, verbose=True)
+                                                               factor=0.1, verbose=True)
         schedulers.append(scheduler)
 
     return schedulers
@@ -105,7 +105,7 @@ def get_inp_target_criterion(encoder, decoder, batch):
         criterion = torch.nn.L1Loss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
-        # criterion = MPJPE
+        # criterion = PJPE
         criterion = torch.nn.MSELoss()
     else:
         print("MODEL NOT DEFINED")

@@ -7,12 +7,12 @@ import gc
 import torch
 import wandb
 import h5py
-sys.path.insert(0, '..')
+sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
 
 import utils
 import dataloader
 from processing import denormalize
-from models.pose_models import MPJPE
+from models.pose_models import PJPE
 
 def main():
     # Experiment Configuration
@@ -35,6 +35,8 @@ def main():
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_TAGS'] = 'CPU'
+
     wandb.init(anonymous='allow', project="hpe3d")
     config.logger = wandb
 
@@ -49,8 +51,6 @@ def main():
     val_loader = dataloader.val_dataloader(config)
 
     model = LinearModel()
-    print(model)
-    exit()
     model.apply(weight_init)
     print(">>> total params: {:.2f}M".format(sum(p.numel()
                                                  for p in model.parameters()) / 1000000.0))
@@ -94,7 +94,6 @@ def main():
                 loss.item()))
 
             config.logger.log({"loss": loss.item()})
-
 
             loss.backward()
             optimizer.step()
@@ -144,7 +143,7 @@ def evaluate_poses(config, model, val_loader, epoch):
             target = torch.cat(
                 (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
 
-            pjpe = MPJPE(output, target)
+            pjpe = PJPE(output, target)
             # TODO plot and save samples for say each action to see improvement
             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
             pjpes.append(torch.sum(pjpe, dim=0))

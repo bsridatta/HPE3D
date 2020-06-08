@@ -152,9 +152,9 @@ def reparameterize(mean, logvar, eval=False):
     return mean + eps*std
 
 
-def MPJPE(pred, target):
+def PJPE(pred, target):
     '''
-    Calculation per sample per sample in batch
+    Equation per sample per sample in batch
     PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2)
 
     Arguments:
@@ -212,7 +212,7 @@ def test(inp, target):
         z = reparameterize(mean, logvar)
         pose3d = decoder_3d(z)
         pose3d = pose3d.view(-1, 16, 3)
-        recon_loss = MPJPE(pose3d, target)
+        recon_loss = PJPE(pose3d, target)
         # loss = nn.functional.l1_loss(pose3d, target)
         kld_loss = KLD(mean, logvar, decoder_3d.__class__.__name__)
         print("2D -> 3D", recon_loss)
