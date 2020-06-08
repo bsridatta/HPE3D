@@ -39,7 +39,9 @@ def main():
 
     config.logger = wandb
     config.logger.run.save()
-
+    # To id weights even after changing run name
+    config.run_name = config.logger.run.name 
+    
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}') 
 
@@ -109,8 +111,8 @@ def main():
             
             # Train
             # TODO init criterion once with .to(cuda)
-            # training_epoch(config, model, train_loader,
-                        #    optimizer, epoch, vae_type)
+            training_epoch(config, model, train_loader,
+                           optimizer, epoch, vae_type)
 
             # Validation
             val_loss, recon, target = validation_epoch(
@@ -124,6 +126,8 @@ def main():
                 pjpe = torch.mean(PJPE(recon, target), dim=0)
                 mpjpe = torch.mean(pjpe).item()
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
+                wandb.log({f'{vae_type}_mpjpe': mpjpe})
+
             # Latent Space Sampling 
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)
