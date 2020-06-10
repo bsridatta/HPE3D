@@ -87,6 +87,7 @@ class H36M(Dataset):
         return len(self.annotations['idx'])
 
     def __getitem__(self, idx):
+
         # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:

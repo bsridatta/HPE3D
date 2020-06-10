@@ -5,7 +5,6 @@ import gc
 
 import torch
 import wandb
-import torch.multiprocessing as mp
 
 import dataloader
 import utils
@@ -30,19 +29,15 @@ def main():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 4 if use_cuda else 4  # for dataloader
+    config.num_workers = 1 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
         os.environ['WANDB_TAGS'] = 'CPU'
-    else:
-        mp.set_start_method('spawn')
-    
+        
     wandb.init(anonymous='allow', project="hpe3d")
     
-
-
     config.logger = wandb
     config.logger.run.save()
     # To id weights even after changing run name
