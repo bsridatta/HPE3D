@@ -57,7 +57,7 @@ class H36M(Dataset):
         # Load annotations entirely to device
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
-                self.annotations[key], dtype=torch.float32, device=device)
+                self.annotations[key], dtype=torch.float32)
                 
         # save norm_stats to denormalize data for evaluation
         subj_name = "".join(str(sub) for sub in subjects)
