@@ -29,7 +29,7 @@ def main():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 1 if use_cuda else 4  # for dataloader
+    config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
