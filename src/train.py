@@ -118,11 +118,8 @@ def main():
             val_loss, recon, target = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
 
-            # for x in range(len(recon)):
-            #     print(torch.mean(abs(recon[x]-target[x])), x)
             # Evaluate Performance
             if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-                print(PJPE(recon, target))
                 pjpe = torch.mean(PJPE(recon, target), dim=0)
                 mpjpe = torch.mean(pjpe).item()
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
@@ -176,7 +173,6 @@ def training_specific_args():
                         help='number of joints to encode and decode')
     parser.add_argument('--learning_rate', default=1e-3, type=float,
                         help='learning rate for all optimizers')
-
     # GPU
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='enable cuda if available')
