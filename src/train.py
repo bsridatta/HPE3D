@@ -5,6 +5,7 @@ import gc
 
 import torch
 import wandb
+import torch.multiprocessing as mp
 
 import dataloader
 import utils
@@ -35,7 +36,12 @@ def main():
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
         os.environ['WANDB_TAGS'] = 'CPU'
+    else:
+        mp.set_start_method('spawn')
+    
     wandb.init(anonymous='allow', project="hpe3d")
+    
+
 
     config.logger = wandb
     config.logger.run.save()
