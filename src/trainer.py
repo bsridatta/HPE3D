@@ -52,6 +52,8 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
     all_recons = []
     all_targets = []
+    all_zs = []
+    all_z_attrs = []
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -62,19 +64,25 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
             all_recons.append(output["recon"])
             all_targets.append(output['target'])
-            
+            all_zs.append(output["z"])
+            all_z_attrs.append(output["z_attr"])
+
             loss += output['loss'].item()
             recon_loss += output['log']['recon_loss'].item()
             kld_loss += output['log']['kld_loss'].item()
+            del output
+            gc.collect()
 
     avg_loss = loss/len(val_loader)  # return for scheduler
 
     # Return Predictions and Target for performace visualization
     all_recons = torch.cat(all_recons, 0)
     all_targets = torch.cat(all_targets, 0)
-    
+    all_zs = torch.cat(all_zs, 0)
+    all_z_attrs = torch.cat(all_z_attrs, 0)
+
     if '3D' in model[1].name:
-        all_recons, all_targets = post_process(config, all_recons, all_targets) 
+        all_recons, all_targets = post_process(config, all_recons, all_targets)
 
     # Logging
     print(f'{vae_type} Validation:',
@@ -92,7 +100,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
 
     del loss, kld_loss, recon_loss, avg_output
 
-    return avg_loss, all_recons, all_targets
+    return avg_loss, all_recons, all_targets, all_zs, all_z_attrs
 
 
 def _training_step(batch, batch_idx, model, config):
@@ -141,109 +149,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     # TODO could remove epoch
     return OrderedDict({'loss': loss, "log": logger_logs,
                         "recon": recon, "target": target,
-                        "epoch": epoch})
-
-
-
-# def evaluate_poses(config, model, val_loader, epoch, vae_type):
-#     '''
-#     Equivalent to merging validation epoch and validation step
-#     But uses denormalized data to calculate MPJPE
-#     '''
-#     ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
-#     norm_stats = h5py.File(
-#         f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
-
-#     pjpes = []
-
-#     zs = []
-#     actions = []
-
-#     outputs = []
-#     targets = []
-#     errors = []
-
-#     n_samples = 0
-#     with torch.no_grad():
-#         for batch_idx, batch in enumerate(val_loader):
-#             for key in batch.keys():
-#                 batch[key] = batch[key].to(config.device).long()
-
-#             # get models for eval
-#             encoder = model[0]
-#             decoder = model[1]
-#             encoder.eval()
-#             decoder.eval()
-
-#             inp, target, _ = get_inp_target_criterion(
-#                 encoder, decoder, batch)  # criterion - MSELoss not used
-
-#             # forward pass
-#             mean, logvar = encoder(inp)
-#             z = reparameterize(mean, logvar, eval=True)
-#             output = decoder(z)
-#             output = output.view(target.shape)
-
-#             # de-normalize data to original positions
-#             output = denormalize(
-#                 output,
-#                 torch.tensor(norm_stats['mean3d'], device=config.device),
-#                 torch.tensor(norm_stats['std3d'], device=config.device))
-#             target = denormalize(
-#                 target,
-#                 torch.tensor(norm_stats['mean3d'], device=config.device),
-#                 torch.tensor(norm_stats['std3d'], device=config.device))
-
-#             # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
-#             # Not very fair, but the average is with 17 in the denom!
-#             output = torch.cat(
-#                 (torch.zeros(output.shape[0], 1, 3, device=config.device), output), dim=1)
-#             target = torch.cat(
-#                 (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
-
-#             pjpe = MPJPE(output, target)
-#             # TODO plot and save samples for say each action to see improvement
-#             # plot_diff(output[0].numpy(), target[0].numpy(), torch.mean(mpjpe).item())
-#             pjpes.append(torch.sum(pjpe, dim=0))
-#             n_samples += pjpe.shape[0]  # to calc overall mean
-
-#             # Poses Viz
-#             # if batch_idx < 1:
-#             #     outputs.append(output)
-#             #     targets.append(target)
-#             #     errors.append(pjpe.mean(dim=1))
-#             # else:
-#             #     break
-#             # # UMAP
-#             # if batch_idx < 10:
-#             #     zs.append(z)
-#             #     actions.append(batch['action'])
-#             # else:
-#             #     break
-
-#     # # Poses Viz
-#     # outputs = torch.cat(outputs, 0)
-#     # targets = torch.cat(targets, 0)
-#     # errors = torch.cat(errors, 0)
-
-#     # plot_diffs(outputs, targets, errors, grid=4)
-
-#     # # UMAP
-#     # zs = torch.cat(zs, 0)
-#     # actions = torch.cat(actions, 0)
-#     # plot_umap(zs, actions)
-
-#     # mpjpe = torch.stack(pjpes, dim=0).mean(dim=0)
-#     mpjpe = torch.stack(pjpes, dim=0).sum(dim=0)/n_samples
-#     avg_mpjpe = torch.mean(mpjpe).item()
-
-#     config.logger.log({"MPJPE_AVG": avg_mpjpe})
-
-#     print(f'{vae_type} - * Mean MPJPE * : {round(avg_mpjpe,4)} \n {mpjpe}')
-
-#     norm_stats.close()
-#     del pjpes, mpjpe, zs, actions, norm_stats
-#     gc.collect()
+                        "z": z, "z_attr": batch['action'], "epoch": epoch})
 
 
 def sample_manifold(config, model):
@@ -289,7 +195,7 @@ def _log_validation_metrics(config, output, vae_type):
     })
 
 
-def plot_umap(zs, actions):
+def plot_umap(zs, z_attrs):
     import umap
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -298,7 +204,7 @@ def plot_umap(zs, actions):
     embedding = reducer.fit_transform(zs)
     print(embedding.shape)
     plt.scatter(embedding[:, 0], embedding[:, 1], c=[
-                sns.color_palette("husl", 17)[x] for x in actions.tolist()])
+                sns.color_palette("husl", 17)[x] for x in z_attrs.tolist()])
     plt.gca().set_aspect('equal', 'datalim')
     plt.title('UMAP projection of Z', fontsize=24)
     plt.show()

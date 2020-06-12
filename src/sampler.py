@@ -113,11 +113,11 @@ def main():
             
             # Train
             # TODO init criterion once with .to(cuda)
-            training_epoch(config, model, train_loader,
-                           optimizer, epoch, vae_type)
+            # training_epoch(config, model, train_loader,
+            #                optimizer, epoch, vae_type)
 
             # Validation
-            val_loss, recon, target, z, z_attr = validation_epoch(
+            val_loss, recon, target, z, action = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
 
             # Evaluate Performance
@@ -127,11 +127,13 @@ def main():
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
 
+                # plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
+                plot_umap(z, action)
             # Latent Space Sampling 
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)
 
-            del recon, target, z, z_attr
+            del recon, target
             gc.collect()
             
             # TODO have different learning rates for all variants
@@ -145,6 +147,22 @@ def main():
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
+
+def plot_umap(zs, actions):
+    import umap
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    print("[INFO] UMAP reducing ", zs.shape)
+    reducer = umap.UMAP(n_neighbors=100,
+                 min_dist=0.1,
+                 metric='cosine')
+    embedding = reducer.fit_transform(zs)
+    print(embedding.shape)
+    plt.scatter(embedding[:, 0], embedding[:, 1], c=[
+                sns.color_palette("husl", 17)[int(x)] for x in actions.tolist()])
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP projection of Z', fontsize=24)
+    plt.show()
 
 
 def training_specific_args():
@@ -183,13 +201,13 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data
-    parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
     parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
-    parser.add_argument('--ignore_images', default=True, type=lambda x: (str(x).lower() == 'true'),
+    parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,

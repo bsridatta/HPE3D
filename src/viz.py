@@ -88,5 +88,20 @@ def plot_diffs(poses, targets, errors, grid=5):
         ax = fig.add_subplot(rows, cols, i+1, projection='3d')
         ax = plot_diff(ax, poses[i].numpy(), targets[i].numpy(), errors[i].item())
 
+    plt.show()
 
+def plot_umap(zs, actions):
+    import umap
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    print("[INFO] UMAP reducing ", zs.shape)
+    reducer = umap.UMAP(n_neighbors=100,
+                 min_dist=0.1,
+                 metric='cosine')
+    embedding = reducer.fit_transform(zs)
+    print(embedding.shape)
+    plt.scatter(embedding[:, 0], embedding[:, 1], c=[
+                sns.color_palette("husl", 17)[int(x)] for x in actions.tolist()])
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP projection of Z', fontsize=24)
     plt.show()
