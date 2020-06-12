@@ -112,8 +112,8 @@ def main():
             
             # Train
             # TODO init criterion once with .to(cuda)
-            training_epoch(config, model, train_loader,
-                           optimizer, epoch, vae_type)
+            # training_epoch(config, model, train_loader,
+            #                optimizer, epoch, vae_type)
 
             # Validation
             val_loss, recon, target = validation_epoch(
