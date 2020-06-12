@@ -12,7 +12,7 @@ reports
 */checkpoints/*.pt
 
 # Exceptions
-!solar-puddle-55*
+!light-morning-232*
 
 # data pickles
 *.h5
