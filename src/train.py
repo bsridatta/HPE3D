@@ -58,7 +58,7 @@ def main():
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
-        3: [['rgb', 'rgb']],
+        3: [['rgb', '3d']],
         4: [['rgb','rgb'],['2d','3d'],['rgb','3d']]}
         
     variants = variant_dic[config.variant]
