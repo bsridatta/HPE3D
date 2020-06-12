@@ -9,7 +9,6 @@ import torch.nn.functional as F
 from models import KLD, PJPE, reparameterize
 from processing import post_process
 from utils import get_inp_target_criterion
-from viz import plot_diff, plot_diffs
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -195,16 +194,4 @@ def _log_validation_metrics(config, output, vae_type):
     })
 
 
-def plot_umap(zs, z_attrs):
-    import umap
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    print("[INFO] UMAP reducing ", zs.shape)
-    reducer = umap.UMAP()
-    embedding = reducer.fit_transform(zs)
-    print(embedding.shape)
-    plt.scatter(embedding[:, 0], embedding[:, 1], c=[
-                sns.color_palette("husl", 17)[x] for x in z_attrs.tolist()])
-    plt.gca().set_aspect('equal', 'datalim')
-    plt.title('UMAP projection of Z', fontsize=24)
-    plt.show()
+

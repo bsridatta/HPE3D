@@ -85,8 +85,8 @@ def main():
     if config.resume_run not in "None":
         for vae in range(len(models)):
             for model_ in models[vae]:
-                print(f'[INFO] Loading Checkpoint {config.resume_run}: {model_.name}')
                 state = torch.load(f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=device)
+                print(f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
                 model_.load_state_dict(state['model_state_dict'])
                 optimizers[vae].load_state_dict(state['optimizer_state_dict'])
                 # TODO load optimizer state seperately w.r.t variant
