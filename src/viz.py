@@ -101,7 +101,8 @@ def plot_umap(zs, actions):
     embedding = reducer.fit_transform(zs)
     print(embedding.shape)
     plt.scatter(embedding[:, 0], embedding[:, 1], c=[
-                sns.color_palette("husl", 17)[int(x)] for x in actions.tolist()])
+                sns.color_palette("husl", 17)[int(x)] for x in actions.tolist()],
+                alpha=0.3)
     plt.gca().set_aspect('equal', 'datalim')
     plt.title('UMAP projection of Z', fontsize=24)
     plt.show()
