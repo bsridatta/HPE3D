@@ -53,20 +53,20 @@ class Encoder2D(nn.Module):
 
         # to explore
         '''BaseLine whole model'''
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
+        # residual = x
+        # x = self.LBAD_block(x)
+        # x = self.LBAD_block(x) + residual
         # residual = x
         # x = self.LBAD_block(x)
         # x = self.LBAD_block(x) + residual
 
         '''Hands VAE'''
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
 
-        # # extra
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
+        # extra
+        x = self.LA_block(x)
+        x = self.LA_block(x)
         
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
@@ -122,19 +122,19 @@ class Decoder3D(nn.Module):
 
         # To explore
         '''BaseLine whole model'''
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
+        # residual = x
+        # x = self.LBAD_block(x)
+        # x = self.LBAD_block(x) + residual
         # residual = x
         # x = self.LBAD_block(x)
         # x = self.LBAD_block(x) + residual
 
         '''VAE Hand'''
 
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
 
         x = self.dec_out_block(x)
 
