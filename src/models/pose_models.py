@@ -12,7 +12,7 @@ class Encoder2D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 1024
+        self.neurons = 512
         self.name = "Encoder2D"
 
         self.__build_model()
@@ -84,7 +84,7 @@ class Decoder3D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 1024
+        self.neurons = 512
         self.name = "Decoder3D"
 
         self.__build_model()
