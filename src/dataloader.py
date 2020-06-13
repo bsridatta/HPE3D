@@ -50,6 +50,9 @@ def val_dataloader(config):
 
     return loader
 
+'''
+test function for time p
+'''
 
 def test_dataloader(config):
     print(f'[INFO]: Test data loader called')
@@ -72,16 +75,19 @@ def test_dataloader(config):
 def test():
     from input_reader import Namespace
     config = Namespace()
-    config.train_subjects = [1]
-    config.annotation_file = "data/debug_h36m17.h5"
-    config.image_path = '../../HPE_datasets/h36m/'
+    config.train_subjects = [1,5,6,7,8]
+    config.annotation_path = "/home/datta/lab/HPE3D/src/data"
+    config.annotation_file = "debug_h36m17"
+    config.image_path = '/home/datta/lab/HPE_datasets/h36m/'
     config.batch_size = 4
     config.num_workers = 0
     config.pin_memory = False
-
+    config.ignore_images = False
+    config.device = "cpu"
     train_loader = train_dataloader(config)
     for batch_idx, batch in enumerate(train_loader):
-        print(batch_idx, len(batch))
+        # print(batch_idx, len(batch))
+        pass
 
 
 if __name__ == "__main__":

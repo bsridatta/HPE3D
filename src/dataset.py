@@ -6,12 +6,18 @@ import h5py
 import numpy as np
 import pandas as pd
 import torch
-from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
 from processing import preprocess
 import time
+from accimage import Image
+
+
+# try:
+#     # High performance image loader from PyTorch
+# except ImportError as error:
+#     import PIL as Image
 
 
 class H36M(Dataset):
@@ -19,9 +25,9 @@ class H36M(Dataset):
     def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None):
         self.no_images = no_images  # incase of only lifting 2D-3D
         self.device = device
+       
         # Data Specific Information
         # Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
-
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
                          (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
         self.joints_name = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
@@ -29,7 +35,7 @@ class H36M(Dataset):
         self.flip_pairs = ((1, 4), (2, 5), (3, 6),
                            (14, 11), (15, 12), (16, 13))
         self.root_idx = self.joints_name.index('Pelvis')
-        
+
         ignore_data = ["pose3d_global","bbox","cam_f","cam_c","cam_R","cam_T"]
 
         # get labels and metadata including camera parameters
@@ -41,7 +47,8 @@ class H36M(Dataset):
             annotations_h5 = h5py.File(
                 f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}_{subj_name}.h5', 'r')
 
-        self.annotations = {}  # to store only the subjects of interest
+        # store only the subjects of interest
+        self.annotations = {}  
         for key in annotations_h5.keys():
             if key not in ignore_data:
                 self.annotations[key] = annotations_h5[key][:]
@@ -51,10 +58,10 @@ class H36M(Dataset):
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
 
-        # to avoid query for every __getitem__
+        # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
         
-        # Load annotations entirely to device
+        # covert data to tensor after preprocessing with numpy (hard with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
@@ -64,7 +71,6 @@ class H36M(Dataset):
         norm_stats_name = f"norm_stats_{annotation_file}_{subj_name}.h5"
         f = h5py.File(
             f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
-
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
@@ -83,7 +89,7 @@ class H36M(Dataset):
         ])
 
     def __len__(self):
-        # contains the index of the image files
+        # idx - index of the image files
         return len(self.annotations['idx'])
 
     def __getitem__(self, idx):
@@ -105,7 +111,7 @@ class H36M(Dataset):
         image_file = self.image_path+image_dir+'/' +\
             image_dir+"_"+("%06d" % (sample['idx']))+".jpg"
 
-        image_tmp = Image.open(image_file)
+        image_tmp = Image(image_file)
         image = image_tmp.copy()
         image = np.array(image)
         image = self.augmentations(image=image)['image']

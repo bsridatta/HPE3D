@@ -154,20 +154,20 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=1, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=30, type=int,
+    parser.add_argument('--batch_size', default=5, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="light-morning-232", type=str,
+    parser.add_argument('--resume_run', default="None", type=str,
                       help='wandb run name to resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=2, type=int,
+    parser.add_argument('--variant', default=3, type=int,
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=512, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--beta', default=0.1, type=float,
                         help='KLD weight')
-    parser.add_argument('--pretrained', default=False, type=lambda x: (str(x).lower() == 'true'),
+    parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
     parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='train last convolution block of the RGB encoder while rest is pre-trained')
@@ -189,7 +189,7 @@ def training_specific_args():
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
     parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
-    parser.add_argument('--ignore_images', default=True, type=lambda x: (str(x).lower() == 'true'),
+    parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
