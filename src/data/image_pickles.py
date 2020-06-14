@@ -3,15 +3,10 @@ import numpy as numpy
 import joblib
 import glob
 from tqdm import tqdm
+import PIL as Image
 
 
 if __name__ == "__main__":
-
-    try:
-        # High performance image loader from PyTorch
-        import accimage as Image
-    except ImportError as error:
-        import PIL as Image
 
     # files = glob.glob(f'/home/datta/lab/HPE_datasets/h36m/')
     files = glob.glob(f'/home/datta/lab/HPE_datasets/h36m/s_05_act_06_subact_01_ca_01/*')

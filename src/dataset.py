@@ -8,6 +8,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+import albumentations
 
 from processing import preprocess, normalize_image
 import time
@@ -81,6 +82,11 @@ class H36M(Dataset):
         # load image directly in __getitem__
         self.image_path = image_path
 
+        self.augmentations = albumentations.Compose([
+            albumentations.Normalize(always_apply=True)
+        ])
+
+
     def __len__(self):
         # idx - index of the image files
         return len(self.annotations['idx'])
@@ -111,7 +117,9 @@ class H36M(Dataset):
         image_tmp = Image.open(image_file)
         image = np.array(image_tmp)
         image = normalize_image(image)
-        image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+        # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+        image = self.augmentations(image=image)['image']
+
         image = torch.tensor(image, dtype=torch.float32)
 
         # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
@@ -120,7 +128,7 @@ class H36M(Dataset):
         # clear PIL
         image_tmp.close()
         del image_tmp
-        gc.collect()
+        # gc.collect()
 
         return image
 
