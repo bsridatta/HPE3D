@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 import torch
 
+
 def zero_the_root(pose3d, root_idx):
     '''
     center around root - pelvis
@@ -124,3 +125,20 @@ def post_process(config, recon, target):
     gc.collect()
 
     return recon, target
+
+
+def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0):
+    """Code from Albumentations"""
+    mean = np.array(mean, dtype=np.float32)
+    mean *= max_pixel_value
+
+    std = np.array(std, dtype=np.float32)
+    std *= max_pixel_value
+
+    denominator = np.reciprocal(std, dtype=np.float32)
+
+    img = img.astype(np.float32)
+    img -= mean
+    img *= denominator
+    
+    return img

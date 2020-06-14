@@ -36,16 +36,16 @@ def main():
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
         os.environ['WANDB_TAGS'] = 'CPU'
-        
+
     wandb.init(anonymous='allow', project="hpe3d")
-    
+
     config.logger = wandb
     config.logger.run.save()
     # To id weights even after changing run name
-    config.run_name = config.logger.run.name 
-    
+    config.run_name = config.logger.run.name
+
     # prints after init, so its logged in wandb
-    print(f'[INFO]: using device: {device}') 
+    print(f'[INFO]: using device: {device}')
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
@@ -59,8 +59,8 @@ def main():
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
         3: [['rgb', '3d']],
-        4: [['rgb','rgb'],['2d','3d'],['rgb','3d']]}
-        
+        4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']]}
+
     variants = variant_dic[config.variant]
 
     # Intuition: Each variant is one model,
@@ -85,14 +85,17 @@ def main():
     if config.resume_run not in "None":
         for vae in range(len(models)):
             for model_ in models[vae]:
-                state = torch.load(f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=device)
-                print(f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
+                state = torch.load(
+                    f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=device)
+                print(
+                    f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
                 model_.load_state_dict(state['model_state_dict'])
                 optimizers[vae].load_state_dict(state['optimizer_state_dict'])
                 # TODO load optimizer state seperately w.r.t variant
 
     print(f'[INFO]: Start training procedure')
-    wandb.save(f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
+    wandb.save(
+        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
     config.val_loss_min = float('inf')
 
@@ -108,9 +111,10 @@ def main():
             model = models[variant]
             optimizer = optimizers[variant]
             scheduler = schedulers[variant]
-            config.logger.log({f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
+            config.logger.log(
+                {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
             # TODO print bad epochs to optimize lr factor and patience
-            
+
             # Train
             # TODO init criterion once with .to(cuda)
             training_epoch(config, model, train_loader,
@@ -127,20 +131,21 @@ def main():
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
 
-            # Latent Space Sampling 
+            # Latent Space Sampling
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)
 
             del recon, target, z, z_attr
             gc.collect()
-            
+
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
-            
+
             # Model Chechpoint
             if use_cuda:
-                utils.model_checkpoint(config, val_loss, model, optimizer, epoch)
+                utils.model_checkpoint(
+                    config, val_loss, model, optimizer, epoch)
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -159,11 +164,11 @@ def training_specific_args():
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
     parser.add_argument('--resume_run', default="None", type=str,
-                      help='wandb run name to resume training using the saved checkpoint')
+                        help='wandb run name to resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=3, type=int,
+    parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=512, type=int,
+    parser.add_argument('--latent_dim', default=200, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--beta', default=0.1, type=float,
                         help='KLD weight')

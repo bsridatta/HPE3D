@@ -14,7 +14,7 @@ the dataloader is same for test/train/val
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M(config.train_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path)
+                   config.image_path, config.ignore_images, config.device, config.annotation_path, "train")
     # alterantive for debug dataset
     # sampler = SubsetRandomSampler(
     #     range(2*config.batch_size)) if config.fast_dev_run else None
@@ -50,9 +50,11 @@ def val_dataloader(config):
 
     return loader
 
+
 '''
 test function for time p
 '''
+
 
 def test_dataloader(config):
     print(f'[INFO]: Test data loader called')
@@ -75,7 +77,7 @@ def test_dataloader(config):
 def test():
     from input_reader import Namespace
     config = Namespace()
-    config.train_subjects = [1,5,6,7,8]
+    config.train_subjects = [1, 5, 6, 7, 8]
     config.annotation_path = "/home/datta/lab/HPE3D/src/data"
     config.annotation_file = "debug_h36m17"
     config.image_path = '/home/datta/lab/HPE_datasets/h36m/'

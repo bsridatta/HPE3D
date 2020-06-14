@@ -1,42 +1,39 @@
 import gc
 import os
 
-import albumentations
 import h5py
 import numpy as np
 import pandas as pd
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from processing import preprocess
+from processing import preprocess, normalize_image
 import time
-from accimage import Image
-
-
-# try:
-#     # High performance image loader from PyTorch
-# except ImportError as error:
-#     import PIL as Image
 
 
 class H36M(Dataset):
 
-    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None):
+    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False):
         self.no_images = no_images  # incase of only lifting 2D-3D
         self.device = device
-       
+        self.train = train
+
         # Data Specific Information
-        # Reference - https://github.com/mks0601/3DMPPE_POSENET_RELEASE/blob/master/data/Human36M/Human36M.py
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
                          (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
         self.joints_name = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
                             'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-        self.flip_pairs = ((1, 4), (2, 5), (3, 6),
-                           (14, 11), (15, 12), (16, 13))
+        # self.flip_pairs = ((1, 4), (2, 5), (3, 6),
+        #                    (14, 11), (15, 12), (16, 13))
+        self.flipped_indices = [0, 4, 5, 6, 1, 2, 3,
+                              7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
+
         self.root_idx = self.joints_name.index('Pelvis')
 
-        ignore_data = ["pose3d_global","bbox","cam_f","cam_c","cam_R","cam_T"]
+        ignore_data = ["pose3d_global", "bbox",
+                       "cam_f", "cam_c", "cam_R", "cam_T"]
 
         # get labels and metadata including camera parameters
         subj_name = "".join(str(sub) for sub in subjects)
@@ -48,7 +45,7 @@ class H36M(Dataset):
                 f'{os.path.dirname(os.path.abspath(__file__))}/data/{annotation_file}_{subj_name}.h5', 'r')
 
         # store only the subjects of interest
-        self.annotations = {}  
+        self.annotations = {}
         for key in annotations_h5.keys():
             if key not in ignore_data:
                 self.annotations[key] = annotations_h5[key][:]
@@ -60,12 +57,12 @@ class H36M(Dataset):
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
-        
+
         # covert data to tensor after preprocessing with numpy (hard with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
-                
+
         # save norm_stats to denormalize data for evaluation
         subj_name = "".join(str(sub) for sub in subjects)
         norm_stats_name = f"norm_stats_{annotation_file}_{subj_name}.h5"
@@ -84,10 +81,6 @@ class H36M(Dataset):
         # load image directly in __getitem__
         self.image_path = image_path
 
-        self.augmentations = albumentations.Compose([
-            albumentations.Normalize(always_apply=True)
-        ])
-
     def __len__(self):
         # idx - index of the image files
         return len(self.annotations['idx'])
@@ -101,6 +94,10 @@ class H36M(Dataset):
         if not self.no_images:
             image = self.get_image_tensor(sample)
             sample['image'] = image
+        # Augmentation - Flip
+        # if self.train and np.random.random < 0.5:
+        #     sample = flip(sample)
+
         return sample
 
     def get_image_tensor(self, sample):
@@ -111,10 +108,9 @@ class H36M(Dataset):
         image_file = self.image_path+image_dir+'/' +\
             image_dir+"_"+("%06d" % (sample['idx']))+".jpg"
 
-        image_tmp = Image(image_file)
-        image = image_tmp.copy()
-        image = np.array(image)
-        image = self.augmentations(image=image)['image']
+        image_tmp = Image.open(image_file)
+        image = np.array(image_tmp)
+        image = normalize_image(image)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
 
@@ -128,6 +124,18 @@ class H36M(Dataset):
 
         return image
 
+    def flip(self, sample):
+        pose2d_flip = sample['pose2d'].clone()
+        pose3d_flip = sample['pose3d'].clone()
+
+        for idx, x in self.flipped_indices:
+            pose2d_flip[idx] = sample['pose2d'][x]
+            pose3d_flip[idx] = sample['pose3d'][x]
+
+        sample['pose2d'] = pose2d_flip
+        sample['pose3d'] = pose3d_flip
+        
+        del pose2d_flip, pose3d_flip
 
 '''
 Can be used to get norm stats for all subjects
@@ -138,7 +146,8 @@ def test_h36m():
     annotation_file = f'debug_h36m17'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
-    dataset = H36M([1, 5, 6, 7, 8, 9, 11], annotation_file, image_path)
+    dataset = H36M([1, 5, 6, 7, 8, 9, 11],
+                   annotation_file, image_path, train=True)
 
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
