@@ -98,10 +98,9 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
     config.val_loss_min = float('inf')
-
+    
     # Training
     for epoch in range(1, config.epochs+1):
-        config.logger.log({"epoch": epoch})
 
         for variant in range(len(variants)):
             # Variant specific players
@@ -113,7 +112,6 @@ def main():
             scheduler = schedulers[variant]
             config.logger.log(
                 {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
-            # TODO print bad epochs to optimize lr factor and patience
 
             # Train
             # TODO init criterion once with .to(cuda)
@@ -146,6 +144,8 @@ def main():
             if use_cuda:
                 utils.model_checkpoint(
                     config, val_loss, model, optimizer, epoch)
+            
+        config.logger.log({"epoch": epoch})
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -170,7 +170,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=200, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta', default=0.1, type=float,
+    parser.add_argument('--beta', default=0.001, type=float,
                         help='KLD weight')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
@@ -192,7 +192,7 @@ def training_specific_args():
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
-    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
+    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m_pickles/', type=str,
                         help='path to image folders with subject action etc as folder names')
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')

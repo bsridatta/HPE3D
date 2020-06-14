@@ -151,19 +151,6 @@ def _validation_step(batch, batch_idx, model, epoch, config):
                         "z": z, "z_attr": batch['action'], "epoch": epoch})
 
 
-def sample_manifold(config, model):
-    decoder = model[1]
-    decoder.eval()
-    with torch.no_grad():
-        samples = torch.randn(10, 30).to(config.device)
-        samples = decoder(samples)
-        if '3D' in decoder.__class__.__name__:
-            samples = samples.reshape([-1, 16, 3])
-        elif 'RGB' in decoder.__class__.__name__:
-            samples = samples.reshape([-1, 256, 256])
-        # TODO save as images to tensorboard
-
-
 def _log_training_metrics(config, output, vae_type):
     config.logger.log({
         f"{vae_type}": {
@@ -192,6 +179,4 @@ def _log_validation_metrics(config, output, vae_type):
             }
         }
     })
-
-
 

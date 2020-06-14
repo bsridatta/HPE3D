@@ -128,7 +128,19 @@ def post_process(config, recon, target):
 
 
 def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), max_pixel_value=255.0):
-    """Code from Albumentations"""
+    """Code from Albumentations
+
+    Arguments:
+        img {Tensor} -- Image sample
+
+    Keyword Arguments:
+        mean {tuple} -- Mean of ImageNet used in albumentations (default: {(0.485, 0.456, 0.406)})
+        std {tuple} -- Std of ImageNet (default: {(0.229, 0.224, 0.225)})
+        max_pixel_value {float} -- Max value before normalization (default: {255.0})
+
+    Returns:
+        Tensor -- Normalized image
+    """
     mean = np.array(mean, dtype=np.float32)
     mean *= max_pixel_value
 
@@ -140,5 +152,5 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
     img = img.astype(np.float32)
     img -= mean
     img *= denominator
-    
+
     return img
