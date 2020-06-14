@@ -10,7 +10,7 @@ from viz import plot_diff, plot_diffs
 import dataloader
 import utils
 from models import PJPE
-from trainer import (sample_manifold, training_epoch,
+from trainer import (training_epoch,
                      validation_epoch)
 
 
