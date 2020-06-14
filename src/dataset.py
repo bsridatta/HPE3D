@@ -117,7 +117,7 @@ class H36M(Dataset):
 
         # Augmentation - Flip
         if self.train and np.random.random() < 0.5:
-            sample = flip(self, sample)
+            sample = self.flip(self, sample)
 
         return sample
 
