@@ -136,15 +136,19 @@ def main():
             del recon, target, z, z_attr
             gc.collect()
 
-            # TODO have different learning rates for all variants
-            # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            scheduler.step(val_loss)
-
             # Model Chechpoint
             if use_cuda:
                 utils.model_checkpoint(
                     config, val_loss, model, optimizer, epoch)
-            
+
+            # TODO have different learning rates for all variants
+            # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
+            scheduler.step(val_loss)
+            if scheduler.lr < 1e-6:
+                print("[INFO]: LR < 1e-6. Stop training")
+                break
+
+
         config.logger.log({"epoch": epoch})
 
     # sync config with wandb for easy experiment comparision

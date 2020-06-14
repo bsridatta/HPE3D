@@ -116,8 +116,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        # if self.train and np.random.random < 0.5:
-        #     sample = flip(sample)
+        if self.train and np.random.random() < 0.5:
+            sample = flip(self, sample)
 
         return sample
 
@@ -125,11 +125,6 @@ class H36M(Dataset):
         image_dir = 's_%02d_act_%02d_subact_%02d_ca_%02d'\
             % (sample['subject'], sample['action'],
                sample['subaction'], sample['camera'])
-
-        # image_file = self.image_path+image_dir+'/' +\
-        #     image_dir+"_"+("%06d" % (sample['idx']))+".jpg"
-        # image_tmp = Image.open(image_file)
-        # image = np.array(image_tmp)
 
         image = joblib.load(self.image_path+image_dir+'/' +
                             image_dir+"_"+("%06d" % (sample['idx']))+".pkl")
@@ -140,11 +135,6 @@ class H36M(Dataset):
 
         # *Note* - tranforms.ToTensor converts HWC to CHW so no need NOT to do explicitly
         # But if you do torch.tensor() you have to do it manually
-
-        # clear PIL
-        # image_tmp.close()
-        # del image_tmp
-        # gc.collect()
 
         return image
 
@@ -160,7 +150,7 @@ class H36M(Dataset):
         sample['pose3d'] = pose3d_flip
 
         del pose2d_flip, pose3d_flip
-
+        return sample
 
 '''
 Can be used to get norm stats for all subjects
