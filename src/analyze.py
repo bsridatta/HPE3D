@@ -123,7 +123,7 @@ def main():
             print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
             wandb.log({f'{vae_type}_mpjpe': mpjpe})
 
-            writer.add_embedding(z, me)
+            writer.add_embedding(z, metadata=action)
 
             # plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
             # plot_umap(z, action)
