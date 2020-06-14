@@ -116,10 +116,9 @@ class H36M(Dataset):
 
         image_tmp = Image.open(image_file)
         image = np.array(image_tmp)
-        image = normalize_image(image)
-        # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+        # image = normalize_image(image)
         image = self.augmentations(image=image)['image']
-
+        image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
 
         # *Note* - toTensor converts HWC to CHW so no need NOT to do explicitly
