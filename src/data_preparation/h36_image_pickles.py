@@ -24,6 +24,6 @@ if __name__ == "__main__":
         image = Image.open(file)
         image = np.array(image)
 
-        joblib.dump(image, f'{dir_}/{image_id}.pkl')
+        joblib.dump(image, f'{dir_}/{image_id}.pkl', compress=True)
 
     print("DONE!")

@@ -116,8 +116,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        if self.train and np.random.random() < 0.5:
-            sample = self.flip(self, sample)
+        # if self.train and np.random.random() < 1:
+        #     sample = self.flip(sample)
 
         return sample
 
@@ -142,7 +142,7 @@ class H36M(Dataset):
         pose2d_flip = sample['pose2d'].clone()
         pose3d_flip = sample['pose3d'].clone()
 
-        for idx, x in self.flipped_indices:
+        for idx, x in enumerate(self.flipped_indices):
             pose2d_flip[idx] = sample['pose2d'][x]
             pose3d_flip[idx] = sample['pose3d'][x]
 
@@ -151,6 +151,7 @@ class H36M(Dataset):
 
         del pose2d_flip, pose3d_flip
         return sample
+
 
 '''
 Can be used to get norm stats for all subjects
@@ -161,8 +162,8 @@ def test_h36m():
     annotation_file = f'debug_h36m17'
     image_path = f"/home/datta/lab/HPE_datasets/h36m_pickles/"
 
-    dataset = H36M([1, 5, 6, 7, 8, 9, 11],
-                   annotation_file, image_path, train=True)
+    dataset = H36M([9,11],
+                   annotation_file, image_path, train=True, no_images=True)
 
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
