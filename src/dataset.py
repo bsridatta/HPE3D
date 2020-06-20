@@ -9,8 +9,6 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from processing import preprocess
-import viz
-
 
 class H36M(Dataset):
 
@@ -115,7 +113,7 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        if self.train and np.random.random() < 1:
+        if self.train and np.random.random() < 0.5:
             sample = self.flip(sample)
 
         return sample
@@ -157,6 +155,8 @@ class H36M(Dataset):
         sample['pose2d'] = pose2d_flip
         sample['pose3d'] = pose3d_flip
         
+        # TODO add image flipping
+
         del pose2d_flip, pose3d_flip
         return sample
 
@@ -166,7 +166,7 @@ def test_h36m():
     '''
     Can be used to get norm stats for all subjects
     '''
-    
+
     annotation_file = f'debug_h36m17'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
