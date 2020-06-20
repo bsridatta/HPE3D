@@ -1,5 +1,5 @@
 '''
-Code adapted from https://github.com/juyongchang/PoseLifter
+Code adapted from dataset provided by https://github.com/juyongchang/PoseLifter
 '''
 
 import numpy as np
@@ -7,26 +7,25 @@ import os
 import scipy.io as sio
 import h5py
 
-# to get smaller subset of the data for dev
-debug = True
-subject_list = [11]
-subj_str = "".join(str(x) for x in subject_list)
-h5name = 'h36m_eating_' + subj_str + '.h5'
+img_path = '/home/datta/lab/HPE_datasets/h36m/'
+save_path = '/home/datta/lab/HPE3D/src/data/'
+annot_name = 'matlab_meta_new.mat'
 
+subject_list = [9, 11]
+# subject_list = [1, 5, 6, 7, 8]
+subj_str = "".join(str(x) for x in subject_list)
+h5name = 'h36m17_' + subj_str + '.h5'
 
 inds = range(17)
-action_list = np.arange(2,10)
+action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
-camera_list = np.arange(2,4)
-# s_11_act_02_subact_01_ca_02_000001
+camera_list = np.arange(1, 5)
 
-# inds = range(17)
-# action_list = np.arange(2, 17)
-# subaction_list = np.arange(1, 3)
-# camera_list = np.arange(1, 5)
-img_path = '../../../HPE_datasets/h36m/'
-save_path = '../data/'
-annot_name = 'matlab_meta_new.mat'
+# to get smaller subset of the data for dev
+debug = True
+
+if debug:
+    h5name = "debug_" + h5name
 
 
 if not os.path.exists(save_path):
@@ -53,9 +52,6 @@ for subject_ in subject_list:
             for camera_ in camera_list:
                 dir_name = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
                     subject_, action_, subaction_, camera_)
-                print("sequence******************")
-                h5name = dir_name +"_911.h5"
-
                 print(dir_name)
                 annot_file = img_path + dir_name + '/' + annot_name
                 try:
@@ -92,21 +88,18 @@ for subject_ in subject_list:
 
                     print(subject_, action_, pose3d_.shape)
 
-                    # if debug:
-                    #     break
+                    if debug:
+                        break
                 if debug:
                     break
             if debug:
                 break
-        if debug:
-            break
-    if debug:
-        break
+        # if debug:
+        #     break
+    # if debug:
+    #     break
     
 print(f'{dir_name}  number of samples = %d' % num_samples)
-
-# if debug:
-#     h5name = "debug_" + h5name
 
 f = h5py.File(save_path+h5name, 'w')
 f['idx'] = idx
@@ -123,3 +116,5 @@ f['action'] = action
 f['subaction'] = subaction
 f['camera'] = camera
 f.close()
+
+print(f"Saved to {save_path+h5name}")

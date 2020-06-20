@@ -15,7 +15,7 @@ from trainer import (training_epoch,
 
 
 def main():
-    # Experiment Configuration
+    # Experiment Configuration`
     parser = training_specific_args()
 
     # Config is distributed to all the other modules

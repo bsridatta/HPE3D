@@ -15,7 +15,7 @@ import viz
 class H36M(Dataset):
 
     def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False):
-        """[summary]
+        """
 
         Arguments:
             subjects {list} -- IDs of subjects to include in this dataset
@@ -77,7 +77,6 @@ class H36M(Dataset):
             f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
-
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
@@ -143,14 +142,13 @@ class H36M(Dataset):
     def flip(self, sample):
         pose2d_flip = sample['pose2d'].clone()
         pose3d_flip = sample['pose3d'].clone()
-        viz.plot_3d(np.asarray(sample['pose3d']))
 
         for idx, x in enumerate(self.flipped_indices):
             if idx == 0:
                # ignore root as it will be added later at 0th index
                 pass
-            pose2d_flip[idx] = sample['pose2d'][x]
-            pose3d_flip[idx] = sample['pose3d'][x]
+            pose2d_flip[idx-1] = sample['pose2d'][x-1]
+            pose3d_flip[idx-1] = sample['pose3d'][x-1]
             
         # TODO have global image resolution
         pose2d_flip[:, 0] = 256 - pose2d_flip[:, 0]
@@ -158,18 +156,17 @@ class H36M(Dataset):
 
         sample['pose2d'] = pose2d_flip
         sample['pose3d'] = pose3d_flip
-        viz.plot_3d(np.asarray(sample['pose3d']))
         
         del pose2d_flip, pose3d_flip
         return sample
 
 
-'''
-Can be used to get norm stats for all subjects
-'''
-
 
 def test_h36m():
+    '''
+    Can be used to get norm stats for all subjects
+    '''
+    
     annotation_file = f'debug_h36m17'
     image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
