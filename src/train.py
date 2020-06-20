@@ -144,7 +144,7 @@ def main():
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
-            if scheduler.lr < 1e-6:
+            if optimizer.param_groups[0]['lr'] < 1e-6:
                 print("[INFO]: LR < 1e-6. Stop training")
                 break
 
@@ -196,7 +196,7 @@ def training_specific_args():
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
-    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m_pickles/', type=str,
+    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')

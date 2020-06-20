@@ -3,14 +3,13 @@ import os
 
 import albumentations
 import h5py
-import joblib
 import numpy as np
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 
 from processing import preprocess
-
-# from PIL import Image
+import viz
 
 
 class H36M(Dataset):
@@ -65,19 +64,11 @@ class H36M(Dataset):
         for key in annotations_h5.keys():
             if key not in ignore_data:
                 self.annotations[key] = annotations_h5[key][:]
-
+        
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations, norm_stats = preprocess(
             self.annotations, self.root_idx)
-
-        # get keys to avoid query them for every __getitem__
-        self.annotation_keys = self.annotations.keys()
-
-        # covert data to tensor after preprocessing with numpy (hard with tensors)
-        for key in self.annotation_keys:
-            self.annotations[key] = torch.tensor(
-                self.annotations[key], dtype=torch.float32)
 
         # save norm_stats to denormalize data for evaluation
         subj_name = "".join(str(sub) for sub in subjects)
@@ -87,12 +78,21 @@ class H36M(Dataset):
         for key in norm_stats.keys():
             f[key] = norm_stats[key]
 
+
+        # get keys to avoid query them for every __getitem__
+        self.annotation_keys = self.annotations.keys()
+
+        # covert data to tensor after preprocessing with numpy (hard with tensors)
+        for key in self.annotation_keys:
+            self.annotations[key] = torch.tensor(
+                self.annotations[key], dtype=torch.float32)
+
         # clear the HDF5 datasets
-        annotations_h5.close()
-        f.close()
-        del annotations_h5
-        del f
-        gc.collect()
+        # annotations_h5.close()
+        # f.close()
+        # del annotations_h5
+        # del f
+        # gc.collect()
 
         # load image directly in __getitem__
         self.image_path = image_path
@@ -116,8 +116,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        # if self.train and np.random.random() < 1:
-        #     sample = self.flip(sample)
+        if self.train and np.random.random() < 1:
+            sample = self.flip(sample)
 
         return sample
 
@@ -126,9 +126,9 @@ class H36M(Dataset):
             % (sample['subject'], sample['action'],
                sample['subaction'], sample['camera'])
 
-        image = joblib.load(self.image_path+image_dir+'/' +
-                            image_dir+"_"+("%06d" % (sample['idx']))+".pkl")
-
+        image_ = Image.open(self.image_path+image_dir+'/' +
+                            image_dir+"_"+("%06d" % (sample['idx']))+".jpg")
+        image = np.array(image_)
         image = self.augmentations(image=image)['image']
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
@@ -136,19 +136,30 @@ class H36M(Dataset):
         # *Note* - tranforms.ToTensor converts HWC to CHW so no need NOT to do explicitly
         # But if you do torch.tensor() you have to do it manually
 
+        image_.close()
+        del image_
         return image
 
     def flip(self, sample):
         pose2d_flip = sample['pose2d'].clone()
         pose3d_flip = sample['pose3d'].clone()
+        viz.plot_3d(np.asarray(sample['pose3d']))
 
         for idx, x in enumerate(self.flipped_indices):
+            if idx == 0:
+               # ignore root as it will be added later at 0th index
+                pass
             pose2d_flip[idx] = sample['pose2d'][x]
             pose3d_flip[idx] = sample['pose3d'][x]
+            
+        # TODO have global image resolution
+        pose2d_flip[:, 0] = 256 - pose2d_flip[:, 0]
+        pose3d_flip[:, 0] *= -1
 
         sample['pose2d'] = pose2d_flip
         sample['pose3d'] = pose3d_flip
-
+        viz.plot_3d(np.asarray(sample['pose3d']))
+        
         del pose2d_flip, pose3d_flip
         return sample
 
@@ -160,15 +171,15 @@ Can be used to get norm stats for all subjects
 
 def test_h36m():
     annotation_file = f'debug_h36m17'
-    image_path = f"/home/datta/lab/HPE_datasets/h36m_pickles/"
+    image_path = f"/home/datta/lab/HPE_datasets/h36m/"
 
-    dataset = H36M([9,11],
-                   annotation_file, image_path, train=True, no_images=True)
+    dataset = H36M([1, 5, 6, 7, 8],
+                   annotation_file, image_path, train=True, no_images=False)
 
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(0)
+    sample = dataset.__getitem__(10)
 
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
