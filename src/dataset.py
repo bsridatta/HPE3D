@@ -9,6 +9,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from processing import preprocess
+import viz
 
 class H36M(Dataset):
 
@@ -113,8 +114,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        if self.train and np.random.random() < 0.5:
-            sample = self.flip(sample)
+        # if self.train and np.random.random() < 0.5:
+        #     sample = self.flip(sample)
 
         return sample
 
@@ -184,6 +185,7 @@ def test_h36m():
 
     # print(sample['pose2d'], '\n\n\n')
     # print(sample['pose3d'])
+
 
     del dataset
     del sample

@@ -77,28 +77,25 @@ def plot_2d(pose, image=False):
     labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
-    fig = plt.figure(1)
-    ax = fig.gca(projection='3d')
-    ax._axis3don = False
+    fig, ax = plt.figure(1)
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
 
     x = pose[:, 0]
-    y = -1*pose[:, 2]
-    z = -1*pose[:, 1]
+    y = -1*pose[:, 1]
+    # z = -1*pose[:, 1]
 
-    ax.scatter(x, y, z, alpha=0.6, s=2)
+    ax.scatter(x, y, alpha=0.6, s=2)
 
     for link in skeleton:
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
-                z[([link[0], link[1]])],
                 c='b', alpha=0.6, lw=3)
 
     # Show coordinate values
-    for i, j, k, l in zip(x, y, z, labels):
-        ax.text(i, j, k, s=l+f" {i}, {j} {k}", size=8, zorder=1, color='k')
+    for i, j, l in zip(x, y, labels):
+        ax.text(i, j, 0, s=l+f" {i}, {j} ", size=8, color='k')
     plt.show()
     return
 
