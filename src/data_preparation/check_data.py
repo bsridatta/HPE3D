@@ -34,14 +34,14 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from PIL import Image
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
 sys.path.append('/home/datta/lab/HPE3D/src')
 
 
-def plot_h36(pose):
-    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
-    import matplotlib.pyplot as plt
-    from matplotlib import cm
+def plot_3d(pose):
 
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
@@ -92,75 +92,45 @@ def plot_h36(pose):
     #     plt.pause(.001)
 
 
-def plot_3D(pose):
+
+def plot_2d(pose, image=None):
+
+    fig = plt.figure(1)
+    ax = fig.gca()
+    if image:
+        image = Image.open(image)
+        image = image.resize((600,600))
+        ax.imshow(image)
+
+    # For each set of style and range settings, plot n random points in the box
+    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
     x = pose[:, 0]
-    y = -1*pose[:, 2]
-    z = -1*pose[:, 1]
-    x = x/x.max()
-    y = y/y.min()
-    z = z/z.min()
+    y = pose[:, 1]
+
+    ax.scatter(x, y)
     skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
                 (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
-
-    fig = go.Figure(data=go.Scatter3d(
-        x=x, y=y, z=z,
-        mode='markers',
-        marker=dict(
-            size=4,
-            color=z,
-            colorscale='Viridis'
-        ),
-        showlegend=False
-    ))
-
     for link in skeleton:
-        fig.add_trace(go.Scatter3d(
-            x=x[([link[0], link[1]])],
-            y=y[([link[0], link[1]])],
-            z=z[([link[0], link[1]])],
-            mode='lines',
-            showlegend=False
-        ))
-    fig.update_layout(scene=dict(
-        xaxis_title='X AXIS TITLE',
-        yaxis_title='Y AXIS TITLE',
-        zaxis_title='Z AXIS TITLE'),
-        width=700,
-        margin=dict(r=20, b=10, l=10, t=10))
+        ax.plot(x[([link[0], link[1]])],
+                y[([link[0], link[1]])])
 
-    fig.show()
+    labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
+              'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
+    for i, j, l in zip(x, y, labels):
+        ax.text(i, j, s=l, size=8, color='k')
 
-def may(pose):
-    import numpy as np
-    from mayavi import mlab
-    black = (0, 0, 0)
-    white = (1, 1, 1)
-    mlab.figure(bgcolor=white)
+    # ax.set_xlabel('X Label')
+    # ax.set_ylabel('Y Label')
+    # ax.set_zlabel('Z Label')
+    ax.axis = 'off'
 
-    x = pose[:, 0]
-    y = -1*pose[:, 2]
-    z = -1*pose[:, 1]
-    skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
-                (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
-    i = 0
-    for link in skeleton:
-        x1 = [x[link[0]], x[link[1]]]
-        y1 = [y[link[0]], y[link[1]]]
-        z1 = [z[link[0]], z[link[1]]]
-        mlab.plot3d(x1, y1, z1, color=black, tube_radius=10.)
-        if i == 1:
-            break
-        i += 1
+    plt.show()
 
-    # Finally, display the set of lines
-    # mlab.pipeline.surface(lines, colormap='Accent', line_width=1, opacity=.4)
-
-    # And choose a nice view
-    mlab.view(33.6, 106, 5.5, [0, 0, .05])
-    mlab.roll(125)
-    mlab.savefig("stick_2.obj")
-    mlab.show()
+    # for angle in range(0, 360):
+    #     ax.view_init(30, angle)
+    #     plt.draw()
+    #     plt.pause(.001)
 
 
 if __name__ == "__main__":
@@ -189,8 +159,7 @@ if __name__ == "__main__":
     img_file = image_path+dirname+"/"+dirname+"_"+("%06d" % (idx))+".jpg"
     print(pose2.shape)
     print(pose3.shape)
-    import viz
-    viz.plot_2d(pose2)
+    plot_2d(pose2, img_file)
     
     # plot_h36(pose3)
     import gc

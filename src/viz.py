@@ -77,7 +77,8 @@ def plot_2d(pose, image=False):
     labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
-    fig, ax = plt.figure(1)
+    fig = plt.figure(1)
+    ax = fig.gca()
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
@@ -95,7 +96,7 @@ def plot_2d(pose, image=False):
 
     # Show coordinate values
     for i, j, l in zip(x, y, labels):
-        ax.text(i, j, 0, s=l+f" {i}, {j} ", size=8, color='k')
+        ax.text(i, j, s=l+f" {i}, {j} ", size=8, color='k')
     plt.show()
     return
 
