@@ -45,23 +45,8 @@ def plot_3d(pose):
 
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
+    ax._axis3don = False
 
-    n = 100
-
-    # create a 21 x 21 vertex mesh
-    xx, yy = np.meshgrid(np.linspace(0, 1, 21), np.linspace(0, 1, 21))
-
-    # create vertices for a rotated mesh (3D rotation matrix)
-    X = xx
-    Y = yy
-    Z = 10*np.ones(X.shape)
-
-    # create some dummy data (20 x 20) for the image
-    data = np.cos(xx) * np.cos(xx) + np.sin(yy) * np.sin(yy)
-    ax.contourf(X, Y, data, 0, zdir='z', offset=0.5, cmap=cm.BrBG)
-
-    # For each set of style and range settings, plot n random points in the box
-    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
     x = pose[:, 0]
     y = -1*pose[:, 2]
     z = -1*pose[:, 1]
@@ -77,13 +62,16 @@ def plot_3d(pose):
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
     for i, j, k, l in zip(x, y, z, labels):
-        ax.text(i, j, k, s=l, size=8, zorder=1, color='k')
+        ax.text(i, j, k, s=None, size=8, zorder=1, color='k')
 
-    # ax.set_xlabel('X Label')
-    # ax.set_ylabel('Y Label')
-    # ax.set_zlabel('Z Label')
+
+    xx, yy = np.meshgrid([0,-700], [-5480, -5080])
+    zz = np.ones((len(xx), len(yy))) * min(z)*1.01  # padding
+    ax.plot_surface(xx, yy, zz, cmap='gray',
+                    linewidth=0, alpha=0.2)
+
     ax.axis = 'off'
-
+    plt.savefig('/home/datta/lab/HPE3D/src/results/h363d.png', format='png', dpi=1000)
     plt.show()
 
     # for angle in range(0, 360):
@@ -99,13 +87,27 @@ def plot_2d(pose, image=None):
     ax = fig.gca()
     if image:
         image = Image.open(image)
-        image = image.resize((600,600))
         ax.imshow(image)
+    
+    ax.set_xticks([])
+    ax.set_yticks([])
 
+    plt.savefig('/home/datta/lab/HPE3D/src/results/h36image.png', format='png', dpi=1000)
+    plt.show()
+    return
     # For each set of style and range settings, plot n random points in the box
-    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
+    # defined by x in [23, 32], y in [0, 100]
+
+    for i in range(pose.shape[0]):
+        print(pose[i,:], end = "\t")
+        pose[:, :] = pose[:,:] - pose[0, :] 
+        pose[:,:] /= np.max(pose[:,:])
+        pose[:,:] *= 256/2  
+        print(pose[i,:])
+
     x = pose[:, 0]
-    y = pose[:, 1]
+    y = -1*pose[:, 1]
+
 
     ax.scatter(x, y)
     skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
@@ -118,15 +120,19 @@ def plot_2d(pose, image=None):
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
     for i, j, l in zip(x, y, labels):
-        ax.text(i, j, s=l, size=8, color='k')
+        ax.text(i+2, j+2, s=l, size=8, color='k')
 
     # ax.set_xlabel('X Label')
     # ax.set_ylabel('Y Label')
     # ax.set_zlabel('Z Label')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
     ax.axis = 'off'
+    # plt.title('2D Pose')
 
+    plt.savefig('/home/datta/lab/HPE3D/src/results/2dpose.png', format='png', dpi=1000)
     plt.show()
-
     # for angle in range(0, 360):
     #     ax.view_init(30, angle)
     #     plt.draw()
@@ -159,7 +165,7 @@ if __name__ == "__main__":
     img_file = image_path+dirname+"/"+dirname+"_"+("%06d" % (idx))+".jpg"
     print(pose2.shape)
     print(pose3.shape)
-    plot_2d(pose2, img_file)
+    plot_3d(pose3)
     
     # plot_h36(pose3)
     import gc

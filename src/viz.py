@@ -51,8 +51,8 @@ def plot_3d(pose):
     # Plot the surface.
     xx, yy = np.meshgrid([-max(x), max(x)], [-max(y), max(y)])
     zz = np.ones((len(xx), len(yy))) * min(z)*1.01  # padding
-    # ax.plot_surface(xx, yy, zz, cmap='gray',
-    #                 linewidth=0, alpha=0.2)
+    ax.plot_surface(xx, yy, zz, cmap='gray',
+                    linewidth=0, alpha=0.2)
 
     # animate rotation of pose
     plt.show()
