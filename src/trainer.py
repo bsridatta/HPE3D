@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from models import KLD, PJPE, reparameterize
 from processing import post_process
-from utils import get_inp_target_criterion
+from utils import get_inp_target_criterion #, beta_annealing
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -33,6 +33,9 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
 
         # if batch_idx % 100 == 0:
         # backup model?
+        
+        # Anneal beta 0 - 1
+        # beta_annealing(config, epoch)
 
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
             vae_type, epoch, batch_idx * len(batch['pose2d']),
@@ -43,7 +46,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     del loss, recon_loss, kld_loss, output
 
 
-def validation_epoch(config, model, val_loader, epoch, vae_type, denormalize=False):
+def validation_epoch(config, model, val_loader, epoch, vae_type, normalize_pose=True):
     # note -- model.eval() in validation step
     loss = 0
     recon_loss = 0
@@ -80,7 +83,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type, denormalize=Fal
     all_zs = torch.cat(all_zs, 0)
     all_z_attrs = torch.cat(all_z_attrs, 0)
 
-    if '3D' in model[1].name and denormalize == True:
+    if '3D' in model[1].name and normalize_pose == True:
         all_recons, all_targets = post_process(config, all_recons, all_targets)
 
     # Logging
