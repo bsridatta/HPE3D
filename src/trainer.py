@@ -43,7 +43,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     del loss, recon_loss, kld_loss, output
 
 
-def validation_epoch(config, model, val_loader, epoch, vae_type):
+def validation_epoch(config, model, val_loader, epoch, vae_type, denormalize=False):
     # note -- model.eval() in validation step
     loss = 0
     recon_loss = 0
@@ -80,7 +80,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type):
     all_zs = torch.cat(all_zs, 0)
     all_z_attrs = torch.cat(all_z_attrs, 0)
 
-    if '3D' in model[1].name:
+    if '3D' in model[1].name and denormalize == True:
         all_recons, all_targets = post_process(config, all_recons, all_targets)
 
     # Logging

@@ -60,7 +60,7 @@ def denormalize(pose, mean, std):
     return pose
 
 
-def preprocess(annotations, root_idx):
+def preprocess(annotations, root_idx, normalize=False):
     '''
     Preprocessing steps on -
     pose3d - 3d pose in camera frame(data already coverted from world to camera)
@@ -81,15 +81,19 @@ def preprocess(annotations, root_idx):
     pose2d_16_joints = np.delete(
         annotations['pose2d'], root_idx, 1)  # axis [n, j, x/y/z]
 
-    # normalize 2d and 3d poses
-    pose2d_norm, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
-        pose2d_16_joints)
+    if normalize:
+        # normalize 2d and 3d poses
+        pose2d_norm, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
+            pose2d_16_joints)
+        pose3d_norm, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
+            pose3d_zeroed)
+        annotations['pose2d'] = pose2d_norm
+        annotations['pose3d'] = pose3d_norm
 
-    pose3d_norm, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
-        pose3d_zeroed)
+    else:
+        annotations['pose2d'] = pose2d_16_joints
+        annotations['pose3d'] = pose3d_zeroed
 
-    annotations['pose2d'] = pose2d_norm
-    annotations['pose3d'] = pose3d_norm
 
     return annotations, norm_stats
 
