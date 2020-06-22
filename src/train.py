@@ -149,7 +149,6 @@ def main():
                 break
 
         config.logger.log({"epoch": epoch})
-
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)

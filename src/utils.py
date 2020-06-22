@@ -24,6 +24,9 @@ def beta_annealing(config, epoch):
     else:
         print(f"[INFO] Beta warming: {config.beta}")
 
+    config.logger.log({"beta": config.beta})
+
+
 
 def model_checkpoint(config, val_loss, model, optimizer, epoch):
     if val_loss < config.val_loss_min:

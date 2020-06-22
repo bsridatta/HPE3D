@@ -121,6 +121,7 @@ def _training_step(batch, batch_idx, model, config):
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss
+    # TODO clip kld loss to prevent explosion
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
