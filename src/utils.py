@@ -6,7 +6,23 @@ from models import (Decoder3D, DecoderRGB,
                     Encoder2D, EncoderRGB,
                     image_recon_loss, PJPE)
 
-# def beta_annealing(config, epoch):
+
+def beta_annealing(config, epoch):
+    """anneal beta from 0 to 1 during annealing_epochs after waiting for warmup_epochs
+
+    Arguments:
+        config {namespace} -- the pipleline configuration
+        epoch {integer} -- current training epoch
+    """
+    # TODO Callback with number of epochs
+    if epoch > config.beta_warmup_epochs:
+        if epoch <= config.beta_warmup_epochs + config.beta_annealing_epochs:
+            config.beta += 1/config.beta_annealing_epochs
+            print(f"[INFO] Beta increased to: {config.beta}")
+        else:
+            print(f"[INFO] Beta constant at: {config.beta}")
+    else:
+        print(f"[INFO] Beta warming: {config.beta}")
 
 
 def model_checkpoint(config, val_loss, model, optimizer, epoch):
@@ -26,11 +42,15 @@ def model_checkpoint(config, val_loss, model, optimizer, epoch):
                 'optimizer_state_dict': optimizer.state_dict()
             }
             # TODO save optimizer state seperately
-            torch.save(state, f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
-            config.logger.save(f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
-            print(f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+            torch.save(
+                state, f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+            config.logger.save(
+                f'{config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
+            print(
+                f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
 
             del state
+
 
 def get_models(variants, config):
     '''

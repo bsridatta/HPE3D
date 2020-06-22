@@ -36,8 +36,9 @@ def main():
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'
         os.environ['WANDB_TAGS'] = 'CPU'
-
-    wandb.init(anonymous='allow', project="hpe3d")
+        wandb.init(anonymous='allow', project="to_delete")
+    else:
+        wandb.init(anonymous='allow', project="hpe3d")
 
     config.logger = wandb
     config.logger.run.save()
@@ -98,7 +99,7 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
 
     config.val_loss_min = float('inf')
-    
+    config.beta = 0
     # Training
     for epoch in range(1, config.epochs+1):
 
@@ -117,7 +118,6 @@ def main():
             # TODO init criterion once with .to(cuda)
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
-
             # Validation
             val_loss, recon, target, z, z_attr = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
@@ -148,7 +148,6 @@ def main():
                 print("[INFO]: LR < 1e-6. Stop training")
                 break
 
-
         config.logger.log({"epoch": epoch})
 
     # sync config with wandb for easy experiment comparision
@@ -161,7 +160,7 @@ def training_specific_args():
     parser = ArgumentParser()
 
     # training specific
-    parser.add_argument('--epochs', default=1, type=int,
+    parser.add_argument('--epochs', default=50, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=5, type=int,
                         help='number of samples per step, have more than one for batch norm')
@@ -174,8 +173,10 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=200, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta', default=0.001, type=float,
-                        help='KLD weight')
+    parser.add_argument('--beta_warmup_epochs', default=5, type=int,
+                        help='KLD weight warmup time. weight is 0 during this period')
+    parser.add_argument('--beta_annealing_epochs', default=30, type=int,
+                        help='KLD weight annealing time')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
     parser.add_argument('--train_last_block', default=False, type=lambda x: (str(x).lower() == 'true'),
@@ -184,14 +185,7 @@ def training_specific_args():
                         help='number of joints to encode and decode')
     parser.add_argument('--learning_rate', default=1e-3, type=float,
                         help='learning rate for all optimizers')
-    # GPU
-    parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='enable cuda if available')
-    parser.add_argument('--pin_memory', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='pin memory to device')
-    parser.add_argument('--seed', default=400, type=int,
-                        help='random seed')
-    # data
+    # input
     parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
@@ -207,6 +201,13 @@ def training_specific_args():
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
                         help='# of batches to wait before logging training status')
+    # device
+    parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
+                        help='enable cuda if available')
+    parser.add_argument('--pin_memory', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='pin memory to device')
+    parser.add_argument('--seed', default=400, type=int,
+                        help='random seed')
 
     return parser
 
