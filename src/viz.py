@@ -1,11 +1,14 @@
+import io
 import math
 
+import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
+from torchvision import transforms
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.image as mpimg
+from PIL import Image
 
 ACTION_NAMES = ["Directions", "Discussion", "Eating", "Greeting", "Phoning", "Photo", "Posing", "Purchases",
                 "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
@@ -44,6 +47,21 @@ def plot_3d(pose):
                 z[([link[0], link[1]])],
                 c='b', alpha=0.6, lw=3)
 
+    """latent viz"""
+    DPI = fig.get_dpi()
+    fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
+    fig.savefig(f'/home/datta/lab/HPE3D/src/results/x.png')
+    fig.clf()
+    image = Image.open(f'/home/datta/lab/HPE3D/src/results/x.png')
+    image = image.convert('RGB')
+    # image = np.asarray(image)
+    # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
+    # to RGB or image = image[...,0:3]
+    image = transforms.ToTensor()(image).unsqueeze_(0)
+
+    return image
+
+    """    
     # Show coordinate values
     for i, j, k, l in zip(x, y, z, labels):
         ax.text(i, j, k, s=l, size=8, zorder=1, color='k')
@@ -53,14 +71,14 @@ def plot_3d(pose):
     zz = np.ones((len(xx), len(yy))) * min(z)*1.01  # padding
     ax.plot_surface(xx, yy, zz, cmap='gray',
                     linewidth=0, alpha=0.2)
+    """
 
-    # animate rotation of pose
-    plt.show()
+   # animate rotation of pose
+    # plt.show()
     # for angle in range(0, 360):
     #     ax.view_init(30, angle)
     #     plt.draw()
     #     plt.pause(.001)
-
 
 
 def plot_2d(pose, image=False):
@@ -114,7 +132,6 @@ def plot_2d(pose, image=False):
     #     plt.pause(.001)
 
 
-
 def plot_diff(ax, pose, target, error, i, image=True):
     """plot the prediction and ground with error
 
@@ -138,7 +155,7 @@ def plot_diff(ax, pose, target, error, i, image=True):
     # ax._axis3don = False
     ax = fig.add_subplot(1, 2, 1, projection='3d')
 
-    print("POSE")    
+    print("POSE")
     x = pose[:, 0]
     y = -1*pose[:, 2]
     z = -1*pose[:, 1]
@@ -188,7 +205,7 @@ def plot_diff(ax, pose, target, error, i, image=True):
     ax2 = fig.add_subplot(1, 2, 2)
     root = '/home/datta/lab/HPE_datasets/h36m'
     path = "s_11_act_02_subact_01_ca_02"
-    image = mpimg.imread(f'{root}/{path}/{path}_'+"%06d"%(5*i+1)+".jpg")
+    image = mpimg.imread(f'{root}/{path}/{path}_'+"%06d" % (5*i+1)+".jpg")
     ax2.imshow(image)
 
     fig.savefig(f'/home/datta/lab/HPE3D/src/results3/{i}.png')
@@ -227,7 +244,7 @@ def plot_diffs(poses, targets, errors, grid=5):
         print(i)
         ax = 0
         plot_diff(ax, poses[i].numpy(),
-                       targets[i].numpy(), errors[i].item(), i)
+                  targets[i].numpy(), errors[i].item(), i)
 
     # plt.show()
 
@@ -277,7 +294,7 @@ def decode_embedding(config, model):
 
 
 if __name__ == "__main__":
-    
+
     pose = [[0.0000,    0.0000,    0.0000],
             [122.7085,  -17.2441,   42.9420],
             [126.0797,  444.2065,  119.1129],
@@ -296,5 +313,4 @@ if __name__ == "__main__":
             [445.9429, -379.3877,   54.3570],
             [641.9531, -382.0340,  210.9446]]
 
-   
-    plot_pose(np.asarray(pose))
+    # plot_pose(np.asarray(pose))

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import wandb
 
-from viz import plot_diff, plot_diffs, plot_umap
+from viz import plot_diff, plot_diffs, plot_umap, plot_3d
 import dataloader
 import utils
 from models import PJPE
@@ -54,11 +54,12 @@ def main():
 
     # train_loader = dataloader.train_dataloader(config) # dont need it!
     val_loader = dataloader.val_dataloader(config)
-    
-    # Could also just import H36M Dataset instead
-    # val_subset = torch.utils.data.Subset(val_loader.dataset,
-    #                                    np.random.randint(0, val_loader.dataset.__len__(), 500))
+
     val_subset = val_loader.dataset
+
+    # Could also just import H36M Dataset instead
+    val_subset = torch.utils.data.Subset(val_loader.dataset,
+                                       np.random.randint(0, val_loader.dataset.__len__(), 500))
 
     val_loader = torch.utils.data.DataLoader(
         dataset=val_subset,
@@ -123,12 +124,22 @@ def main():
             mpjpe = torch.mean(pjpe).item()
             print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
             wandb.log({f'{vae_type}_mpjpe': mpjpe})
+            images = []
+            for t in target:
+                image_ = plot_3d(np.asarray(t))
+                images.append(image_)
+            images = torch.cat(images,0)
+            # images = np.stack(images, axis=0)
+            # label_img = torch.rand(30, 3, 10, 32)
+            # for i in range(30):
+            #     label_img[i]*=i/100.0
 
-            # writer.add_embedding(z, metadata=action)
+            writer.add_embedding(z, metadata=action, label_img=images)
+            
             # for x in range(recon.shape[0]):
                 # print(recon.shape, recon[x].shape)
             
-            plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
+            # plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
             # print(recon[0])
             # plot_umap(z, action)
 
@@ -177,7 +188,7 @@ def training_specific_args():
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
     # data s_11_act_03_subact_01_ca_01
-    parser.add_argument('--annotation_file', default=f's_11_act_02_subact_01_ca_02', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17, debug_h36m17 etc')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

@@ -22,8 +22,7 @@ subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 
 # to get smaller subset of the data for dev
-debug = True
-
+debug = False
 if debug:
     h5name = "debug_" + h5name
 
