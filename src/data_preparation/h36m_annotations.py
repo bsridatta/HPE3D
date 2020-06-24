@@ -20,7 +20,7 @@ inds = range(17)
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
-
+des
 # to get smaller subset of the data for dev
 debug = False
 if debug:

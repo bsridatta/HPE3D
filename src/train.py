@@ -167,7 +167,7 @@ def training_specific_args():
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=2, type=int,
+    parser.add_argument('--variant', default=2, type=int, 
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=200, type=int,
                         help='dimensions of the cross model latent space')
