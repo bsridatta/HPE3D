@@ -180,7 +180,7 @@ def training_specific_args():
                         help='prefix of the h5 file containing poses and camera data')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
-    parser.add_argument('--image_path', default=f'/home/datta/lab/HPE_datasets/h36m/', type=str,
+    parser.add_argument('--image_path', default=f'$HOME/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
     parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
