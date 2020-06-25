@@ -103,7 +103,6 @@ def plot_2d(pose, image=False):
 
     x = pose[:, 0]
     y = -1*pose[:, 1]
-    # z = -1*pose[:, 1]
 
     ax.scatter(x, y, alpha=0.6, s=2)
 

@@ -183,8 +183,8 @@ def test_h36m():
         print(k, v.size(), v.dtype, end="\t")
         pass
 
-    # print(sample['pose2d'], '\n\n\n')
-    # print(sample['pose3d'])
+    print(sample['pose2d'], '\n\n\n')
+    print(sample['pose3d'])
 
 
     del dataset

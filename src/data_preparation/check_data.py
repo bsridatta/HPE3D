@@ -45,11 +45,14 @@ def plot_3d(pose):
 
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
-    ax._axis3don = False
-
+    # ax._axis3don = False
+    print(pose)
     x = pose[:, 0]
-    y = -1*pose[:, 2]
-    z = -1*pose[:, 1]
+    # y = -1*pose[:, 2]
+    # z = -1*pose[:, 1]
+
+    y = pose[:, 2]
+    z = pose[:, 1]
 
     ax.scatter(x, y, z)
     skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
@@ -62,7 +65,7 @@ def plot_3d(pose):
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
     for i, j, k, l in zip(x, y, z, labels):
-        ax.text(i, j, k, s=None, size=8, zorder=1, color='k')
+        ax.text(i, j, k, s=f'{l} | {int(i)} | {int(j)} | {int(k)}', size=7, zorder=1, color='k')
 
 
     xx, yy = np.meshgrid([0,-700], [-5480, -5080])
@@ -92,21 +95,28 @@ def plot_2d(pose, image=None):
     ax.set_xticks([])
     ax.set_yticks([])
 
-    plt.savefig('/home/datta/lab/HPE3D/src/results/h36image.png', format='png', dpi=1000)
-    plt.show()
-    return
+    # plt.savefig('/home/datta/lab/HPE3D/src/results/h36image.png', format='png', dpi=1000)
+    # plt.show()
+    # return
     # For each set of style and range settings, plot n random points in the box
     # defined by x in [23, 32], y in [0, 100]
 
-    for i in range(pose.shape[0]):
-        print(pose[i,:], end = "\t")
-        pose[:, :] = pose[:,:] - pose[0, :] 
+    x = pose[:, 0]
+    # y = -1*pose[:, 1]
+    y = pose[:, 1]
+
+    if image:
+        # To plot 2d and image together
+        # print(pose[i,:], end = "\t")
+        pose[:, :] = pose[:,:] - pose[0] 
         pose[:,:] /= np.max(pose[:,:])
         pose[:,:] *= 256/2  
-        print(pose[i,:])
-
-    x = pose[:, 0]
-    y = -1*pose[:, 1]
+        # pose[:,0] += 131  
+        # pose[:,1] += 117  
+        
+            # print(pose[i,:])
+        x = pose[:, 0]
+        y = pose[:, 1]
 
 
     ax.scatter(x, y)
@@ -162,11 +172,12 @@ if __name__ == "__main__":
 
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
         subject_, action_, subaction_, camera_)
-    img_file = image_path+dirname+"/"+dirname+"_"+("%06d" % (idx))+".jpg"
-    print(pose2.shape)
-    print(pose3.shape)
+    image = image_path+dirname+"/"+dirname+"_"+("%06d" % (idx))+".jpg"
+    # print(pose2.shape)
+    # print(pose3.shape)
+    # plot_2d(pose2)
+    # plot_2d(pose2, image)
     plot_3d(pose3)
-    
     # plot_h36(pose3)
     import gc
     gc.collect()

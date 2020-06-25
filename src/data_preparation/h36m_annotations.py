@@ -11,8 +11,8 @@ img_path = '/home/datta/lab/HPE_datasets/h36m/'
 save_path = '/home/datta/lab/HPE3D/src/data/'
 annot_name = 'matlab_meta_new.mat'
 
-subject_list = [9, 11]
-# subject_list = [1, 5, 6, 7, 8]
+# subject_list = [9, 11]
+subject_list = [1, 5, 6, 7, 8]
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str + '.h5'
 
@@ -20,7 +20,7 @@ inds = range(17)
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
-des
+
 # to get smaller subset of the data for dev
 debug = False
 if debug:
@@ -71,6 +71,13 @@ for subject_ in subject_list:
                     if i % 5 != 0:
                         continue
                     idx.append(i+1)
+
+
+                    print("POSE 2D ***** \n", pose2d_[inds, :, i+2])
+                    print("POSE 3D ***** \n", pose3d_[inds, :, i+2])
+                    print("POSE 3D Global ***** \n", pose3d_global_[inds, :, i+2])
+                    
+                    exit()
                     pose2d.append(pose2d_[inds, :, i])
                     pose3d.append(pose3d_[inds, :, i])
                     pose3d_global.append(pose3d_global_[inds, :, i])
