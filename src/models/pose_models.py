@@ -181,8 +181,11 @@ def KLD(mean, logvar, decoder_name):
         # normalize by same number in recon - b*j*dim
         # from vae-hands local_utility_fn ln-108
         loss /= mean.shape[0]*16*3
-    else:
+    elif 'RGB' in decoder_name:
         print("[WARNING] fix KLD loss normalization for current decoder")
+        loss /= mean.shape[0]*256*256
+    else:
+        print(f"[WARNING] {decoder_name} has no KLD loss normalization")
 
     return loss
 

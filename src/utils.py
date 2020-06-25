@@ -26,7 +26,7 @@ def beta_annealing(config, epoch):
 
     config.logger.log({"beta": config.beta})
 
-def beta_cyclicing(config, epoch):
+def beta_cycling(config, epoch):
     """cycling beta btw 0 and 1 during annealing_epochs after waiting for warmup_epochs
 
     Arguments:
@@ -35,11 +35,12 @@ def beta_cyclicing(config, epoch):
     """
     # TODO Callback with number of epochs
     if epoch > config.beta_warmup_epochs:
-        if epoch <= config.beta_warmup_epochs + config.beta_annealing_epochs:
-            config.beta += 1/config.beta_annealing_epochs
-            print(f"[INFO] Beta increased to: {config.beta}")
+        if epoch % config.beta_annealing_epochs == 0:
+            config.beta = 0
+            print(f"[INFO] Beta reset to: {config.beta}")
         else:
-            print(f"[INFO] Beta constant at: {config.beta}")
+            config.beta += 0.01/config.beta_annealing_epochs
+            print(f"[INFO] Beta increased to: {config.beta}")
     else:
         print(f"[INFO] Beta warming: {config.beta}")
 

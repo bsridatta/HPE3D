@@ -109,6 +109,8 @@ def test():
     image_dim = inp.shape[1:]
 
     encoder_RGB = EncoderRGB(latent_dim)
+    print(encoder_RGB)
+    exit()
     decoder_RGB = DecoderRGB(latent_dim)
     encoder_RGB.eval()
     decoder_RGB.eval()

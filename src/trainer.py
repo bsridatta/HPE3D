@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from models import KLD, PJPE, reparameterize
 from processing import post_process
-from utils import get_inp_target_criterion, beta_annealing
+from utils import get_inp_target_criterion, beta_annealing, beta_cycling
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -27,7 +27,7 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         kld_loss = output['log']['kld_loss']
         recon_loss = output['log']['recon_loss']
         loss = output['loss']
-
+         
         loss.backward()
         optimizer.step()
 
@@ -40,10 +40,11 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
             batch_idx / len(train_loader),
             loss.item(), recon_loss.item(), kld_loss.item()))
 
-    # Anneal beta 0 - 1
+    # Anneal beta 0 - 0.01
     beta_annealing(config, epoch)
-
-    del loss, recon_loss, kld_loss, output
+    # beta_cycling(config, epoch)
+ 
+    # del loss, recon_loss, kld_loss, output
 
 
 def validation_epoch(config, model, val_loader, epoch, vae_type, normalize_pose=True):
