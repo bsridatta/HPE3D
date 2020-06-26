@@ -114,8 +114,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        # if self.train and np.random.random() < 0.5:
-        #     sample = self.flip(sample)
+        if self.train and np.random.random() < 1:
+            sample = self.flip(sample)
 
         return sample
 
@@ -139,8 +139,11 @@ class H36M(Dataset):
         return image
 
     def flip(self, sample):
+        import utils
         pose2d_flip = sample['pose2d'].clone()
         pose3d_flip = sample['pose3d'].clone()
+
+        utils.print_pose(pose2d_flip)
 
         for idx, x in enumerate(self.flipped_indices):
             if idx == 0:
@@ -150,12 +153,15 @@ class H36M(Dataset):
             pose3d_flip[idx-1] = sample['pose3d'][x-1]
             
         # TODO have global image resolution
-        pose2d_flip[:, 0] = 256 - pose2d_flip[:, 0]
-        pose3d_flip[:, 0] *= -1
+        # pose2d_flip[:, 0] = 256 - pose2d_flip[:, 0]
+        # pose3d_flip[:, 0] *= -1
 
         sample['pose2d'] = pose2d_flip
         sample['pose3d'] = pose3d_flip
         
+        print("\n AFTER 6 MONTHS \n")
+        utils.print_pose(pose2d_flip)
+
         # TODO add image flipping
 
         del pose2d_flip, pose3d_flip
@@ -169,7 +175,7 @@ def test_h36m():
     '''
 
     annotation_file = f'debug_h36m17'
-    image_path = f"/home/datta/lab/HPE_datasets/h36m/"
+    image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
 
     dataset = H36M([1, 5, 6, 7, 8],
                    annotation_file, image_path, train=True, no_images=False)
@@ -183,8 +189,8 @@ def test_h36m():
         print(k, v.size(), v.dtype, end="\t")
         pass
 
-    print(sample['pose2d'], '\n\n\n')
-    print(sample['pose3d'])
+    # print(sample['pose2d'], '\n\n\n')
+    # print(sample['pose3d'])
 
 
     del dataset

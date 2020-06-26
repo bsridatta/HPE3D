@@ -2,9 +2,8 @@ import sys
 
 import torch
 
-from models import (Decoder3D, DecoderRGB,
-                    Encoder2D, EncoderRGB,
-                    image_recon_loss, PJPE)
+from models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB,
+                    image_recon_loss)
 
 
 def beta_annealing(config, epoch):
@@ -25,6 +24,7 @@ def beta_annealing(config, epoch):
         print(f"[INFO] Beta warming: {config.beta}")
 
     config.logger.log({"beta": config.beta})
+
 
 def beta_cycling(config, epoch):
     """cycling beta btw 0 and 1 during annealing_epochs after waiting for warmup_epochs
@@ -179,3 +179,22 @@ def get_inp_target_criterion(encoder, decoder, batch):
         exit()
 
     return (inp, target, criterion)
+
+
+def print_pose(pose):
+    """print pose with its joint name. for debugging
+
+    Args:
+        pose (numpy): 2D or 3D pose
+    """
+    joint_names = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
+                   'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+
+    if torch.is_tensor(pose):
+        pose = pose.numpy()
+    if len(pose) == 17:
+        for x in range(len(pose)):
+            print(f'{joint_names[x]:10} {pose[x]}')
+    else:
+        for x in range(len(pose)):
+            print(f'{joint_names[x+1]:10} {pose[x]}')
