@@ -177,7 +177,9 @@ if __name__ == "__main__":
     # print(pose3.shape)
     # plot_2d(pose2)
     # plot_2d(pose2, image)
-    plot_3d(pose3)
     # plot_h36(pose3)
+    import viz
+    viz.plot_2d(pose2)
+    viz.plot_3d(pose3)
     import gc
     gc.collect()

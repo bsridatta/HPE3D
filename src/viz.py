@@ -30,7 +30,7 @@ def plot_3d(pose):
 
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
-    ax._axis3don = False
+    # ax._axis3don = False
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
@@ -47,7 +47,8 @@ def plot_3d(pose):
                 z[([link[0], link[1]])],
                 c='b', alpha=0.6, lw=3)
 
-    """latent viz"""
+    plt.show()
+    """for latent viz"""
     DPI = fig.get_dpi()
     fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
     fig.savefig(f'/home/datta/lab/HPE3D/src/results/x.png')
@@ -58,7 +59,7 @@ def plot_3d(pose):
     # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
     # to RGB or image = image[...,0:3]
     image = transforms.ToTensor()(image).unsqueeze_(0)
-
+    
     return image
 
     """    

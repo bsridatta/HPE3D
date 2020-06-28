@@ -61,7 +61,7 @@ def denormalize(pose, mean, std):
     return pose
 
 
-def preprocess(annotations, root_idx, normalize_pose=True):
+def preprocess(annotations, root_idx, normalize_pose=False):
     '''
     Preprocessing steps on -
     pose3d - 3d pose in camera frame(data already coverted from world to camera)

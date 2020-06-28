@@ -115,6 +115,7 @@ class H36M(Dataset):
 
         # Augmentation - Flip
         # if self.train and np.random.random() < 1:
+
         #     sample = self.flip(sample)
 
         return sample
@@ -191,6 +192,7 @@ def test_h36m():
     
     import viz
     viz.plot_2d(sample['pose2d'])
+    viz.plot_3d(sample['pose3d'])
     # print(sample['pose2d'], '\n\n\n')
     # print(sample['pose3d'])
 
