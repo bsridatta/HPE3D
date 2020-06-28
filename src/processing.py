@@ -9,26 +9,26 @@ import numpy as np
 import torch
 
 
-def zero_the_root(pose3d, root_idx):
+def zero_the_root(pose, root_idx):
     '''
     center around root - pelvis
 
     Arguments:
-        pose3d (array) -- array of 3d poses of shape [17,3]
+        pose (array) -- array of poses
         root_idx (int) -- index of root(pelvis)
 
     Returns:
-        pose3d (array) -- poses with root shifted to 0,0,0. 
+        pose (array) -- poses with root shifted to origin,
                         w/o root as always 0 
     '''
     # center at root
-    for i in range(pose3d.shape[0]):
-        pose3d[i, :, :] = pose3d[i, :, :] - pose3d[i, root_idx, :]
+    for i in range(pose.shape[0]):
+        pose[i, :, :] = pose[i, :, :] - pose[i, root_idx, :]
 
     # remove root
-    pose3d = np.delete(pose3d, root_idx, 1)  # axis [n, j, x/y]
+    pose = np.delete(pose, root_idx, 1)  # axis [n, j, x/y]
 
-    return pose3d
+    return pose
 
 
 def normalize(pose):
@@ -45,6 +45,7 @@ def normalize(pose):
     '''
     mean = np.mean(pose, axis=0)
     std = np.std(pose, axis=0)
+
     pose_norm = (pose - mean)/std
 
     return pose_norm, mean, std
@@ -77,9 +78,11 @@ def preprocess(annotations, root_idx, normalize_pose=True):
     # center the 3d pose at the root and remove the root
     pose3d_zeroed = zero_the_root(annotations['pose3d'], root_idx)
 
+
+    pose2d = annotations['pose2d']
+    pose2d_16_joints = zero_the_root(pose2d, root_idx)
     # remove root joint in 2d pose
-    pose2d_16_joints = np.delete(
-        annotations['pose2d'], root_idx, 1)  # axis [n, j, x/y/z]
+    # pose2d_16_joints = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
 
     if normalize_pose:
         # normalize 2d and 3d poses
@@ -93,7 +96,6 @@ def preprocess(annotations, root_idx, normalize_pose=True):
     else:
         annotations['pose2d'] = pose2d_16_joints
         annotations['pose3d'] = pose3d_zeroed
-
 
     return annotations, norm_stats
 

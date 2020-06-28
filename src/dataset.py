@@ -114,8 +114,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        if self.train and np.random.random() < 1:
-            sample = self.flip(sample)
+        # if self.train and np.random.random() < 1:
+        #     sample = self.flip(sample)
 
         return sample
 
