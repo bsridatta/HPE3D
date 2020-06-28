@@ -80,9 +80,9 @@ def preprocess(annotations, root_idx, normalize_pose=True):
 
 
     pose2d = annotations['pose2d']
-    pose2d_16_joints = zero_the_root(pose2d, root_idx)
+    # pose2d_16_joints = zero_the_root(pose2d, root_idx)
     # remove root joint in 2d pose
-    # pose2d_16_joints = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
+    pose2d_16_joints = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
 
     if normalize_pose:
         # normalize 2d and 3d poses
