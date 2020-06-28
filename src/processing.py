@@ -75,27 +75,30 @@ def preprocess(annotations, root_idx, normalize_pose=True):
         norm_stats (dic) -- mean and std of 2d, 3d poses to use for de-norm
     '''
     norm_stats = {}  # store mean and std of poses
-    # center the 3d pose at the root and remove the root
-    pose3d_zeroed = zero_the_root(annotations['pose3d'], root_idx)
-
-
+    
     pose2d = annotations['pose2d']
-    # pose2d_16_joints = zero_the_root(pose2d, root_idx)
+    pose3d = annotations['pose3d']
+
     # remove root joint in 2d pose
-    pose2d_16_joints = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
+    # pose2d = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
+
+    # center the 3d pose at the root and remove the root
+    pose3d = zero_the_root(pose3d, root_idx)
+    pose2d = zero_the_root(pose2d, root_idx)
+
 
     if normalize_pose:
         # normalize 2d and 3d poses
-        pose2d_norm, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
-            pose2d_16_joints)
-        pose3d_norm, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
-            pose3d_zeroed)
-        annotations['pose2d'] = pose2d_norm
-        annotations['pose3d'] = pose3d_norm
+        pose2d, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
+            pose2d)
+        pose3d, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
+            pose3d)
+        annotations['pose2d'] = pose2d
+        annotations['pose3d'] = pose3d
 
     else:
-        annotations['pose2d'] = pose2d_16_joints
-        annotations['pose3d'] = pose3d_zeroed
+        annotations['pose2d'] = pose2d
+        annotations['pose3d'] = pose3d
 
     return annotations, norm_stats
 

@@ -99,7 +99,7 @@ def plot_2d(pose, image=False):
     ax = fig.gca()
 
     if pose.shape[0] == 16:
-        pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
+        pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
 
     x = pose[:, 0]
     y = -1*pose[:, 1]

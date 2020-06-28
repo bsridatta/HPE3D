@@ -188,7 +188,9 @@ def test_h36m():
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
         pass
-
+    
+    import viz
+    viz.plot_2d(sample['pose2d'])
     # print(sample['pose2d'], '\n\n\n')
     # print(sample['pose3d'])
 
