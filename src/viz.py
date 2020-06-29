@@ -329,7 +329,6 @@ def plot_mayavi(pose, pose2):
     tube = mlab.pipeline.stripper(tube)
     mlab.pipeline.surface(tube, color=(1, 1, 1))
 
-    # Finally, display the set of lines
     # mlab.pipeline.surface(lines, colormap='Accent', line_width=1, opacity=.4)
 
     # And choose a nice view
