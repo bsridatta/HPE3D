@@ -20,8 +20,8 @@ save_path = f'{os.getenv("HOME")}/lab/HPE3D/src/data/'
 annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
-# subject_list = [9, 11]
-subject_list = [1, 5, 6, 7, 8]
+subject_list = [9, 11]
+# subject_list = [1, 5, 6, 7, 8]
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str
 inds = range(17)
@@ -30,10 +30,10 @@ subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 
 # Get smaller subset of the data for fast dev?
-debug = False
-
+debug = True
 # Get Mean and Std of the data alone?
-mean_std = True
+mean_std = False
+
 #################################################################
 
 if debug:

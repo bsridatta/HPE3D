@@ -2,6 +2,7 @@ import os
 import sys
 from argparse import ArgumentParser
 import gc
+import atexit
 
 import torch
 import wandb
@@ -33,12 +34,14 @@ def main():
 
     # wandb for experiment monitoring, ignore when debugging on cpu
     if not use_cuda:
-        os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="to_delete")
+        wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        wandb.init(anonymous='allow', project="hpe3d")
+        # os.environ['WANDB_MODE'] = 'dryrun'
+        wandb.init(anonymous='allow', project="hpe3d", config=config)
 
+    os.environ['WANDB_NOTES'] = 'Without normalize'
     config.logger = wandb
     config.logger.run.save()
     # To id weights even after changing run name
@@ -46,7 +49,6 @@ def main():
 
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}')
-
 
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
@@ -154,6 +156,11 @@ def main():
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
+# def exit_handler(config, wandb):
+#     print("[INFO]: Sync wandb before terminating")
+
+#     config.logger = None  # wandb cant have objects in its config
+#     wandb.config.update(config)
 
 def training_specific_args():
 
@@ -173,7 +180,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=20, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta_warmup_epochs', default=0, type=int,
+    parser.add_argument('--beta_warmup_epochs', default=10, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=50, type=int,
                         help='KLD weight annealing time')
@@ -186,7 +193,7 @@ def training_specific_args():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')    
     # pose data
-    parser.add_argument('--annotation_file', default=f'debug_h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
