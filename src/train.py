@@ -146,7 +146,7 @@ def main():
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
 
-        config.logger.log({"epoch": epoch})
+        # config.logger.log({"epoch": epoch})
         
         if optimizer.param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")
