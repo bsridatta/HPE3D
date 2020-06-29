@@ -14,6 +14,7 @@ class Encoder2D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 512
         self.name = "Encoder2D"
+        self.drop_out_p = 0
 
         self.__build_model()
 
@@ -23,7 +24,7 @@ class Encoder2D(nn.Module):
             nn.Linear(2*self.n_joints, self.neurons),  # expand features
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
@@ -32,14 +33,14 @@ class Encoder2D(nn.Module):
         self.enc_out_block = nn.Sequential(
             nn.BatchNorm1d(self.latent_dim),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_block = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LA_block = nn.Sequential(
@@ -62,12 +63,10 @@ class Encoder2D(nn.Module):
 
         '''Hands VAE'''
         x = self.LA_block(x)
+        x = self.LA_block(x) 
+        x = self.LA_block(x)
         x = self.LA_block(x)
 
-        # extra
-        x = self.LA_block(x)
-        x = self.LA_block(x)
-        
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
 
@@ -86,6 +85,7 @@ class Decoder3D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 512
         self.name = "Decoder3D"
+        self.drop_out_p = 0
 
         self.__build_model()
 
@@ -95,20 +95,23 @@ class Decoder3D(nn.Module):
             nn.Linear(self.latent_dim, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.dec_out_block = nn.Sequential(
             # TODO is it good idea to have activation \
             # and drop out at the end for enc or dec
-            nn.Linear(self.neurons, 3*self.n_joints)
+            nn.Linear(self.neurons, 3*self.n_joints),
+            # nn.BatchNorm1d(3*self.n_joints),
+            # self.activation(),
+            # nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_block = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LA_block = nn.Sequential(
@@ -130,11 +133,10 @@ class Decoder3D(nn.Module):
         # x = self.LBAD_block(x) + residual
 
         '''VAE Hand'''
-
         x = self.LA_block(x)
+        x = self.LA_block(x) 
         x = self.LA_block(x)
-        x = self.LA_block(x)
-        x = self.LA_block(x)
+        x = self.LA_block(x) 
 
         x = self.dec_out_block(x)
 

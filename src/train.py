@@ -33,6 +33,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring, ignore when debugging on cpu
+    os.environ['WANDB_NOTES'] = 'Absolutely NO BN, again'
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
@@ -41,7 +42,6 @@ def main():
         # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
-    os.environ['WANDB_NOTES'] = 'Without normalize'
     config.logger = wandb
     config.logger.run.save()
     # To id weights even after changing run name

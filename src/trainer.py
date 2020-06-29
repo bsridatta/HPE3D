@@ -84,7 +84,7 @@ def validation_epoch(config, model, val_loader, epoch, vae_type, normalize_pose=
     all_zs = torch.cat(all_zs, 0)
     all_z_attrs = torch.cat(all_z_attrs, 0)
 
-    if '3D' in model[1].name and normalize_pose == False:
+    if '3D' in model[1].name and normalize_pose == True:
         all_recons, all_targets = post_process(config, all_recons, all_targets)
 
     # Logging
