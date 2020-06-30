@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 
 from processing import preprocess
 import viz
+import utils
 
 class H36M(Dataset):
 
@@ -41,8 +42,11 @@ class H36M(Dataset):
                              "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
         # self.flip_pairs = ((1, 4), (2, 5), (3, 6),
         #                    (14, 11), (15, 12), (16, 13))
-        self.flipped_indices = [0, 4, 5, 6, 1, 2, 3,
-                                7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
+        # self.flipped_indices = [0, 4, 5, 6, 1, 2, 3,
+        #                         7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
+        # for 16 joints
+        self.flipped_indices = [3, 4, 5, 0, 1, 2,
+                                6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
 
         self.root_idx = self.joint_names.index('Pelvis')
 
@@ -63,7 +67,7 @@ class H36M(Dataset):
         for key in annotations_h5.keys():
             if key not in ignore_data:
                 self.annotations[key] = annotations_h5[key][:]
-        
+
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations = preprocess(self.annotations, self.root_idx)
@@ -103,9 +107,8 @@ class H36M(Dataset):
             sample['image'] = image
 
         # Augmentation - Flip
-        # if self.train and np.random.random() < 1:
-
-        #     sample = self.flip(sample)
+        if self.train and np.random.random() < 0.2:
+            sample = self.flip(sample)
 
         return sample
 
@@ -129,34 +132,12 @@ class H36M(Dataset):
         return image
 
     def flip(self, sample):
-        import utils
-        pose2d_flip = sample['pose2d'].clone()
-        pose3d_flip = sample['pose3d'].clone()
-
-        utils.print_pose(pose2d_flip)
-
-        for idx, x in enumerate(self.flipped_indices):
-            if idx == 0:
-               # ignore root as it will be added later at 0th index
-                pass
-            pose2d_flip[idx-1] = sample['pose2d'][x-1]
-            pose3d_flip[idx-1] = sample['pose3d'][x-1]
-            
-        # TODO have global image resolution
-        # pose2d_flip[:, 0] = 256 - pose2d_flip[:, 0]
-        # pose3d_flip[:, 0] *= -1
-
-        sample['pose2d'] = pose2d_flip
-        sample['pose3d'] = pose3d_flip
-        
-        print("\n AFTER 6 MONTHS \n")
-        utils.print_pose(pose2d_flip)
-
+        sample['pose2d'] = sample['pose2d'][self.flipped_indices]
+        sample['pose3d'] = sample['pose3d'][self.flipped_indices]
+        sample['pose2d'][:,0] *= -1
+        sample['pose3d'][:,0] *= -1
         # TODO add image flipping
-
-        del pose2d_flip, pose3d_flip
         return sample
-
 
 
 def test_h36m():
@@ -178,13 +159,12 @@ def test_h36m():
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
         pass
-    
+
     import viz
     viz.plot_2d(sample['pose2d'])
     viz.plot_3d(sample['pose3d'])
     # print(sample['pose2d'], '\n\n\n')
     # print(sample['pose3d'])
-
 
     del dataset
     del sample

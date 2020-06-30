@@ -11,11 +11,12 @@ results
 # checkpoints
 */checkpoints/*.pt
 
-# Exceptions
-!light-morning-232*
-
 # data pickles
 *.h5
+
+# Exceptions
+!light-morning-232*
+!norm_stats.h5
 
 # cache
 __pycache__/

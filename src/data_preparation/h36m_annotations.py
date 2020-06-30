@@ -8,6 +8,7 @@ Code adapted from dataset provided by https://github.com/juyongchang/PoseLifter
 '''
 
 import os
+import sys
 
 import h5py
 import numpy as np
@@ -20,8 +21,8 @@ save_path = f'{os.getenv("HOME")}/lab/HPE3D/src/data/'
 annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
-subject_list = [9, 11]
-# subject_list = [1, 5, 6, 7, 8]
+# subject_list = [9, 11]
+subject_list = [1, 5, 6, 7, 8]
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str
 inds = range(17)
@@ -116,10 +117,6 @@ for subject_ in subject_list:
 print(f'{dir_name}  number of samples = %d' % num_samples)
 
 if mean_std:
-    import json
-    import os
-    import sys
-
     sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
 
     from processing import zero_the_root 
@@ -128,21 +125,22 @@ if mean_std:
     pose3d = zero_the_root(np.asarray(pose3d))
     
     norm_stats = {}
-    norm_stats['mean2d'] = str(np.mean(pose2d, axis=(0,1)))
-    norm_stats['mean3d'] = str(np.mean(pose3d, axis=(0,1)))
-    norm_stats['std2d'] = str(np.std(pose2d, axis=(0,1)))
-    norm_stats['std3d'] = str(np.std(pose3d, axis=(0,1)))
+    # axis = 0, 1 to get mean for x, y,z 
 
-    norm_stats['max2d'] = str(np.max(pose2d, axis=(0,1)))
-    norm_stats['max3d'] = str(np.max(pose3d, axis=(0,1)))
+    norm_stats['mean2d'] = np.mean(pose2d, axis=(0))
+    norm_stats['mean3d'] = np.mean(pose3d, axis=(0))
+    norm_stats['std2d'] = np.std(pose2d, axis=(0))
+    norm_stats['std3d'] = np.std(pose3d, axis=(0))
+    norm_stats['max2d'] = np.max(pose2d, axis=(0))
+    norm_stats['max3d'] = np.max(pose3d, axis=(0))
+    norm_stats['min2d'] = np.min(pose2d, axis=(0))
+    norm_stats['min3d'] = np.min(pose3d, axis=(0))
 
-    norm_stats['min2d'] = str(np.min(pose2d, axis=(0,1)))
-    norm_stats['min3d'] = str(np.min(pose3d, axis=(0,1)))
-    
-    with open(save_path+h5name+"_mean_std.json", 'w') as f:
-        json.dump(norm_stats, f)
-    # Using only h36m17_15678_mean/std//2d/3d.csv 
-
+    f = h5py.File(f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5", 'w')
+    for key in norm_stats.keys():
+        f[key] = norm_stats[key]
+    f.close()
+    print("Saved to", f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5")
     exit()
 
 f = h5py.File(save_path+h5name+'.h5', 'w')

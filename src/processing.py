@@ -9,19 +9,14 @@ import numpy as np
 import torch
 
 # Stats collected from all the samples of subjects 1, 5, 6, 7, 8
-# after the data is ZEROED
+# after the data is ZEROED and the root removed
 
-NORM_STATS = {"mean2d": [0.71090996, -17.873556],
-              "mean3d": [1.048013, -72.56035,  -16.8111],
-              "std2d": [43.305832, 100.220085],
-              "std3d": [187.36096, 429.86206, 216.51875],
-              "max2d": [225.2641,  348.26266],
-              "max3d": [894.68054, 979.8469,  953.58203],
-              "min2d": [-242.80597, -280.42264],
-              "min3d": [-912.9147, -934.85205, -948.437]
-              }
+path=f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
+if os.path.exists(path):
+    NORM_STATS = h5py.File(path, 'r')
 
 ROOT_INDEX = 0  # Root at Pelvis index 0
+
 
 def zero_the_root(pose, root_idx=ROOT_INDEX):
     '''
@@ -71,8 +66,10 @@ def denormalize(pose):
     Returns:
        numpy : denormalized pose
     """
-    pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"], device=pose.device)
-    pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"], device=pose.device)
+    pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
+                         device=pose.device)
+    pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"],
+                         device=pose.device)
 
     return pose
 
