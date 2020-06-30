@@ -66,31 +66,20 @@ class H36M(Dataset):
         
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
-        self.annotations, norm_stats = preprocess(
-            self.annotations, self.root_idx)
-
-        # save norm_stats to denormalize data for evaluation
-        subj_name = "".join(str(sub) for sub in subjects)
-        norm_stats_name = f"norm_stats_{annotation_file}_{subj_name}.h5"
-        f = h5py.File(
-            f"{os.path.dirname(os.path.abspath(__file__))}/data/{norm_stats_name}", 'w')
-        for key in norm_stats.keys():
-            f[key] = norm_stats[key]
+        self.annotations = preprocess(self.annotations, self.root_idx)
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
 
-        # covert data to tensor after preprocessing with numpy (hard with tensors)
+        # covert data to tensor after preprocessing them as numpys (hard with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
 
         # clear the HDF5 datasets
-        # annotations_h5.close()
-        # f.close()
-        # del annotations_h5
-        # del f
-        # gc.collect()
+        annotations_h5.close()
+        del annotations_h5
+        gc.collect()
 
         # load image directly in __getitem__
         self.image_path = image_path

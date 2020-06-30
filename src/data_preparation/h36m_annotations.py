@@ -30,9 +30,9 @@ subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 
 # Get smaller subset of the data for fast dev?
-debug = True
+debug = False
 # Get Mean and Std of the data alone?
-mean_std = False
+mean_std = True
 
 #################################################################
 
@@ -117,9 +117,17 @@ print(f'{dir_name}  number of samples = %d' % num_samples)
 
 if mean_std:
     import json
+    import os
+    import sys
 
+    sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
+
+    from processing import zero_the_root 
+
+    pose2d = zero_the_root(np.asarray(pose2d))
+    pose3d = zero_the_root(np.asarray(pose3d))
+    
     norm_stats = {}
-    pose2d = np.asarray(pose2d)
     norm_stats['mean2d'] = str(np.mean(pose2d, axis=(0,1)))
     norm_stats['mean3d'] = str(np.mean(pose3d, axis=(0,1)))
     norm_stats['std2d'] = str(np.std(pose2d, axis=(0,1)))

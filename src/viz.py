@@ -310,7 +310,7 @@ def plot_mayavi(pose, pose2):
     y = -1*pose[:, 2]
     z = -1*pose[:, 1]
 
-    pts = mlab.points3d(x, y, z, scale_factor=30, color=(0.8, 0.8, 0))
+    pts = mlab.points3d(x, y, z, scale_factor=30, color=(1, 0, 0))
     pts.mlab_source.dataset.lines = np.array(skeleton)
     tube = mlab.pipeline.tube(pts, tube_radius=15)
     # tube.filter.radius_factor = 1.
@@ -322,7 +322,7 @@ def plot_mayavi(pose, pose2):
     y = -1*pose[:, 2]
     z = -1*pose[:, 1]
 
-    pts = mlab.points3d(x, y, z, scale_factor=30)
+    pts = mlab.points3d(x, y, z, scale_factor=30, color=(1, 1, 1))
     pts.mlab_source.dataset.lines = np.array(skeleton)
     tube = mlab.pipeline.tube(pts, tube_radius=15)
     # tube.filter.radius_factor = 1.
@@ -361,7 +361,7 @@ if __name__ == "__main__":
     pose2 = [[0.0000,    0.0000,    1.0000],
              [122.7085,  -17.2441,   42.9420],
              [126.0797,  444.2065,  119.1129],
-             [155.8211,  903.9439,  107.8988],
+             [158.8211,  904.9439,  108.8988],
              [-122.7145,   17.2554,  -42.7849],
              [-138.7586,  479.9395,   19.2924],
              [-106.0115,  940.2942,    5.0193],

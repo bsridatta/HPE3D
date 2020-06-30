@@ -8,17 +8,31 @@ import h5py
 import numpy as np
 import torch
 
+# Stats collected from all the samples of subjects 1, 5, 6, 7, 8
+# after the data is ZEROED
 
-def zero_the_root(pose, root_idx):
+NORM_STATS = {"mean2d": [0.71090996, -17.873556],
+              "mean3d": [1.048013, -72.56035,  -16.8111],
+              "std2d": [43.305832, 100.220085],
+              "std3d": [187.36096, 429.86206, 216.51875],
+              "max2d": [225.2641,  348.26266],
+              "max3d": [894.68054, 979.8469,  953.58203],
+              "min2d": [-242.80597, -280.42264],
+              "min3d": [-912.9147, -934.85205, -948.437]
+              }
+
+ROOT_INDEX = 0  # Root at Pelvis index 0
+
+def zero_the_root(pose, root_idx=ROOT_INDEX):
     '''
     center around root - pelvis
 
     Arguments:
-        pose (array) -- array of poses
+        pose (numpy) -- array of poses
         root_idx (int) -- index of root(pelvis)
 
     Returns:
-        pose (array) -- poses with root shifted to origin,
+        pose (numpy) -- poses with root shifted to origin,
                         w/o root as always 0 
     '''
     # center at root
@@ -33,35 +47,37 @@ def zero_the_root(pose, root_idx):
 
 def normalize(pose):
     '''
-    with mean, std with pose.shape ie for (x,y,z) of each joint
+    with mean, std for (x,y,z) of all joints
 
     Arguments:
-        pose3d (array) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
+        pose (numpy) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
 
     Returns:
-        pose_norm (array) -- array of normalized pose
-        mean (array) -- mean of poses (mean pose) [16, 2/3]
-        std (array) -- std of poses [16, 2/3]
+        pose (numpy) -- array of normalized pose
     '''
-    mean = np.mean(pose, axis=0)
-    std = np.std(pose, axis=0)
-
-    pose_norm = (pose - mean)/std
-
-    return pose_norm, mean, std
-
-
-def denormalize(pose, mean, std):
-    '''
-    Denormalize poses for evaluation of actual pose. Could also be obtained by just multiplying std
-    '''
-    pose *= std
-    pose += mean
+    mean = NORM_STATS[f"mean{pose.shape[2]}d"]
+    pose = (pose - NORM_STATS[f"mean{pose.shape[2]}d"]
+            )/NORM_STATS[f"std{pose.shape[2]}d"]
 
     return pose
 
 
-def preprocess(annotations, root_idx, normalize_pose=True):
+def denormalize(pose):
+    """ Denormalize poses for evaluation of actual pose.  
+
+    Args:
+        pose (numpy): 2d/3d pose
+
+    Returns:
+       numpy : denormalized pose
+    """
+    pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"], device=pose.device)
+    pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"], device=pose.device)
+
+    return pose
+
+
+def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True):
     '''
     Preprocessing steps on -
     pose3d - 3d pose in camera frame(data already coverted from world to camera)
@@ -72,55 +88,30 @@ def preprocess(annotations, root_idx, normalize_pose=True):
 
     Returns:
         annotations (dic) -- with normalized 16 joint 2d and 3d poses
-        norm_stats (dic) -- mean and std of 2d, 3d poses to use for de-norm
     '''
-    norm_stats = {}  # store mean and std of poses
-    
-    pose2d = annotations['pose2d']
-    pose3d = annotations['pose3d']
-
-    # remove root joint in 2d pose
-    # pose2d = np.delete(pose2d, root_idx, 1)  # axis [n, j, x/y/z]
-
-    # center the 3d pose at the root and remove the root
-    pose3d = zero_the_root(pose3d, root_idx)
-    pose2d = zero_the_root(pose2d, root_idx)
-
+    # center the 2d and 3d pose at the root and remove the root
+    pose2d = zero_the_root(annotations['pose2d'], root_idx)
+    pose3d = zero_the_root(annotations['pose3d'], root_idx)
 
     if normalize_pose:
         # normalize 2d and 3d poses
-        pose2d, norm_stats['mean2d'], norm_stats['std2d'] = normalize(
-            pose2d)
-        pose3d, norm_stats['mean3d'], norm_stats['std3d'] = normalize(
-            pose3d)
-        annotations['pose2d'] = pose2d
-        annotations['pose3d'] = pose3d
-
+        annotations['pose2d'] = normalize(pose2d)
+        annotations['pose3d'] = normalize(pose3d)
     else:
         annotations['pose2d'] = pose2d
         annotations['pose3d'] = pose3d
 
-    return annotations, norm_stats
+    return annotations
 
 
 def post_process(config, recon, target):
     '''
     Normalize Validation Data
-    Add root at 0,0
+    Add root at 0,0,0
     '''
-    ann_file_name = config.annotation_file.split('/')[-1].split('.')[0]
-    norm_stats = h5py.File(
-        f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_{ann_file_name}_911.h5", 'r')
-
     # de-normalize data to original positions
-    recon = denormalize(
-        recon,
-        torch.tensor(norm_stats['mean3d'], device=config.device),
-        torch.tensor(norm_stats['std3d'], device=config.device))
-    target = denormalize(
-        target,
-        torch.tensor(norm_stats['mean3d'], device=config.device),
-        torch.tensor(norm_stats['std3d'], device=config.device))
+    recon = denormalize(recon)
+    target = denormalize(target)
 
     # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
     # Not very fair, but the average is with 17 in the denom!
@@ -128,10 +119,6 @@ def post_process(config, recon, target):
         (torch.zeros(recon.shape[0], 1, 3, device=config.device), recon), dim=1)
     target = torch.cat(
         (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
-
-    norm_stats.close()
-    del norm_stats
-    gc.collect()
 
     return recon, target
 
