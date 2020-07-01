@@ -1,19 +1,19 @@
+import atexit
+import gc
+import math
 import os
 import sys
 from argparse import ArgumentParser
-import gc
-import atexit
 
-import torch
-import wandb
 import numpy as np
+import torch
 
-from viz import plot_diff, plot_diffs
 import dataloader
 import utils
+import wandb
 from models import PJPE
-from trainer import (training_epoch,
-                     validation_epoch)
+from trainer import training_epoch, validation_epoch
+from viz import plot_diff, plot_diffs
 
 
 def main():
@@ -153,7 +153,10 @@ def main():
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
-        
+        if val_loss != val_loss:
+            print("[INFO]: NAN loss")
+            break
+
         if optimizer.param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")
             break
