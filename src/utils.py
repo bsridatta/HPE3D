@@ -130,7 +130,7 @@ def get_schedulers(optimizers):
     '''
     schedulers = []
     for optimizer in optimizers:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5,
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=10,
                                                                factor=0.3, verbose=True)
         schedulers.append(scheduler)
 
@@ -173,7 +173,8 @@ def get_inp_target_criterion(encoder, decoder, batch):
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
         # criterion = PJPE
-        criterion = torch.nn.MSELoss()
+        criterion = torch.nn.L1Loss()
+        # criterion = torch.nn.MSELoss()
     else:
         print("MODEL NOT DEFINED")
         exit()

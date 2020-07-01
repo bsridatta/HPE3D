@@ -32,8 +32,9 @@ def main():
     config.device = device  # Adding device to config, not already in argparse
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
-    # wandb for experiment monitoring, ignore when debugging on cpu
-    os.environ['WANDB_NOTES'] = 'New norm ...flipping p 0.7'
+    # wandb for experiment monitoring
+    os.environ['WANDB_NOTES'] = 'exp with l1 making richwater 61 better'
+    # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
@@ -102,6 +103,7 @@ def main():
 
     config.val_loss_min = float('inf')
     config.beta = 0
+
     # Training
     for epoch in range(1, config.epochs+1):
         for variant in range(len(variants)):
@@ -146,7 +148,8 @@ def main():
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
 
-        # config.logger.log({"epoch": epoch})
+        # TODO add better metric log for every batch with partial epoch for batch size independence
+        config.logger.log({"epoch": epoch})
         
         if optimizer.param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")

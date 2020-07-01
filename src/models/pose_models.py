@@ -63,6 +63,7 @@ class Encoder2D(nn.Module):
 
         '''Hands VAE'''
         x = self.LA_block(x)
+        x = self.LA_block(x)
         x = self.LA_block(x) 
         x = self.LA_block(x)
         x = self.LA_block(x)
@@ -133,6 +134,7 @@ class Decoder3D(nn.Module):
         # x = self.LBAD_block(x) + residual
 
         '''VAE Hand'''
+        x = self.LA_block(x)
         x = self.LA_block(x)
         x = self.LA_block(x) 
         x = self.LA_block(x)
