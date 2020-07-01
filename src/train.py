@@ -30,7 +30,7 @@ def main():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 4 if use_cuda else 4  # for dataloader
+    config.num_workers = 0 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
     os.environ['WANDB_NOTES'] = 'exp with l1 making richwater 61 better'
@@ -172,7 +172,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=8048, type=int,
+    parser.add_argument('--batch_size', default=1024, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
