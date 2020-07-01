@@ -6,6 +6,7 @@ import atexit
 
 import torch
 import wandb
+import numpy as np
 
 from viz import plot_diff, plot_diffs
 import dataloader
@@ -22,6 +23,8 @@ def main():
     # Config is distributed to all the other modules
     config = parser.parse_args()
     torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+
     # log intervals
     eval_interval = 1  # interval to get MPJPE of 3d decoder
     manifold_interval = 1  # interval to visualize encoding in manifold
@@ -30,10 +33,10 @@ def main():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 0 if use_cuda else 4  # for dataloader
+    config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'exp with l1 making richwater 61 better'
+    os.environ['WANDB_NOTES'] = 'exp with cyclic beta lr 1e-5 threshold 1k batch'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -183,9 +186,9 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=20, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta_warmup_epochs', default=10, type=int,
+    parser.add_argument('--beta_warmup_epochs', default=0, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
-    parser.add_argument('--beta_annealing_epochs', default=50, type=int,
+    parser.add_argument('--beta_annealing_epochs', default=25, type=int,
                         help='KLD weight annealing time')
     parser.add_argument('--learning_rate', default=1e-3, type=float,
                         help='learning rate for all optimizers')

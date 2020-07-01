@@ -41,8 +41,8 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
             loss.item(), recon_loss.item(), kld_loss.item()))
 
     # Anneal beta 0 - 0.01
-    beta_annealing(config, epoch)
-    # beta_cycling(config, epoch)
+    # beta_annealing(config, epoch)
+    beta_cycling(config, epoch)
  
     # del loss, recon_loss, kld_loss, output
 

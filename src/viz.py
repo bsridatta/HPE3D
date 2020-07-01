@@ -51,9 +51,9 @@ def plot_3d(pose):
     """for latent viz"""
     DPI = fig.get_dpi()
     fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
-    fig.savefig(f'/home/datta/lab/HPE3D/src/results/x.png')
+    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
     fig.clf()
-    image = Image.open(f'/home/datta/lab/HPE3D/src/results/x.png')
+    image = Image.open(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
     image = image.convert('RGB')
     # image = np.asarray(image)
     # image = np.transpose(image, (2, 0, 1)).astype(np.float32)
@@ -208,7 +208,7 @@ def plot_diff(ax, pose, target, error, i, image=True):
     image = mpimg.imread(f'{root}/{path}/{path}_'+"%06d" % (5*i+1)+".jpg")
     ax2.imshow(image)
 
-    fig.savefig(f'/home/datta/lab/HPE3D/src/results3/{i}.png')
+    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results3/{i}.png")
     fig.clf()
 
     return ax

@@ -34,15 +34,14 @@ def beta_cycling(config, epoch):
         epoch {integer} -- current training epoch
     """
     # TODO Callback with number of epochs
-    if epoch > config.beta_warmup_epochs:
-        if epoch % config.beta_annealing_epochs == 0:
-            config.beta = 0
-            print(f"[INFO] Beta reset to: {config.beta}")
-        else:
-            config.beta += 0.01/config.beta_annealing_epochs
-            print(f"[INFO] Beta increased to: {config.beta}")
+    if epoch % config.beta_annealing_epochs == 0:
+        config.beta = 0
+        print(f"[INFO] Beta reset to: {config.beta}")
+    elif epoch % config.beta_annealing_epochs < config.beta_annealing_epochs/2:   
+        config.beta += 0.01/config.beta_annealing_epochs*0.5
+        print(f"[INFO] Beta increased to: {config.beta}")
     else:
-        print(f"[INFO] Beta warming: {config.beta}")
+        print(f"[INFO] Beta constant: {config.beta}")
 
     config.logger.log({"beta": config.beta})
 
@@ -131,7 +130,7 @@ def get_schedulers(optimizers):
     schedulers = []
     for optimizer in optimizers:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=10,
-                                                               factor=0.3, verbose=True)
+                                                               factor=0.3, verbose=True, threshold=1e-5)
         schedulers.append(scheduler)
 
     return schedulers
