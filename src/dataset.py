@@ -69,7 +69,7 @@ class H36M(Dataset):
 
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
-        self.annotations = preprocess(self.annotations, self.root_idx)
+        self.annotations = preprocess(self.annotations, self.root_idx, normalize_pose=False)
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
@@ -153,15 +153,20 @@ def test_h36m():
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(10)
+    sample = dataset.__getitem__(5)
 
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
         pass
 
     import viz
-    viz.plot_2d(sample['pose2d'])
-    viz.plot_3d(sample['pose3d'])
+    import numpy as np
+    import matplotlib.pyplot as plt
+    # viz.plot_2d(sample['pose2d'])
+    viz.plot_mayavi(sample['pose3d'], sample['pose3d'])
+    plt.imshow(np.transpose(sample['image'].numpy(), (1,2 , 0)).astype(np.float32))
+
+    plt.show()
     # print(sample['pose2d'], '\n\n\n')
     # print(sample['pose3d'])
 

@@ -32,6 +32,7 @@ def plot_3d(pose):
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
     # ax._axis3don = False
+    plt.axis('normal')
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
