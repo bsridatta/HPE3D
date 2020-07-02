@@ -69,7 +69,7 @@ class H36M(Dataset):
 
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
-        self.annotations = preprocess(self.annotations, self.root_idx, normalize_pose=False)
+        self.annotations = preprocess(self.annotations, self.root_idx, normalize_pose=True)
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()

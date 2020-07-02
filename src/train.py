@@ -194,7 +194,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=100, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta_warmup_epochs', default=100, type=int,
+    parser.add_argument('--beta_warmup_epochs', default=10, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
