@@ -3,6 +3,12 @@ import sys
 import torch
 import torch.nn as nn
 import torchvision.models as models
+from .model_utils import KLD, PJPE, reparameterize, image_recon_loss
+
+"""
+Pose models - Linear Variant
+change import in __init__.py according to choice
+"""
 
 
 class Encoder2D(nn.Module):
@@ -14,6 +20,7 @@ class Encoder2D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 512
         self.name = "Encoder2D"
+        self.drop_out_p = 0
 
         self.__build_model()
 
@@ -23,7 +30,7 @@ class Encoder2D(nn.Module):
             nn.Linear(2*self.n_joints, self.neurons),  # expand features
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
@@ -32,14 +39,14 @@ class Encoder2D(nn.Module):
         self.enc_out_block = nn.Sequential(
             nn.BatchNorm1d(self.latent_dim),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_block = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LA_block = nn.Sequential(
@@ -51,27 +58,14 @@ class Encoder2D(nn.Module):
         x = x.view(-1, 2*self.n_joints)
         x = self.enc_inp_block(x)
 
-        # to explore
-        '''BaseLine whole model'''
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
+        ''' Similar to Hands VAE'''
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
 
-        '''Hands VAE'''
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
-
-        '''BAD - BatchNorm Activation Dropout'''
-        # mean = self.enc_out_block(mean)
-        # logvar = self.enc_out_block(logvar)
 
         return mean, logvar
 
@@ -84,6 +78,7 @@ class Decoder3D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 512
         self.name = "Decoder3D"
+        self.drop_out_p = 0
 
         self.__build_model()
 
@@ -93,20 +88,20 @@ class Decoder3D(nn.Module):
             nn.Linear(self.latent_dim, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.dec_out_block = nn.Sequential(
             # TODO is it good idea to have activation \
             # and drop out at the end for enc or dec
-            nn.Linear(self.neurons, 3*self.n_joints)
+            nn.Linear(self.neurons, 3*self.n_joints),
         )
 
         self.LBAD_block = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout()
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LA_block = nn.Sequential(
@@ -118,71 +113,14 @@ class Decoder3D(nn.Module):
         x = x.view(-1, self.latent_dim)
         x = self.dec_inp_block(x)
 
-        # To explore
-        '''BaseLine whole model'''
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
-        residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) + residual
-
-        '''VAE Hand'''
-
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
-        # x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
+        x = self.LA_block(x)
 
         x = self.dec_out_block(x)
 
         return x
-
-
-def reparameterize(mean, logvar, eval=False):
-    # TODO not sure why few repos do that
-    if eval:
-        return mean
-
-    std = torch.exp(0.5*logvar)
-    eps = torch.randn_like(std)
-
-    return mean + eps*std
-
-
-def PJPE(pred, target):
-    '''
-    Equation per sample per sample in batch
-    PJPE(per joint position estimation) -- root((x-x`)2+(y-y`)2+(z-z`)2)
-
-    Arguments:
-        pred (tensor)-- predicted 3d poses [n,j,3]
-        target (tensor)-- taget 3d poses [n,j,3]
-    Returns:
-        PJPE -- calc MPJPE - mean(PJPE, axis=0) for each joint across batch
-    '''
-    PJPE = torch.sqrt(
-        torch.sum((pred-target).pow(2), dim=2))
-
-    # MPJPE = torch.mean(PJPE, dim=0)
-
-    return PJPE
-
-
-def KLD(mean, logvar, decoder_name):
-    '''
-    Returns:
-        loss -- averaged with the same denom as of recon
-    '''
-    loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
-    if '3D' in decoder_name:
-        # normalize by same number in recon - b*j*dim
-        # from vae-hands local_utility_fn ln-108
-        loss /= mean.shape[0]*16*3
-    else:
-        print("[WARNING] fix KLD loss normalization for current decoder")
-
-    return loss
 
 
 '''

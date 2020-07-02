@@ -52,16 +52,7 @@ class Encoder2D(nn.Module):
         x = x.view(-1, 2*self.n_joints)
         x = self.enc_inp_block(x)
 
-        # to explore
-        '''BaseLine whole model'''
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-
-        '''Hands VAE'''
+        ''' Similar to Hands VAE'''
         x = self.LA_block(x)
         x = self.LA_block(x)
         x = self.LA_block(x)
@@ -69,10 +60,6 @@ class Encoder2D(nn.Module):
 
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
-
-        '''BAD - BatchNorm Activation Dropout'''
-        # mean = self.enc_out_block(mean)
-        # logvar = self.enc_out_block(logvar)
 
         return mean, logvar
 
@@ -102,9 +89,6 @@ class Decoder3D(nn.Module):
             # TODO is it good idea to have activation \
             # and drop out at the end for enc or dec
             nn.Linear(self.neurons, 3*self.n_joints),
-            # nn.BatchNorm1d(3*self.n_joints),
-            # self.activation(),
-            # nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_block = nn.Sequential(
@@ -123,16 +107,6 @@ class Decoder3D(nn.Module):
         x = x.view(-1, self.latent_dim)
         x = self.dec_inp_block(x)
 
-        # To explore
-        '''BaseLine whole model'''
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-
-        '''VAE Hand'''
         x = self.LA_block(x)
         x = self.LA_block(x) 
         x = self.LA_block(x)
@@ -179,6 +153,7 @@ def KLD(mean, logvar, decoder_name):
         loss -- averaged with the same denom as of recon
     '''
     loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
+    
     if '3D' in decoder_name:
         # normalize by same number in recon - b*j*dim
         # from vae-hands local_utility_fn ln-108
