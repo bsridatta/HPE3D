@@ -3,7 +3,7 @@ import sys
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from .model_utils import KLD, PJPE, reparameterize, image_recon_loss
+from .model_utils import KLD, PJPE, reparameterize
 
 """
 Pose models - Linear Variant

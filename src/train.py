@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 import dataloader
-import utils
+import train_utils
 import wandb
 from models import PJPE
 from trainer import training_epoch, validation_epoch
@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'exp with cyclic beta lr 1e-5 threshold 1k batch'
+    os.environ['WANDB_NOTES'] = 'exp with batch norm'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -72,9 +72,9 @@ def main():
 
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
-    models = utils.get_models(variants, config)
-    optimizers = utils.get_optims(models, config)
-    schedulers = utils.get_schedulers(optimizers)
+    models = train_utils.get_models(variants, config)
+    optimizers = train_utils.get_optims(models, config)
+    schedulers = train_utils.get_schedulers(optimizers)
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
@@ -148,7 +148,7 @@ def main():
 
             # Model Chechpoint
             if use_cuda:
-                utils.model_checkpoint(
+                train_utils.model_checkpoint(
                     config, val_loss, model, optimizer, epoch)
 
             # TODO have different learning rates for all variants
@@ -183,7 +183,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=4096, type=int,
+    parser.add_argument('--batch_size', default=1024, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -194,7 +194,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=100, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--beta_warmup_epochs', default=10, type=int,
+    parser.add_argument('--beta_warmup_epochs', default=100, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')

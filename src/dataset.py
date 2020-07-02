@@ -10,7 +10,6 @@ from torch.utils.data import Dataset
 
 from processing import preprocess
 import viz
-import utils
 
 class H36M(Dataset):
 

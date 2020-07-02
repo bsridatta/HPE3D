@@ -9,7 +9,7 @@ import wandb
 
 from viz import plot_diff, plot_diffs, plot_umap, plot_3d
 import dataloader
-import utils
+import train_utils
 from models import PJPE
 from trainer import (training_epoch,
                      validation_epoch)
@@ -82,7 +82,7 @@ def main():
 
     # Intuition: Each variant is one model,
     # except they use the same weights and same latent_dim
-    models = utils.get_models(variants, config)
+    models = train_utils.get_models(variants, config)
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:

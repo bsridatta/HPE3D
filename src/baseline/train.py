@@ -9,7 +9,6 @@ import wandb
 import h5py
 sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
 
-import utils
 import dataloader
 from processing import denormalize
 from models.pose_models import PJPE

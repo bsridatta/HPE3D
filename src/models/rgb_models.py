@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 
 import torchvision.models as models
+from .model_utils import KLD, PJPE, reparameterize
 
 '''
 Reference (RGB Decoder) - https://github.com/spurra/vae-hands-3d

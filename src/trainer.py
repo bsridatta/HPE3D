@@ -8,10 +8,21 @@ import torch.nn.functional as F
 
 from models import KLD, PJPE, reparameterize
 from processing import post_process
-from utils import get_inp_target_criterion, beta_annealing, beta_cycling
+from train_utils import get_inp_target_criterion, beta_annealing, beta_cycling
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
+    """Logic for each epoch
+
+    Args:
+        config (namespace): [description]
+        model ([type]): [description]
+        train_loader ([type]): [description]
+        optimizer ([type]): [description]
+        epoch ([type]): [description]
+        vae_type ([type]): [description]
+    """
+
     # note -- model.train() in training step
 
     # TODO perform get_inp_target_criterion for the whole epoch directly
@@ -31,9 +42,6 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
         loss.backward()
         optimizer.step()
 
-        # if batch_idx % 100 == 0:
-        # backup model?
-
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
             vae_type, epoch, batch_idx * len(batch['pose2d']),
             len(train_loader.dataset), 100. *
@@ -43,8 +51,6 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
     # Anneal beta 0 - 0.01
     # beta_annealing(config, epoch)
     beta_cycling(config, epoch)
- 
-    # del loss, recon_loss, kld_loss, output
 
 
 def validation_epoch(config, model, val_loader, epoch, vae_type, normalize_pose=True):
@@ -120,9 +126,9 @@ def _training_step(batch, batch_idx, model, config):
     recon = recon.view(target.shape)
 
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
+    # TODO clip kld loss to prevent explosion
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss
-    # TODO clip kld loss to prevent explosion
 
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}

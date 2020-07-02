@@ -2,8 +2,7 @@ import sys
 
 import torch
 
-from models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB,
-                    image_recon_loss)
+from models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
 
 
 def beta_annealing(config, epoch):
@@ -171,8 +170,8 @@ def get_inp_target_criterion(encoder, decoder, batch):
         criterion = torch.nn.L1Loss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
-        # criterion = PJPE
         criterion = torch.nn.L1Loss()
+        # criterion = PJPE
         # criterion = torch.nn.MSELoss()
     else:
         print("MODEL NOT DEFINED")

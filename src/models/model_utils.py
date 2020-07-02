@@ -36,6 +36,8 @@ def KLD(mean, logvar, decoder_name):
     Returns:
         loss -- averaged with the same denom as of recon
     '''
+    logvar = torch.clamp(logvar, max=30)
+    
     loss = -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
     if '3D' in decoder_name:
         # normalize by same number in recon - b*j*dim
@@ -45,12 +47,10 @@ def KLD(mean, logvar, decoder_name):
         print("[WARNING] fix KLD loss normalization for current decoder")
         loss /= mean.shape[0]*256*256
     else:
-        print(f"[WARNING] {decoder_name} has no KLD loss normalization")
+        print(f"[WARNING] {decoder_name} has no KLD loss normalization implemented")
 
     return loss
 
-def image_recon_loss(output, target):
-    return torch.nn.functional.binary_cross_entropy(output, target)
 
 if __name__ == "__main__":
     print("[INFO] Method for Models")
