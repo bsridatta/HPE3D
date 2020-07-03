@@ -125,16 +125,16 @@ class Decoder3D(nn.Module):
         x = self.dec_inp_block(x)
 
         # To explore
-        '''BaseLine whole model'''
+        '''BaseLine'''
         residual = x
         x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
+        x = self.LBAD_block(x) + residual
         #####
-        L = nn.Linear(self.neurons, self.neurons)
-        B = nn.BatchNorm1d(self.neurons),
-        A = nn.Tanh()
-        D = nn.Dropout(p=self.drop_out_p)
-        x = D(A(B(L(x)))) + x
+        # L = nn.Linear(self.neurons, self.neurons)
+        # B = nn.BatchNorm1d(self.neurons),
+        # A = nn.Tanh()
+        # D = nn.Dropout(p=self.drop_out_p)
+        # x = D(A(B(L(x)))) + x
         #####
         '''whole model'''
         # residual = x
