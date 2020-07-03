@@ -183,7 +183,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=1024, type=int,
+    parser.add_argument('--batch_size', default=2048, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -192,7 +192,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int, 
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=100, type=int,
+    parser.add_argument('--latent_dim', default=50, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--beta_warmup_epochs', default=10, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
