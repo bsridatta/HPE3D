@@ -28,9 +28,9 @@ class Encoder2D(nn.Module):
 
         self.enc_inp_block = nn.Sequential(
             nn.Linear(2*self.n_joints, self.neurons),  # expand features
-            nn.BatchNorm1d(self.neurons),
-            self.activation(),
-            nn.Dropout(p=self.drop_out_p)
+            # nn.BatchNorm1d(self.neurons),
+            # self.activation(),
+            # nn.Dropout(p=self.drop_out_p)
         )
 
         self.LA_block = nn.Sequential(
@@ -86,7 +86,7 @@ class Decoder3D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 1024
         self.name = "Decoder3D"
-        self.drop_out_p = 0.5
+        self.drop_out_p = 0.2
 
         self.__build_model()
 

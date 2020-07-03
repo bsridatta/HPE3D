@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'exp with batch norm'
+    os.environ['WANDB_NOTES'] = 'E_L_L->D_LBAD_L 0.2, 0.5'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -102,7 +102,7 @@ def main():
 
     print(f'[INFO]: Start training procedure')
     wandb.save(
-        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose_models.py")
+        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
 
     config.val_loss_min = float('inf')
     config.beta = 0

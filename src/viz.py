@@ -296,6 +296,7 @@ def decode_embedding(config, model):
 
 
 def plot_mayavi(pose, pose2):
+
     import numpy as np
     from mayavi import mlab
 
