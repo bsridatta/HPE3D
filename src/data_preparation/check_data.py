@@ -28,6 +28,7 @@ divided by the number of frames
 # self.protocol = protocols[protocol]
 
 import sys
+import os
 
 import h5py
 import numpy as np
@@ -38,7 +39,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-sys.path.append('/home/datta/lab/HPE3D/src')
+sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src')
 
 
 def plot_3d(pose):
@@ -74,7 +75,7 @@ def plot_3d(pose):
                     linewidth=0, alpha=0.2)
 
     ax.axis = 'off'
-    plt.savefig('/home/datta/lab/HPE3D/src/results/h363d.png', format='png', dpi=1000)
+    plt.savefig(f'{os.getenv("HOME")}/lab/HPE3D/src/results/h363d.png', format='png', dpi=1000)
     plt.show()
 
     # for angle in range(0, 360):
@@ -95,7 +96,7 @@ def plot_2d(pose, image=None):
     ax.set_xticks([])
     ax.set_yticks([])
 
-    # plt.savefig('/home/datta/lab/HPE3D/src/results/h36image.png', format='png', dpi=1000)
+    # plt.savefig(f'{os.getenv("HOME")}/lab/HPE3D/src/results/h36image.png', format='png', dpi=1000)
     # plt.show()
     # return
     # For each set of style and range settings, plot n random points in the box
@@ -141,7 +142,7 @@ def plot_2d(pose, image=None):
     ax.axis = 'off'
     # plt.title('2D Pose')
 
-    plt.savefig('/home/datta/lab/HPE3D/src/results/2dpose.png', format='png', dpi=1000)
+    plt.savefig(f'{os.getenv("HOME")}/lab/HPE3D/src/results/2dpose.png', format='png', dpi=1000)
     plt.show()
     # for angle in range(0, 360):
     #     ax.view_init(30, angle)
@@ -151,15 +152,15 @@ def plot_2d(pose, image=None):
 
 if __name__ == "__main__":
 
-    image_path = '/home/datta/lab/HPE_datasets/h36m/'
-    save_path = '/home/datta/lab/HPE3D/src/results'
+    image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
+    save_path = f'{os.getenv("HOME")}/lab/HPE3D/src/results'
 
-    h5name = '/home/datta/lab/HPE3D/src/data/debug_h36m17_911.h5'
+    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
 
     f = h5py.File(h5name, 'r')
     # print(list(f.keys()))
 
-    i = 1
+    i = 40
 
     pose3 = f['pose3d'][i]
     pose2 = f['pose2d'][i]
@@ -179,7 +180,8 @@ if __name__ == "__main__":
     # plot_2d(pose2, image)
     # plot_h36(pose3)
     import viz
-    viz.plot_2d(pose2)
-    viz.plot_3d(pose3)
-    import gc
-    gc.collect()
+    viz.plot_pose(image=image, pose2d=pose2, pose3d=pose3)
+    # viz.plot_2d(pose2)
+    # viz.plot_3d(pose3)
+    # import gc
+    # gc.collect()
