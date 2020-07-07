@@ -50,7 +50,6 @@ def main():
     config.logger.run.save()
     # To id weights even after changing run name
     config.run_name = config.logger.run.name
-
     # prints after init, so its logged in wandb
     print(f'[INFO]: using device: {device}')
 
@@ -87,6 +86,10 @@ def main():
     for vae in range(len(models)):
         models[vae][0].to(device)
         models[vae][1].to(device)
+        config.logger.watch(models[vae][0])
+        # config.logger.watch(models[vae][1])
+        # print(models[vae][0])
+        
 
     # Resume training
     if config.resume_run not in "None":
@@ -138,6 +141,8 @@ def main():
                 mpjpe = torch.mean(pjpe).item()
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
+
+
 
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
