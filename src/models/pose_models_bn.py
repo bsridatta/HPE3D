@@ -129,6 +129,9 @@ class Decoder3D(nn.Module):
         residual = x
         x = self.LBAD_block(x)
         x = self.LBAD_block(x) + residual
+        # residual = x
+        # x = self.LBAD_block(x)
+        # x = self.LBAD_block(x) + residual
         #####
         # L = nn.Linear(self.neurons, self.neurons)
         # B = nn.BatchNorm1d(self.neurons),

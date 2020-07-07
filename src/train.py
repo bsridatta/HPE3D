@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'E_L_L->D_LBAD_L 0.2, 0.5'
+    os.environ['WANDB_NOTES'] = 'E_LBAD_L->D_LBAD_L 0.2'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -183,7 +183,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=2048, type=int,
+    parser.add_argument('--batch_size', default=4196, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -192,13 +192,13 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int, 
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=500, type=int,
+    parser.add_argument('--latent_dim', default=50, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--beta_warmup_epochs', default=10, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=4e-4, type=float,
+    parser.add_argument('--learning_rate', default=1e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
