@@ -61,8 +61,8 @@ class Encoder2D(nn.Module):
         # to explore
         '''BaseLine'''
         # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) # + residual
+        x = self.LBAD_block(x)
+        x = self.LBAD_block(x) # + residual
         """whole model"""
         # residual = x
         # x = self.LBAD_block(x)
@@ -126,9 +126,9 @@ class Decoder3D(nn.Module):
 
         # To explore
         '''BaseLine'''
-        residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
+        # residual = x
+        x = self.LBAD_block(x)
+        x = self.LBAD_block(x) #+ residual
         # residual = x
         # x = self.LBAD_block(x)
         # x = self.LBAD_block(x) + residual
