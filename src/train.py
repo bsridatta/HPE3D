@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'E_LBAD_L->D_LBAD_L 0.2'
+    os.environ['WANDB_NOTES'] = 'grad analysis baseline no residuals'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -87,9 +87,7 @@ def main():
         models[vae][0].to(device)
         models[vae][1].to(device)
         config.logger.watch(models[vae][0])
-        # config.logger.watch(models[vae][1])
-        # print(models[vae][0])
-        
+        config.logger.watch(models[vae][1])
 
     # Resume training
     if config.resume_run not in "None":
@@ -108,6 +106,9 @@ def main():
         f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
 
     config.val_loss_min = float('inf')
+    config.mpjpe_min = float('inf')
+    config.mpjpe_at_min_val = float('inf')
+    
     config.beta = 0
 
     # Training
@@ -141,8 +142,8 @@ def main():
                 mpjpe = torch.mean(pjpe).item()
                 print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
-
-
+                if mpjpe < config.mpjpe_min:
+                    config.mpjpe_min = mpjpe
 
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
@@ -154,7 +155,7 @@ def main():
             # Model Chechpoint
             if use_cuda:
                 train_utils.model_checkpoint(
-                    config, val_loss, model, optimizer, epoch)
+                    config, val_loss, mpjpe, model, optimizer, epoch)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9

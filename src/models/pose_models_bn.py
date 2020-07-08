@@ -11,6 +11,26 @@ change import in __init__.py according to choice
 """
 
 
+# class LBAD(nn.Module):
+#     def __init__(self, neurons, activation, drop_out_p):
+#         super(LBAD, self).__init__()
+#         self.neurons = neurons
+#         self.activ = self.activation()
+#         self.drop_out_p = drop_out_p
+
+#         self.w1 = nn.Linear(self.neurons, self.neurons)
+#         self.bn1 = nn.BatchNorm1d(self.neurons)
+#         self.dropout = nn.Dropout(p=self.drop_out_p)
+
+#     def forward(self, x):
+#         x = self.w1(x)
+#         x = self.bn1(x)
+#         x = self.activ(x)
+#         x = self.dropout(x)
+
+#         return x
+
+
 class Encoder2D(nn.Module):
 
     def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
@@ -33,12 +53,14 @@ class Encoder2D(nn.Module):
             nn.Dropout(p=self.drop_out_p)
         )
 
-        self.LA_block = nn.Sequential(
+        self.LBAD_1 = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
-            self.activation()
+            nn.BatchNorm1d(self.neurons),
+            self.activation(),
+            nn.Dropout(p=self.drop_out_p)
         )
 
-        self.LBAD_block = nn.Sequential(
+        self.LBAD_2 = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
@@ -60,14 +82,10 @@ class Encoder2D(nn.Module):
 
         # to explore
         '''BaseLine'''
-        # residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) # + residual
-        """whole model"""
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-
+        residual = x
+        x = self.LBAD_1(x)
+        x = self.LBAD_2(x) + residual
+        
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
 
@@ -99,12 +117,14 @@ class Decoder3D(nn.Module):
             nn.Dropout(p=self.drop_out_p)
         )
 
-        self.LA_block = nn.Sequential(
+        self.LBAD_1 = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
-            self.activation()
+            nn.BatchNorm1d(self.neurons),
+            self.activation(),
+            nn.Dropout(p=self.drop_out_p)
         )
 
-        self.LBAD_block = nn.Sequential(
+        self.LBAD_2 = nn.Sequential(
             nn.Linear(self.neurons, self.neurons),
             nn.BatchNorm1d(self.neurons),
             self.activation(),
@@ -126,23 +146,9 @@ class Decoder3D(nn.Module):
 
         # To explore
         '''BaseLine'''
-        # residual = x
-        x = self.LBAD_block(x)
-        x = self.LBAD_block(x) #+ residual
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
-        #####
-        # L = nn.Linear(self.neurons, self.neurons)
-        # B = nn.BatchNorm1d(self.neurons),
-        # A = nn.Tanh()
-        # D = nn.Dropout(p=self.drop_out_p)
-        # x = D(A(B(L(x)))) + x
-        #####
-        '''whole model'''
-        # residual = x
-        # x = self.LBAD_block(x)
-        # x = self.LBAD_block(x) + residual
+        residual = x
+        x = self.LBAD_1(x)
+        x = self.LBAD_2(x) + residual
 
         x = self.dec_out_block(x)
 

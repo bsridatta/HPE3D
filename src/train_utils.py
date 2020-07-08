@@ -45,9 +45,12 @@ def beta_cycling(config, epoch):
     config.logger.log({"beta": config.beta})
 
 
-def model_checkpoint(config, val_loss, model, optimizer, epoch):
+def model_checkpoint(config, val_loss, mpjpe, model, optimizer, epoch):
+    
     if val_loss < config.val_loss_min:
         config.val_loss_min = val_loss
+        
+        config.mpjpe_at_min_val = mpjpe
 
         for model_ in model:
             try:
