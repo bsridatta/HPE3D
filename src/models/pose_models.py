@@ -6,9 +6,29 @@ import torchvision.models as models
 from .model_utils import KLD, PJPE, reparameterize
 
 """
-Pose models - Linear Variant
+Pose models - Batch Norm Variant
 change import in __init__.py according to choice
 """
+
+
+class LBAD(nn.Module):
+    def __init__(self, neurons, activation, drop_out_p):
+        super(LBAD, self).__init__()
+        self.neurons = neurons
+        self.activ = activation()
+        self.drop_out_p = drop_out_p
+
+        self.w1 = nn.Linear(self.neurons, self.neurons)
+        self.bn1 = nn.BatchNorm1d(self.neurons)
+        self.dropout = nn.Dropout(p=self.drop_out_p)
+
+    def forward(self, x):
+        x = self.w1(x)
+        x = self.bn1(x)
+        x = self.activ(x)
+        x = self.dropout(x)
+
+        return x
 
 
 class Encoder2D(nn.Module):
@@ -18,9 +38,9 @@ class Encoder2D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 512
+        self.neurons = 1024
         self.name = "Encoder2D"
-        self.drop_out_p = 0
+        self.drop_out_p = 0.2
 
         self.__build_model()
 
@@ -33,6 +53,12 @@ class Encoder2D(nn.Module):
             nn.Dropout(p=self.drop_out_p)
         )
 
+        self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        
+
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
         self.fc_logvar = nn.Linear(self.neurons, self.latent_dim)
 
@@ -42,30 +68,27 @@ class Encoder2D(nn.Module):
             nn.Dropout(p=self.drop_out_p)
         )
 
-        self.LBAD_block = nn.Sequential(
-            nn.Linear(self.neurons, self.neurons),
-            nn.BatchNorm1d(self.neurons),
-            self.activation(),
-            nn.Dropout(p=self.drop_out_p)
-        )
-
-        self.LA_block = nn.Sequential(
-            nn.Linear(self.neurons, self.neurons),
-            self.activation()
-        )
-
     def forward(self, x):
         x = x.view(-1, 2*self.n_joints)
         x = self.enc_inp_block(x)
 
-        ''' Similar to Hands VAE'''
-        x = self.LA_block(x)
-        x = self.LA_block(x)
-        x = self.LA_block(x)
-        x = self.LA_block(x)
+        # to explore
+        '''BaseLine'''
+        residual = x
+        x = self.LBAD_1(x)
+        x = self.LBAD_2(x) + residual
+
+        # residual = x
+        # x = self.LBAD_3(x)
+        # x = self.LBAD_4(x) + residual
+        ################        
 
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
+
+        '''BAD - BatchNorm Activation Dropout'''
+        # mean = self.enc_out_block(mean)
+        # logvar = self.enc_out_block(logvar)
 
         return mean, logvar
 
@@ -76,9 +99,9 @@ class Decoder3D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 512
+        self.neurons = 1024
         self.name = "Decoder3D"
-        self.drop_out_p = 0
+        self.drop_out_p = 0.2
 
         self.__build_model()
 
@@ -91,32 +114,34 @@ class Decoder3D(nn.Module):
             nn.Dropout(p=self.drop_out_p)
         )
 
+        self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+
         self.dec_out_block = nn.Sequential(
             # TODO is it good idea to have activation \
             # and drop out at the end for enc or dec
             nn.Linear(self.neurons, 3*self.n_joints),
-        )
-
-        self.LBAD_block = nn.Sequential(
-            nn.Linear(self.neurons, self.neurons),
-            nn.BatchNorm1d(self.neurons),
-            self.activation(),
-            nn.Dropout(p=self.drop_out_p)
-        )
-
-        self.LA_block = nn.Sequential(
-            nn.Linear(self.neurons, self.neurons),
-            self.activation()
+            # nn.BatchNorm1d(3*self.n_joints),
+            # self.activation(),
+            # nn.Dropout(p=self.drop_out_p)
         )
 
     def forward(self, x):
         x = x.view(-1, self.latent_dim)
         x = self.dec_inp_block(x)
 
-        x = self.LA_block(x)
-        x = self.LA_block(x)
-        x = self.LA_block(x)
-        x = self.LA_block(x)
+        # To explore
+        '''BaseLine'''
+        residual = x
+        x = self.LBAD_1(x)
+        x = self.LBAD_2(x) + residual
+
+        # residual = x
+        # x = self.LBAD_3(x)
+        # x = self.LBAD_4(x) + residual
+        ################        
 
         x = self.dec_out_block(x)
 

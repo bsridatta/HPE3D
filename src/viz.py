@@ -17,7 +17,6 @@ ACTION_NAMES = ["Directions", "Discussion", "Eating", "Greeting", "Phoning", "Ph
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
 
-
 def plot_diff(ax, pose, target, error, i, image=True):
     """plot the prediction and ground with error
 
@@ -214,6 +213,10 @@ def plot_3d(pose, return_image=True, axis=None):
     for xb, yb, zb in zip(Xb, Yb, Zb):
         ax.plot([xb], [yb], [zb], 'w')
 
+    for i, j, k, l in zip(x, y, z, labels):
+        ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
+        #  | {int(i)} | {int(j)} | {int(k)}
+
     # plt.tight_layout()
     # ax.set_aspect('equal')
     # ax.tick_params(which='minor',top=False, bottom=False, left=False, right=False,
@@ -302,10 +305,10 @@ def plot_2d(pose, image=False, axis=None):
 
     ax.scatter(x, y, alpha=0.6, s=2)
 
-    for link in skeleton:
+    for link, color in zip(skeleton, SKELETON_COLORS):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
-                c='b', alpha=0.6, lw=3)
+                c=color, alpha=0.6, lw=3)
 
     ax.set_aspect('equal')
 
@@ -398,7 +401,8 @@ def plot_pose(pose2d=None, pose3d=None, image=None):
     if image is not None:
         ax = fig.add_subplot(100+col*10+i)
         i += 1
-        image = Image.open(image)
+        if type(image) == str:
+            image = Image.open(image)
         ax.set_xticks([])
         ax.set_yticks([])
         ax.imshow(image.convert("RGB"))

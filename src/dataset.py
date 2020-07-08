@@ -9,7 +9,6 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from processing import preprocess
-import viz
 
 
 class H36M(Dataset):
@@ -107,6 +106,8 @@ class H36M(Dataset):
             image = self.get_image_tensor(sample)
             sample['image'] = image
 
+        sample['pose2d'] = sample['pose2d'] + 100000
+        a = self.annotations['pose2d'][idx]
         # Augmentation - Flip
         if self.train and np.random.random() < 0.2:
             sample = self.flip(sample)
@@ -155,23 +156,18 @@ def test_h36m():
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(5)
+    sample = dataset.__getitem__(10)
 
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
         pass
 
     import viz
-    import numpy as np
-    import matplotlib.pyplot as plt
-    # viz.plot_2d(sample['pose2d'])
-    viz.plot_mayavi(sample['pose3d'], sample['pose3d'])
-    plt.imshow(np.transpose(
-        sample['image'].numpy(), (1, 2, 0)).astype(np.float32))
+    from torchvision import transforms
 
-    plt.show()
-    # print(sample['pose2d'], '\n\n\n')
-    # print(sample['pose3d'])
+    to_pil = transforms.ToPILImage()
+    viz.plot_pose(pose2d=sample['pose2d'],
+                  pose3d=sample['pose3d'], image=to_pil(sample['image']))
 
     del dataset
     del sample

@@ -2,6 +2,8 @@
 import torch
 from h5py import File
 from torch.utils.data import Dataset
+import os
+import gc 
 
 import numpy as np
 import pdb
@@ -12,22 +14,20 @@ import pdb
 flip_index = [0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
 
 class MPIINF(Dataset):
-    def __init__(self, split, noise=0, std_train=0, std_test=0, noise_path=None):
+    def __init__(self, split):
         print('==> Initializing MPI_INF %s data' % (split))
 
         annot = {}
         tags = ['pose2d', 'pose3d', 'bbox', 'cam_f',
                 'cam_c', 'subject', 'sequence', 'video']
-        f = File('%s/inf/inf_%s.h5' % (conf.data_dir, split), 'r')
+
+        f = File('%s/inf_%s.h5' % (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", split), 'r')
+
         for tag in tags:
             annot[tag] = np.asarray(f[tag]).copy()
         f.close()
 
         self.split = split
-        self.noise = noise
-        self.std_train = std_train
-        self.std_test = std_test
-        self.noise_path = noise_path
         self.annot = annot
         self.num_samples = self.annot['pose2d'].shape[0]
 
@@ -73,35 +73,59 @@ class MPIINF(Dataset):
             #bbox[0] = self.width - bbox[0] - bbox[2]
             #cam_c[0] = self.width - cam_c[0]
 
-        # original 2d pose
-        meta2d = pose2d.copy()
 
-        # # set 2d pose
-        # if self.noise == 2:
-        #     if not self.split == 'train':
-        #         pose2d = pose2d - bbox[0:2]
-        #         pose2d = pose2d / bbox[2:4]
-        #         pose2d = pose2d * float(conf.res_in - 1)
-
-        # root coordinates
-        coords_root = pose3d[conf.root].copy()
-        depth_root = coords_root[2].copy()
-        depth_root_canonical = coords_root[2].copy(
-        ) / np.sqrt(np.prod(cam_f)) * conf.f0
-
-        # set 3d pose
-        pose3d = pose3d - pose3d[conf.root]
-        pose3d = np.delete(pose3d, (conf.root), axis=0)
 
         # set data
         data = {'pose2d': pose2d, 'bbox': bbox,
-                'pose3d': pose3d, 'coords_root': coords_root,
-                'depth_root': depth_root,
-                'depth_root_canonical': depth_root_canonical,
-                'cam_f': cam_f, 'cam_c': cam_c,
-                'meta2d': meta2d}
+                'pose3d': pose3d,
+                'cam_f': cam_f, 'cam_c': cam_c
+                }
 
         return data
 
     def __len__(self):
         return self.num_samples
+
+
+
+def test_mpiinf():
+    '''
+    Can be used to get norm stats for all subjects
+    '''
+
+    annotation_file = f'h36m17'
+    image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/inf"
+
+    dataset = MPIINF('train')
+
+    print("[INFO]: Length of the dataset: ", len(dataset))
+    print("[INFO]: One sample -")
+
+    sample = dataset.__getitem__(5)
+
+    print(sample) 
+
+    exit()
+    for k, v in zip(sample.keys(), sample.values()):
+        print(k, v.size(), v.dtype, end="\t")
+        pass
+
+    import viz
+    import numpy as np
+    import matplotlib.pyplot as plt
+    # viz.plot_2d(sample['pose2d'])
+    viz.plot_mayavi(sample['pose3d'], sample['pose3d'])
+    plt.imshow(np.transpose(
+        sample['image'].numpy(), (1, 2, 0)).astype(np.float32))
+
+    plt.show()
+    # print(sample['pose2d'], '\n\n\n')
+    # print(sample['pose3d'])
+
+    del dataset
+    del sample
+    gc.collect()
+
+
+if __name__ == "__main__":
+    test_mpiinf()

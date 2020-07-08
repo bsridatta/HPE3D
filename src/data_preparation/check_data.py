@@ -160,7 +160,7 @@ if __name__ == "__main__":
     f = h5py.File(h5name, 'r')
     # print(list(f.keys()))
 
-    i = 10
+    i = 100
 
     pose3 = f['pose3d'][i]
     pose2 = f['pose2d'][i]
