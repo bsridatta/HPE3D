@@ -1,6 +1,11 @@
 
 import torch 
 
+
+def weight_init(m):
+    if isinstance(m, torch.nn.Linear):
+        torch.nn.init.kaiming_normal_(m.weight)
+
 def reparameterize(mean, logvar, eval=False):
     # TODO not sure why few repos do that
     if eval:
@@ -27,7 +32,7 @@ def PJPE(pred, target):
         torch.sum((pred-target).pow(2), dim=2))
 
     # MPJPE = torch.mean(PJPE, dim=0)
-
+    torch.nn.L1Loss()
     return PJPE
 
 

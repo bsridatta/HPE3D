@@ -3,89 +3,66 @@ import torch
 from h5py import File
 from torch.utils.data import Dataset
 import os
-import gc 
-
+import gc
+import sys
 import numpy as np
 import pdb
+sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
+from processing import preprocess
+
 
 '''Code adapted from dataset provided by https://github.com/juyongchang/PoseLifter
 '''
 
-flip_index = [0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
 
 class MPIINF(Dataset):
     def __init__(self, split):
-        print('==> Initializing MPI_INF %s data' % (split))
+        self.split = split
+        self.annotations = {}
+        tags = ['pose2d', 'pose3d', 'subject', 'sequence']
 
-        annot = {}
-        tags = ['pose2d', 'pose3d', 'bbox', 'cam_f',
-                'cam_c', 'subject', 'sequence', 'video']
-
-        f = File('%s/inf_%s.h5' % (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", split), 'r')
+        f = File('%s/inf_%s.h5' %
+                 (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", split), 'r')
 
         for tag in tags:
-            annot[tag] = np.asarray(f[tag]).copy()
+            self.annotations[tag] = np.asarray(f[tag]).copy()
         f.close()
 
-        self.split = split
-        self.annot = annot
-        self.num_samples = self.annot['pose2d'].shape[0]
+        self.flipped_indices = [3, 4, 5, 0, 1, 2,
+                                6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
+        self.annotation_keys = self.annotations.keys()
+        self.root_idx = 0
 
-        # image size
-        self.width = 2048 * 0.5
-        self.height = 2048 * 0.5
+        self.annotations = preprocess(
+            self.annotations, self.root_idx, normalize_pose=False)
+        
+        print(self.annotations['pose2d'].mean(axis=(0,2)))
+        print(self.annotations['pose3d'].mean(axis=(0,2)))
 
-        print('Load %d MPI_INF %s samples' % (self.num_samples, self.split))
-
-    def get_part_info(self, index):
-        pose2d = self.annot['pose2d'][index].copy()
-        bbox = self.annot['bbox'][index].copy()
-        pose3d = self.annot['pose3d'][index].copy()
-        cam_f = self.annot['cam_f'][index].copy()
-        cam_c = self.annot['cam_c'][index].copy()
-        return pose2d, bbox, pose3d, cam_f, cam_c
-
-    def __getitem__(self, index):
-        # get 2d/3d pose, bounding box, camera information
-        pose2d, bbox, pose3d, cam_f, cam_c = self.get_part_info(index)
-        cam_f = cam_f.astype(np.float32)
-        cam_c = cam_c.astype(np.float32)
-
-        # SCALING
-        pose2d = pose2d * 0.5
-        bbox = bbox * 0.5
-        cam_f = cam_f * 0.5
-        cam_c = cam_c * 0.5
-
-        # data augmentation (flipping)
-        if self.split == 'train' and np.random.random() < 0.5:
-            pose2d_flip = pose2d.copy()
-            for i in range(len(flip_index)):
-                pose2d_flip[i] = pose2d[flip_index[i]].copy()
-            pose3d_flip = pose3d.copy()
-            for i in range(len(flip_index)):
-                pose3d_flip[i] = pose3d[flip_index[i]].copy()
-            pose2d = pose2d_flip.copy()
-            pose3d = pose3d_flip.copy()
-            pose2d[:, 0] = self.width - pose2d[:, 0]
-            pose3d[:, 0] *= -1
-
-            #bbox[0] = self.width - bbox[0] - bbox[2]
-            #cam_c[0] = self.width - cam_c[0]
-
-
-
-        # set data
-        data = {'pose2d': pose2d, 'bbox': bbox,
-                'pose3d': pose3d,
-                'cam_f': cam_f, 'cam_c': cam_c
-                }
-
-        return data
-
+        # covert data to tensor after preprocessing them as numpys (hard with tensors)
+        for key in self.annotation_keys:
+            self.annotations[key] = torch.tensor(
+                self.annotations[key], dtype=torch.float32)
+       
     def __len__(self):
-        return self.num_samples
+        return self.annotations['pose2d'].shape[0]
 
+
+    def __getitem__(self, idx):
+        sample = {}
+        for key in self.annotation_keys:
+            sample[key] = self.annotations[key][idx]
+       # Augmentation - Flip
+        if self.split == "train" and np.random.random() < 0.2:
+            sample = self.flip(sample)
+        return sample
+
+    def flip(self, sample):
+        sample['pose2d'] = sample['pose2d'][self.flipped_indices]
+        sample['pose3d'] = sample['pose3d'][self.flipped_indices]
+        sample['pose2d'][:, 0] *= -1
+        sample['pose3d'][:, 0] *= -1
+        return sample
 
 
 def test_mpiinf():
@@ -101,27 +78,20 @@ def test_mpiinf():
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(5)
+    sample = dataset.__getitem__(50)
 
-    print(sample) 
-
-    exit()
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\t")
         pass
 
     import viz
     import numpy as np
-    import matplotlib.pyplot as plt
-    # viz.plot_2d(sample['pose2d'])
-    viz.plot_mayavi(sample['pose3d'], sample['pose3d'])
-    plt.imshow(np.transpose(
-        sample['image'].numpy(), (1, 2, 0)).astype(np.float32))
 
-    plt.show()
-    # print(sample['pose2d'], '\n\n\n')
+    # print(sample['pose2d'])
     # print(sample['pose3d'])
 
+    viz.plot_pose(pose2d=sample['pose2d'],
+                  pose3d=sample['pose3d'])
     del dataset
     del sample
     gc.collect()

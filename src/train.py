@@ -11,7 +11,7 @@ import torch
 import dataloader
 import train_utils
 import wandb
-from models import PJPE
+from models import PJPE, weight_init
 from trainer import training_epoch, validation_epoch
 from viz import plot_diff, plot_diffs
 
@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'grad analysis baseline no residuals'
+    os.environ['WANDB_NOTES'] = 'exps with right batchnorm'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -86,6 +86,10 @@ def main():
     for vae in range(len(models)):
         models[vae][0].to(device)
         models[vae][1].to(device)
+
+        # models[vae][0].apply(weight_init)
+        # models[vae][1].apply(weight_init)
+        
         config.logger.watch(models[vae][0])
         config.logger.watch(models[vae][1])
 

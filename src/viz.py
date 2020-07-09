@@ -17,6 +17,7 @@ ACTION_NAMES = ["Directions", "Discussion", "Eating", "Greeting", "Phoning", "Ph
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
 
+
 def plot_diff(ax, pose, target, error, i, image=True):
     """plot the prediction and ground with error
 
@@ -200,6 +201,7 @@ def plot_3d(pose, return_image=True, axis=None):
                 z[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
 
+    # From https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-tohttps://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
     # Create cubic bounding box to simulate equal aspect ratio
     max_range = np.array(
         [x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max()
@@ -310,6 +312,9 @@ def plot_2d(pose, image=False, axis=None):
                 y[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
 
+    for i, j, l in zip(x, y, labels):
+        ax.text(i, j, s=l, size=8, zorder=1, color='k')
+
     ax.set_aspect('equal')
 
     # ax.axes.xaxis.set_visible(False)
@@ -416,7 +421,7 @@ def plot_pose(pose2d=None, pose3d=None, image=None):
         ax = fig.add_subplot(100+col*10+i, projection='3d')
         i += 1
         plot_3d(pose3d, axis=ax)
-    
+
     plt.show()
 
 

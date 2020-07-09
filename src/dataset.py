@@ -31,24 +31,21 @@ class H36M(Dataset):
         self.no_images = no_images  # incase of only lifting 2D-3D
         self.device = device
         self.train = train
+        self.image_path = image_path  # load image directly in __getitem__
 
         # Data Specific Information
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
-                         (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
+                            (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
         self.joint_names = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
                             'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
         self.action_names = ["Directions", "Discussion", "Eating", "Greeting", "Phoning", "Photo", "Posing", "Purchases",
-                             "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
+                                "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
         # self.flip_pairs = ((1, 4), (2, 5), (3, 6),
         #                    (14, 11), (15, 12), (16, 13))
-        # self.flipped_indices = [0, 4, 5, 6, 1, 2, 3,
-        #                         7, 8, 9, 10, 14, 15, 16, 11, 12, 13]
         # for 16 joints
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
-
         self.root_idx = self.joint_names.index('Pelvis')
-
         ignore_data = ["pose3d_global", "bbox",
                        "cam_f", "cam_c", "cam_R", "cam_T"]
 
@@ -67,48 +64,41 @@ class H36M(Dataset):
             if key not in ignore_data:
                 self.annotations[key] = annotations_h5[key][:]
 
+        # get keys to avoid query them for every __getitem__
+        self.annotation_keys = self.annotations.keys()
+
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations = preprocess(
-            self.annotations, self.root_idx, normalize_pose=True)
-
-        # get keys to avoid query them for every __getitem__
-        self.annotation_keys = self.annotations.keys()
+            self.annotations, self.root_idx, normalize_pose=False)
 
         # covert data to tensor after preprocessing them as numpys (hard with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
 
+        self.augmentations = albumentations.Compose([
+            albumentations.Normalize(always_apply=True)
+        ])
+
         # clear the HDF5 datasets
         annotations_h5.close()
         del annotations_h5
         gc.collect()
-
-        # load image directly in __getitem__
-        self.image_path = image_path
-
-        self.augmentations = albumentations.Compose([
-            albumentations.Normalize(always_apply=True)
-        ])
 
     def __len__(self):
         # idx - index of the image files
         return len(self.annotations['idx'])
 
     def __getitem__(self, idx):
-
-        # Get all data for a sample
         sample = {}
         for key in self.annotation_keys:
             sample[key] = self.annotations[key][idx]
+
         if not self.no_images:
             image = self.get_image_tensor(sample)
             sample['image'] = image
 
-        sample['pose2d'] = sample['pose2d'] + 100000
-        a = self.annotations['pose2d'][idx]
-        # Augmentation - Flip
         if self.train and np.random.random() < 0.2:
             sample = self.flip(sample)
 
@@ -118,19 +108,16 @@ class H36M(Dataset):
         image_dir = 's_%02d_act_%02d_subact_%02d_ca_%02d'\
             % (sample['subject'], sample['action'],
                sample['subaction'], sample['camera'])
-
         image_ = Image.open(self.image_path+image_dir+'/' +
                             image_dir+"_"+("%06d" % (sample['idx']))+".jpg")
+
         image = np.array(image_)
         image = self.augmentations(image=image)['image']
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         image = torch.tensor(image, dtype=torch.float32)
 
-        # *Note* - tranforms.ToTensor converts HWC to CHW so no need NOT to do explicitly
-        # But if you do torch.tensor() you have to do it manually
-
-        image_.close()
-        del image_
+        # image_.close()
+        # del image_
         return image
 
     def flip(self, sample):
@@ -164,6 +151,9 @@ def test_h36m():
 
     import viz
     from torchvision import transforms
+
+    print(sample['pose2d'])
+    print(sample['pose3d'])
 
     to_pil = transforms.ToPILImage()
     viz.plot_pose(pose2d=sample['pose2d'],

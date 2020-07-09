@@ -3,7 +3,7 @@
 # from .pose_models_linear import Encoder2D, Decoder3D
 from .pose_models import Encoder2D, Decoder3D
 from .rgb_models import DecoderRGB, EncoderRGB
-from .model_utils import KLD, PJPE, reparameterize
+from .model_utils import KLD, PJPE, reparameterize, weight_init
 
 
 __all__ = [
@@ -13,5 +13,6 @@ __all__ = [
     'DecoderRGB',
     'reparameterize',
     'KLD',
-    'PJPE'
+    'PJPE',
+    'weight_init'
 ]
