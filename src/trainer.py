@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from models import KLD, PJPE, reparameterize
 from processing import post_process
-from train_utils import get_inp_target_criterion, beta_annealing, beta_cycling
+from train_utils import get_inp_target_criterion, beta_annealing, beta_cycling, max_norm
 
 
 def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
@@ -41,6 +41,10 @@ def training_epoch(config, model, train_loader, optimizer, epoch, vae_type):
          
         loss.backward()
         optimizer.step()
+
+        # Max norm constraint. Regularization to prevent norm of weights going beyond 1
+        # max_norm(model[0])
+        # max_norm(model[1])
 
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
             vae_type, epoch, batch_idx * len(batch['pose2d']),
@@ -121,11 +125,16 @@ def _training_step(batch, batch_idx, model, config):
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
     mean, logvar = encoder(inp)
+
+    # clip logvar to prevent inf when exp is calculated
+    logvar = torch.clamp(logvar, max=30)
+
     z = reparameterize(mean, logvar)
     recon = decoder(z)
     recon = recon.view(target.shape)
 
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
+    
     # TODO clip kld loss to prevent explosion
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss

@@ -70,7 +70,7 @@ class H36M(Dataset):
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations = preprocess(
-            self.annotations, self.root_idx, normalize_pose=False)
+            self.annotations, self.root_idx, normalize_pose=True)
 
         # covert data to tensor after preprocessing them as numpys (hard with tensors)
         for key in self.annotation_keys:

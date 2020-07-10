@@ -4,6 +4,19 @@ import torch
 
 from models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
 
+def max_norm(model, max_val=1, eps=1e-8):
+    """clip the norm of the weights to 1, as suggested in Martinez et. al
+
+    Args:
+        model (nn.Model): pytorch model
+        max_val (int): max norm constraint value. Defaults to 1.
+        eps (float): To avoid nan division by zero. Defaults to 1e-8.
+    """
+    for name, param in model.named_parameters():
+        if 'bias' not in name:
+            norm = param.norm(2, dim=0, keepdim=True)
+            desired = torch.clamp(norm, 0, max_val)
+            param = param * (desired / (eps + norm))
 
 def beta_annealing(config, epoch):
     """anneal beta from 0 to 1 during annealing_epochs after waiting for warmup_epochs

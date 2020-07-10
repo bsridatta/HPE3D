@@ -55,18 +55,18 @@ class Encoder2D(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
         
 
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
         self.fc_logvar = nn.Linear(self.neurons, self.latent_dim)
 
-        self.enc_out_block = nn.Sequential(
-            nn.BatchNorm1d(self.latent_dim),
-            self.activation(),
-            nn.Dropout(p=self.drop_out_p)
-        )
+        # self.enc_out_block = nn.Sequential(
+        #     nn.BatchNorm1d(self.latent_dim),
+        #     self.activation(),
+        #     nn.Dropout(p=self.drop_out_p)
+        # )
 
     def forward(self, x):
         x = x.view(-1, 2*self.n_joints)
@@ -116,8 +116,8 @@ class Decoder3D(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.dec_out_block = nn.Sequential(
             # TODO is it good idea to have activation \

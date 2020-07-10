@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'exps with right batchnorm'
+    os.environ['WANDB_NOTES'] = 'without max norm constraint '
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -90,8 +90,8 @@ def main():
         # models[vae][0].apply(weight_init)
         # models[vae][1].apply(weight_init)
         
-        config.logger.watch(models[vae][0])
-        config.logger.watch(models[vae][1])
+        config.logger.watch(models[vae][0], log='all')
+        config.logger.watch(models[vae][1], log='all')
 
     # Resume training
     if config.resume_run not in "None":
@@ -202,7 +202,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int, 
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=50, type=int,
+    parser.add_argument('--latent_dim', default=500, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--beta_warmup_epochs', default=10, type=int,
                         help='KLD weight warmup time. weight is 0 during this period')
