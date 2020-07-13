@@ -174,14 +174,18 @@ if __name__ == "__main__":
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
         subject_, action_, subaction_, camera_)
     image = image_path+dirname+"/"+dirname+"_"+("%06d" % (idx))+".jpg"
-    # print(pose2.shape)
-    # print(pose3.shape)
-    # plot_2d(pose2)
-    # plot_2d(pose2, image)
+    
     # plot_h36(pose3)
+    
     import viz
-    viz.plot_pose(image=image, pose2d=pose2, pose3d=pose3)
-    # viz.plot_2d(pose2)
-    # viz.plot_3d(pose3)
-    # import gc
-    # gc.collect()
+    # viz.plot_pose(image=image, pose2d=pose2, pose3d=pose3)
+        
+    path = f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5"
+    if os.path.exists(path):
+        NORM_STATS = h5py.File(path, 'r')
+
+    pose3 = pose3-pose3[0]
+    print(pose3)
+    viz.plot_pose(pose3d=pose3[1:]/NORM_STATS['max3d'])
+
+    # print(pose3[1:]/NORM_STATS['max3d'])

@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'without max norm constraint '
+    os.environ['WANDB_NOTES'] = 'divide by mean distance no norm'
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
@@ -148,7 +148,8 @@ def main():
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
                 if mpjpe < config.mpjpe_min:
                     config.mpjpe_min = mpjpe
-
+                import viz
+                viz.plot_diffs(recon[1:3].cpu(), target[1:3].cpu(), pjpe[1:3].cpu())
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
             # sample_manifold(config, model)

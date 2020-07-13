@@ -117,24 +117,29 @@ for subject_ in subject_list:
 print(f'{dir_name}  number of samples = %d' % num_samples)
 
 if mean_std:
+    # Not going to use this anymore
     sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
 
     from processing import zero_the_root 
-
+    
+    # Zero the root 
     pose2d = zero_the_root(np.asarray(pose2d))
     pose3d = zero_the_root(np.asarray(pose3d))
-    
+    # Standardize the poses
+    max2d = pose2d.max()
+    max3d = pose3d.max()
+    pose2d = pose2d/max2d
+    pose3d = pose3d/max3d
+    # mean and std to normalize at this point
     norm_stats = {}
-    # axis = 0, 1 to get mean for x, y,z 
-
     norm_stats['mean2d'] = np.mean(pose2d, axis=(0))
     norm_stats['mean3d'] = np.mean(pose3d, axis=(0))
     norm_stats['std2d'] = np.std(pose2d, axis=(0))
     norm_stats['std3d'] = np.std(pose3d, axis=(0))
-    norm_stats['max2d'] = np.max(pose2d, axis=(0))
-    norm_stats['max3d'] = np.max(pose3d, axis=(0))
-    norm_stats['min2d'] = np.min(pose2d, axis=(0))
-    norm_stats['min3d'] = np.min(pose3d, axis=(0))
+    # norm_stats['max2d'] = max2d
+    # norm_stats['max3d'] = max3d
+    # norm_stats['mean_dist2d'] = np.mean(np.sqrt(np.sum(np.power(np.subtract(pose2d, np.zeros((1,2))), 2), axis=2)), axis=1)
+    # norm_stats['mean_dist3d'] = np.mean(np.sqrt(np.sum(np.power(np.subtract(pose3d, np.zeros((1,3))), 2), axis=2)), axis=1)   
 
     f = h5py.File(f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5", 'w')
     for key in norm_stats.keys():

@@ -35,23 +35,22 @@ class H36M(Dataset):
 
         # Data Specific Information
         self.skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
-                            (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
+                         (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
         self.joint_names = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
                             'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
         self.action_names = ["Directions", "Discussion", "Eating", "Greeting", "Phoning", "Photo", "Posing", "Purchases",
-                                "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
-        # self.flip_pairs = ((1, 4), (2, 5), (3, 6),
-        #                    (14, 11), (15, 12), (16, 13))
-        # for 16 joints
+                             "Sitting", "SittingDown", "Smoking", "Waiting", "WalkDog", "Walking", "WalkTogether"]
+        self.root_idx = self.joint_names.index('Pelvis')
+
+        # fliped indices for 16 joints
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
-        self.root_idx = self.joint_names.index('Pelvis')
-        ignore_data = ["pose3d_global", "bbox",
+        ignore_data = ["pose3d_global",
                        "cam_f", "cam_c", "cam_R", "cam_T"]
 
         # get labels and metadata including camera parameters
         subj_name = "".join(str(sub) for sub in subjects)
-        if annotation_path:
+        if annotation_path: # to train on colab/kaggle where data paths are different
             annotations_h5 = h5py.File(
                 f'{annotation_path}/{annotation_file}_{subj_name}.h5', 'r')
         else:

@@ -87,8 +87,8 @@ def test_mpiinf():
     import viz
     import numpy as np
 
-    # print(sample['pose2d'])
-    # print(sample['pose3d'])
+    print(sample['pose2d'])
+    print(sample['pose3d'])
 
     viz.plot_pose(pose2d=sample['pose2d'],
                   pose3d=sample['pose3d'])

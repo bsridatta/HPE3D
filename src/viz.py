@@ -89,12 +89,12 @@ def plot_diff(ax, pose, target, error, i, image=True):
             " mm", size=8, zorder=1, color='k')
 
     ax2 = fig.add_subplot(1, 2, 2)
-    root = '/home/datta/lab/HPE_datasets/h36m'
+    root = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m"
     path = "s_11_act_02_subact_01_ca_02"
     image = mpimg.imread(f'{root}/{path}/{path}_'+"%06d" % (5*i+1)+".jpg")
     ax2.imshow(image)
 
-    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results3/{i}.png")
+    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/{i}.png")
     fig.clf()
 
     return ax
