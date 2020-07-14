@@ -45,6 +45,7 @@ class H36M(Dataset):
         # fliped indices for 16 joints
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
+                                
         ignore_data = ["pose3d_global",
                        "cam_f", "cam_c", "cam_R", "cam_T"]
 
@@ -76,6 +77,7 @@ class H36M(Dataset):
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
 
+        # Image normalization
         self.augmentations = albumentations.Compose([
             albumentations.Normalize(always_apply=True)
         ])

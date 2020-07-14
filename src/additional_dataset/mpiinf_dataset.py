@@ -1,4 +1,3 @@
-
 import torch
 from h5py import File
 from torch.utils.data import Dataset
@@ -7,22 +6,28 @@ import gc
 import sys
 import numpy as np
 import pdb
-sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
-from processing import preprocess
 
+sys.path.insert(
+    0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
+from processing import preprocess
 
 '''Code adapted from dataset provided by https://github.com/juyongchang/PoseLifter
 '''
 
 
 class MPIINF(Dataset):
-    def __init__(self, split):
-        self.split = split
+    def __init__(self, train):
+        if train:
+            self.split = "train"
+        else:
+            self.split = "val"
+
         self.annotations = {}
-        tags = ['pose2d', 'pose3d', 'subject', 'sequence']
+        # More @ print([key for key in f.keys()])
+        tags = ['pose2d', 'pose3d', 'subject', 'bbox']
 
         f = File('%s/inf_%s.h5' %
-                 (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", split), 'r')
+                 (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", self.split), 'r')
 
         for tag in tags:
             self.annotations[tag] = np.asarray(f[tag]).copy()
@@ -35,18 +40,17 @@ class MPIINF(Dataset):
 
         self.annotations = preprocess(
             self.annotations, self.root_idx, normalize_pose=False)
-        
-        print(self.annotations['pose2d'].mean(axis=(0,2)))
-        print(self.annotations['pose3d'].mean(axis=(0,2)))
+
+        print(self.annotations['pose2d'].mean(axis=(0, 2)))
+        print(self.annotations['pose3d'].mean(axis=(0, 2)))
 
         # covert data to tensor after preprocessing them as numpys (hard with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
-       
+
     def __len__(self):
         return self.annotations['pose2d'].shape[0]
-
 
     def __getitem__(self, idx):
         sample = {}

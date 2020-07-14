@@ -1,19 +1,22 @@
+import sys
 import os
 
 import torch
 from torch.utils.data import SubsetRandomSampler
-
+from h36_inf_dataset import H36M_MPII
+sys.path.append("..")
 from dataset import H36M
-
 '''
 Since the data is same across all subjects, 
 the dataloader is same for test/train/val
 '''
 
+def h36m_inf_collate(batch):
+    return [(sample['pose2d'], sample['pose3d']) for sample in batch]
 
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
-    dataset = H36M(config.train_subjects, config.annotation_file,
+    dataset = H36M_MPII(config.train_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
     # alterantive for debug dataset
     # sampler = SubsetRandomSampler(
@@ -26,7 +29,8 @@ def train_dataloader(config):
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
         sampler=sampler,
-        shuffle=True
+        shuffle=True,
+        collate_fn=h36m_inf_collate
     )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
     print("samples -", len(loader.dataset))
@@ -82,14 +86,15 @@ def test():
     config.annotation_file = "h36m17"
     config.image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
     config.batch_size = 4
-    config.num_workers = 0
+    config.num_workers = 4
     config.pin_memory = False
-    config.ignore_images = False
+    config.ignore_images = True
     config.device = "cpu"
     train_loader = train_dataloader(config)
+    
     for batch_idx, batch in enumerate(train_loader):
         print(batch_idx, len(batch))
-        break
+        
         pass
 
 
