@@ -11,13 +11,19 @@ import torch
 path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
 if os.path.exists(path):
     f = h5py.File(path, 'r')
-    
+
 NORM_STATS = {}
 for key in f.keys():
     NORM_STATS[key] = f[key][:]
 f.close()
 
+# path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats_val.h5"
+# if os.path.exists(path):
+#     norm_stats_val = h5py.File(path, 'r')
+
+
 ROOT_INDEX = 0  # Root at Pelvis index 0
+
 
 def zero_the_root(pose, root_idx=ROOT_INDEX):
     '''
@@ -57,6 +63,7 @@ def normalize(pose):
 
     return pose
 
+
 def denormalize(pose):
     """ De-Standardize and then 
     Denormalize poses for evaluation of actual pose.  
@@ -67,9 +74,9 @@ def denormalize(pose):
     Returns:
        numpy : denormalized pose [n, 16, 2/3]
     """
-    # pose *= torch.tensor(NORM_STATS[f"mean_dist{pose.shape[2]}d"],
-    #                      device=pose.device).reshape((-1,1,1))
 
+    # pose *= torch.tensor(norm_stats_val[f"mean_dist{pose.shape[2]}d"],
+    #                      device=pose.device).reshape((-1, 1, 1))
 
     pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
                          device=pose.device)
@@ -97,12 +104,17 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True):
 
     if normalize_pose:
         # Standardize
-        # pose2d = pose2d/NORM_STATS['mean_dist2d'].reshape(-1,1,1)
-        # pose3d = pose3d/NORM_STATS['mean_dist3d'].reshape(-1,1,1)
+        # mean_dist2d = np.mean(np.sqrt(
+        #     np.sum(np.power(np.subtract(pose2d, np.zeros((1, 2))), 2), axis=2)), axis=1)
+        # mean_dist3d = np.mean(np.sqrt(
+        #     np.sum(np.power(np.subtract(pose3d, np.zeros((1, 3))), 2), axis=2)), axis=1)
+        # pose2d = pose2d/mean_dist2d.reshape(-1, 1, 1)
+        # pose3d = pose3d/mean_dist3d.reshape(-1, 1, 1)
+
         # # Normalize
         pose2d = normalize(pose2d)
         pose3d = normalize(pose3d)
-    
+
     annotations['pose2d'] = pose2d
     annotations['pose3d'] = pose3d
 
@@ -114,17 +126,16 @@ def post_process(config, recon, target):
     DeNormalize Validation Data
     Add root at 0,0,0
     '''
-    
+
     # de-normalize data to original coordinates
     recon = denormalize(recon)
     target = denormalize(target)
-    
+
     # # # de-standardize
     # recon = recon*torch.tensor(NORM_STATS[f"max3d"],
     #                      device=recon.device)
     # target = target*torch.tensor(NORM_STATS[f"max3d"],
     #                      device=target.device)
-
 
     # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
     # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
@@ -164,9 +175,7 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
 
     return img
 
-  
 
 # if __name__ == "__main__":
 #     for x in NORM_STATS.keys():
 #         print(x, '\n', NORM_STATS[x])
-    
