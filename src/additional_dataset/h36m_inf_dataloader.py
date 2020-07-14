@@ -3,21 +3,28 @@ import os
 
 import torch
 from torch.utils.data import SubsetRandomSampler
-from h36_inf_dataset import H36M_MPII
-sys.path.append("..")
+
+from .h36m_inf_dataset import H36M_MPII
 from dataset import H36M
+from .mpiinf_dataset import MPIINF
 '''
 Since the data is same across all subjects, 
 the dataloader is same for test/train/val
 '''
 
 def h36m_inf_collate(batch):
-    return [(sample['pose2d'], sample['pose3d']) for sample in batch]
+    for sample in batch:
+        for key in sample.keys():
+            if key not in ['pose2d', 'pose3d']:
+                sample.pop(key, None)
+    return batch
 
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M_MPII(config.train_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
+    # dataset = MPIINF(train=True)
+                   
     # alterantive for debug dataset
     # sampler = SubsetRandomSampler(
     #     range(2*config.batch_size)) if config.fast_dev_run else None
@@ -27,10 +34,11 @@ def train_dataloader(config):
         dataset=dataset,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
+        # pin_memory=config.pin_memory,
+        pin_memory=False,
         sampler=sampler,
         shuffle=True,
-        collate_fn=h36m_inf_collate
+        # collate_fn=h36m_inf_collate
     )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
     print("samples -", len(loader.dataset))
@@ -39,14 +47,16 @@ def train_dataloader(config):
 
 def val_dataloader(config):
     print(f'[INFO]: Validation data loader called')
-    dataset = H36M(config.val_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path)
+    # dataset = H36M(config.val_subjects, config.annotation_file,
+    #                config.image_path, config.ignore_images, config.device, config.annotation_path)
+    dataset = MPIINF(train=True)
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
+        # pin_memory=config.pin_memory,
+        pin_memory=False,
         sampler=sampler,
         shuffle=True
     )

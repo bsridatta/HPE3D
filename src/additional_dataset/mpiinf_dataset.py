@@ -30,8 +30,14 @@ class MPIINF(Dataset):
                  (f"{os.getenv('HOME')}/lab/HPE_datasets/annot/inf", self.split), 'r')
 
         for tag in tags:
-            self.annotations[tag] = np.asarray(f[tag]).copy()
+            self.annotations[tag] = f[tag][:]
         f.close()
+
+        self.annotations['action'] = self.annotations['subject']
+        self.annotations['camera'] = self.annotations['subject']
+        self.annotations['idx'] = self.annotations['subject']
+        self.annotations['subaction'] = self.annotations['subject']
+    
 
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
@@ -41,8 +47,8 @@ class MPIINF(Dataset):
         self.annotations = preprocess(
             self.annotations, self.root_idx, normalize_pose=False)
 
-        print(self.annotations['pose2d'].mean(axis=(0, 2)))
-        print(self.annotations['pose3d'].mean(axis=(0, 2)))
+        # print(self.annotations['pose2d'].mean(axis=(0, 2)))
+        # print(self.annotations['pose3d'].mean(axis=(0, 2)))
 
         # covert data to tensor after preprocessing them as numpys (hard with tensors)
         for key in self.annotation_keys:

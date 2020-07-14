@@ -46,7 +46,10 @@ class H36M(Dataset):
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
                                 
-        ignore_data = ["pose3d_global",
+        # ignore_data = ["pose3d_global",
+        #                "cam_f", "cam_c", "cam_R", "cam_T"]
+
+        ignore_data = ["pose3d_global", 
                        "cam_f", "cam_c", "cam_R", "cam_T"]
 
         # get labels and metadata including camera parameters

@@ -8,13 +8,13 @@ from argparse import ArgumentParser
 import numpy as np
 import torch
 
-import dataloader
 import train_utils
 import wandb
 from models import PJPE, weight_init
 from trainer import training_epoch, validation_epoch
 from viz import plot_diff, plot_diffs
-
+from dataloader import train_dataloader, val_dataloader
+# from additional_dataset import train_dataloader, val_dataloader
 
 def main():
     # Experiment Configuration`
@@ -57,8 +57,8 @@ def main():
     config.train_subjects = [1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
 
-    train_loader = dataloader.train_dataloader(config)
-    val_loader = dataloader.val_dataloader(config)
+    train_loader = train_dataloader(config)
+    val_loader = val_dataloader(config)
 
     # combinations of Encoder, Decoder to train in an epoch
     variant_dic = {

@@ -1,12 +1,14 @@
 
-import torch.utils.data as data
-from mpiinf_dataset import MPIINF
+import gc
 import os
 import sys
-import gc
 
-sys.path.append("..")
+import torch.utils.data as data
+sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
+
 from dataset import H36M
+from .mpiinf_dataset import MPIINF
+
 
 class H36M_MPII(data.Dataset):
     def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False):
@@ -18,7 +20,6 @@ class H36M_MPII(data.Dataset):
         print('Load %d H36M and %d MPII samples' % (self.num_h36m, self.num_mpii))
 
     def __getitem__(self, index):
-        print(index)
         if index < self.num_mpii:
             return self.MPII[index]
         else:
