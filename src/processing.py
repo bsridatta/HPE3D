@@ -10,12 +10,12 @@ import torch
 
 path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
 if os.path.exists(path):
-    NORM_STATS = h5py.File(path, 'r')
+    f = h5py.File(path, 'r')
     
-# NORM_STATS = {}
-# for key in f.keys():
-#     NORM_STATS[key] = f[key][:]
-# f.close()
+NORM_STATS = {}
+for key in f.keys():
+    NORM_STATS[key] = f[key][:]
+f.close()
 
 ROOT_INDEX = 0  # Root at Pelvis index 0
 
@@ -166,7 +166,7 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
 
   
 
-if __name__ == "__main__":
-    for x in NORM_STATS.keys():
-        print(x, '\n', NORM_STATS[x])
+# if __name__ == "__main__":
+#     for x in NORM_STATS.keys():
+#         print(x, '\n', NORM_STATS[x])
     

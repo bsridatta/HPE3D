@@ -126,10 +126,10 @@ if mean_std:
     pose2d = zero_the_root(np.asarray(pose2d))
     pose3d = zero_the_root(np.asarray(pose3d))
     # Standardize the poses
-    max2d = pose2d.max()
-    max3d = pose3d.max()
-    pose2d = pose2d/max2d
-    pose3d = pose3d/max3d
+    # max2d = pose2d.max()
+    # max3d = pose3d.max()
+    # pose2d = pose2d/max2d
+    # pose3d = pose3d/max3d
     # mean and std to normalize at this point
     norm_stats = {}
     norm_stats['mean2d'] = np.mean(pose2d, axis=(0))
