@@ -10,12 +10,12 @@ import torch
 
 path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
 if os.path.exists(path):
-    f = h5py.File(path, 'r')
+    NORM_STATS = h5py.File(path, 'r')
     
-NORM_STATS = {}
-for key in f.keys():
-    NORM_STATS[key] = f[key][:]
-f.close()
+# NORM_STATS = {}
+# for key in f.keys():
+#     NORM_STATS[key] = f[key][:]
+# f.close()
 
 ROOT_INDEX = 0  # Root at Pelvis index 0
 
@@ -164,76 +164,7 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
 
     return img
 
-    #######################################
-# def standardize(pose, stats=None):
-#     '''
-#     Arguments:
-#         pose (numpy) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
-
-#     Returns:
-#         pose (numpy) -- array of standardized pose
-#         stats (h5 dic) -- passed to use stats of different dataset
-#     '''
-#     if stats:
-#         pose = pose/stats[f"max{pose.shape[2]}d"]
-
-#     pose = pose/NORM_STATS[f"max{pose.shape[2]}d"]
-
-#     return pose
-
-
-# def destandardize(pose, stats=None):
-#     '''
-#     Arguments:
-#         pose (numpy) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
-
-#     Returns:
-#         pose (numpy) -- array of destandardized pose
-#         stats (h5 dic) -- passed to use stats of different dataset
-#     '''
-#     if stats:
-#         pose = pose*stats[f"max{pose.shape[2]}d"]
-
-#     pose = pose*NORM_STATS[f"max{pose.shape[2]}d"]
-
-#     return pose
-
-
-
-# def normalize(pose, norm_stats):
-#     '''
-#     normalize with mean, std for (x,y,z) of all joints
-
-#     Arguments:
-#         pose (numpy) -- array of 2/3d poses with 16 joints w/o root [n, 16, 2/3]
-
-#     Returns:
-#         pose (numpy) -- array of normalized pose
-#     '''
-
-#     pose = pose/norm_stats[f"max{pose.shape[2]}d"]
-#     mean = norm_stats[f"mean{pose.shape[2]}d"]
-#     pose = (pose - norm_stats[f"mean{pose.shape[2]}d"]
-#             )/norm_stats[f"std{pose.shape[2]}d"]
-    
-#     # Save
-#     f = h5py.File(f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5", 'w')
-#     for key in norm_stats.keys():
-#         f[key] = norm_stats[key]
-#     f.close()
-
-#     print("Saved to", f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5")
-
-#     return pose
-
-
-
-# Stats collected from all the samples of subjects 1, 5, 6, 7, 8
-# after the data is ZEROED and the root removed
-
-
-    ##################################
-
+  
 
 if __name__ == "__main__":
     for x in NORM_STATS.keys():
