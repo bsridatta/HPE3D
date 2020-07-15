@@ -7,20 +7,20 @@ from argparse import ArgumentParser
 
 import numpy as np
 import torch
-
-import train_utils
 import wandb
-from models import PJPE, weight_init
-from trainer import training_epoch, validation_epoch
-import viz
-from dataloader import train_dataloader, val_dataloader
-# from additional_dataset import train_dataloader, val_dataloader
+
+from src import train_utils
+from src import viz
+from src.dataloader import train_dataloader, val_dataloader
+from src.models import PJPE, weight_init
+from src.trainer import training_epoch, validation_epoch
+from src.callbacks import CallbackList, ModelCheckpoint
+
 
 def main():
-    # Experiment Configuration`
-    parser = training_specific_args()
 
-    # Config is distributed to all the other modules
+    # Experiment Configuration, Config, is distributed to all the other modules
+    parser = training_specific_args()
     config = parser.parse_args()
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
@@ -39,11 +39,11 @@ def main():
     os.environ['WANDB_NOTES'] = 'divide by mean distance no norm'
     # ignore when debugging on cpu
     if not use_cuda:
-        os.environ['WANDB_MODE'] = 'dryrun' # Doesnt auto sync to project
+        os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        # os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
     config.logger = wandb
@@ -109,10 +109,12 @@ def main():
     wandb.save(
         f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
 
+    cb = CallbackList([ModelCheckpoint()])
+
     config.val_loss_min = float('inf')
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
-    
+
     config.beta = 0
 
     # Training
@@ -148,18 +150,22 @@ def main():
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
                 if mpjpe < config.mpjpe_min:
                     config.mpjpe_min = mpjpe
-                viz.plot_diffs(recon[1:3].cpu(), target[1:3].cpu(), pjpe[1:3].cpu())
+
+                # viz.plot_diffs(recon[1:3].cpu(), target[1:3].cpu(), pjpe[1:3].cpu())
+
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
-            # sample_manifold(config, model)
+            #     sample_manifold(config, model)
 
             del recon, target, z, z_attr
             gc.collect()
 
-            # Model Chechpoint
-            if use_cuda:
-                train_utils.model_checkpoint(
-                    config, val_loss, mpjpe, model, optimizer, epoch)
+            cb.on_epoch_end(config=config, val_loss=val_loss,
+                            mpjpe=mpjpe, model=model, optimizer=optimizer, epoch=epoch)
+            # # Model Chechpoint
+            # if use_cuda:
+            #     train_utils.model_checkpoint(
+            #         config, val_loss, mpjpe, model, optimizer, epoch)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
@@ -167,11 +173,11 @@ def main():
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
-        
+
         if val_loss != val_loss:
-                print("[INFO]: NAN loss")
-                break
-        
+            print("[INFO]: NAN loss")
+            break
+
         if optimizer.param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")
             break
@@ -180,11 +186,12 @@ def main():
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
+# TODO handle train crash
 # def exit_handler(config, wandb):
 #     print("[INFO]: Sync wandb before terminating")
-
 #     config.logger = None  # wandb cant have objects in its config
 #     wandb.config.update(config)
+
 
 def training_specific_args():
 
@@ -200,7 +207,7 @@ def training_specific_args():
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=2, type=int, 
+    parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=50, type=int,
                         help='dimensions of the cross model latent space')
@@ -215,7 +222,7 @@ def training_specific_args():
     parser.add_argument('--train_last_block', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='train last convolution block of the RGB encoder while rest is pre-trained')
     parser.add_argument('--n_joints', default=16, type=int,
-                        help='number of joints to encode and decode')    
+                        help='number of joints to encode and decode')
     # pose data
     parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or debug_h36m17')

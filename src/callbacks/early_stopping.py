@@ -1,5 +1,5 @@
-from .base import BaseCallback
+from .base import Callback
 
-class EarlyStopping(BaseCallback):
+class EarlyStopping(Callback):
     def on_epoch_start(self, **kwargs):
         print("Early")

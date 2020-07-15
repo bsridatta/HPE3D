@@ -6,7 +6,7 @@ and https://github.com/devforfu/pytorch_playground/blob/master/loop.ipynb
 import abc
 
 
-class BaseCallback(abc.ABC):
+class Callback(abc.ABC):
     def on_epoch_start(self, **kwargs): pass
     def on_epoch_end(self, **kwargs): pass
     def on_batch_start(self, **kwargs): pass
@@ -19,7 +19,7 @@ class BaseCallback(abc.ABC):
     def on_test_end(self, **kwargs): pass
 
 
-class CallbackList(BaseCallback):
+class CallbackList(Callback):
 
     def __init__(self, callbacks):
         self.callbacks = callbacks
