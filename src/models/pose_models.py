@@ -3,12 +3,7 @@ import sys
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from .model_utils import KLD, PJPE, reparameterize
-
-"""
-Pose models - Batch Norm Variant
-change import in __init__.py according to choice
-"""
+from src.models.model_utils import KLD, PJPE, reparameterize
 
 
 class LBAD(nn.Module):
@@ -57,7 +52,6 @@ class Encoder2D(nn.Module):
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
         # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
         # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        
 
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
         self.fc_logvar = nn.Linear(self.neurons, self.latent_dim)
@@ -77,11 +71,9 @@ class Encoder2D(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-
         # residual = x
         # x = self.LBAD_3(x)
         # x = self.LBAD_4(x) + residual
-        ################        
 
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
@@ -120,8 +112,6 @@ class Decoder3D(nn.Module):
         # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.dec_out_block = nn.Sequential(
-            # TODO is it good idea to have activation \
-            # and drop out at the end for enc or dec
             nn.Linear(self.neurons, 3*self.n_joints),
             # nn.BatchNorm1d(3*self.n_joints),
             # self.activation(),
@@ -137,11 +127,9 @@ class Decoder3D(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-
         # residual = x
         # x = self.LBAD_3(x)
         # x = self.LBAD_4(x) + residual
-        ################        
 
         x = self.dec_out_block(x)
 
@@ -175,7 +163,7 @@ def test(inp, target):
         pose3d = pose3d.view(-1, 16, 3)
         recon_loss = PJPE(pose3d, target)
         # loss = nn.functional.l1_loss(pose3d, target)
-        kld_loss = KLD(mean, logvar, decoder_3d.__class__.__name__)
+        kld_loss = KLD(mean, logvar, decoder_3d.name)
         print("2D -> 3D", recon_loss)
 
 

@@ -28,7 +28,7 @@ class H36M(Dataset):
             train {bool} -- triggers data augmentation during training (default: {False})
         """
 
-        self.no_images = no_images  # incase of only lifting 2D-3D
+        self.no_images = no_images  # if only lifting 2D-3D
         self.device = device
         self.train = train
         self.image_path = image_path  # load image directly in __getitem__
@@ -45,16 +45,14 @@ class H36M(Dataset):
         # fliped indices for 16 joints
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
-                                
-        # ignore_data = ["pose3d_global",
-        #                "cam_f", "cam_c", "cam_R", "cam_T"]
 
-        ignore_data = ["pose3d_global", 
+        ignore_data = ["pose3d_global",
                        "cam_f", "cam_c", "cam_R", "cam_T"]
 
         # get labels and metadata including camera parameters
         subj_name = "".join(str(sub) for sub in subjects)
-        if annotation_path: # to train on colab/kaggle where data paths are different
+
+        if annotation_path:
             annotations_h5 = h5py.File(
                 f'{annotation_path}/{annotation_file}_{subj_name}.h5', 'r')
         else:

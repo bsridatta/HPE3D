@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 
 import torchvision.models as models
-from .model_utils import KLD, PJPE, reparameterize
+from src.models.model_utils import KLD, PJPE, reparameterize
 
 '''
 Reference (RGB Decoder) - https://github.com/spurra/vae-hands-3d
@@ -101,8 +101,6 @@ def test():
     image_dim = inp.shape[1:]
 
     encoder_RGB = EncoderRGB(latent_dim)
-    print(encoder_RGB)
-    exit()
     decoder_RGB = DecoderRGB(latent_dim)
     encoder_RGB.eval()
     decoder_RGB.eval()

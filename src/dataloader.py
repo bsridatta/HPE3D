@@ -3,7 +3,8 @@ import os
 import torch
 from torch.utils.data import SubsetRandomSampler
 
-from dataset import H36M
+from src.dataset import H36M
+
 
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
@@ -42,11 +43,6 @@ def val_dataloader(config):
     return loader
 
 
-'''
-test function
-'''
-
-
 def test_dataloader(config):
     print(f'[INFO]: Test data loader called')
     dataset = H36M(config.subjects, config.annotation_file,
@@ -65,6 +61,11 @@ def test_dataloader(config):
     return loader
 
 
+'''
+test function
+'''
+
+
 def test():
     from input_reader import Namespace
     config = Namespace()
@@ -81,7 +82,7 @@ def test():
     for batch_idx, batch in enumerate(train_loader):
         print(batch_idx, len(batch))
         break
-        pass
+        # pass
 
 
 if __name__ == "__main__":
