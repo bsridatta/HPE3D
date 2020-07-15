@@ -3,6 +3,9 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+# packaging
+*.egg-info/
+
 # other reference repo
 other
 reports
