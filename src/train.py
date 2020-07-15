@@ -43,14 +43,15 @@ def main():
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        os.environ['WANDB_MODE'] = 'dryrun'
+        # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
     config.logger = wandb
     config.logger.run.save()
-    # To id weights even after changing run name
-    config.run_name = config.logger.run.name
-    # prints after init, so its logged in wandb
+    config.run_name = config.logger.run.name  # handle name change in wandb
+    atexit.register(sync_before_exit, config, wandb)
+
+    # print after init, so its logged in wandb
     print(f'[INFO]: using device: {device}')
 
     # Data loading
@@ -86,24 +87,10 @@ def main():
     for vae in range(len(models)):
         models[vae][0].to(device)
         models[vae][1].to(device)
-
         # models[vae][0].apply(weight_init)
         # models[vae][1].apply(weight_init)
-
         config.logger.watch(models[vae][0], log='all')
         config.logger.watch(models[vae][1], log='all')
-
-    # Resume training
-    if config.resume_run not in "None":
-        for vae in range(len(models)):
-            for model_ in models[vae]:
-                state = torch.load(
-                    f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=device)
-                print(
-                    f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
-                model_.load_state_dict(state['model_state_dict'])
-                optimizers[vae].load_state_dict(state['optimizer_state_dict'])
-                # TODO load optimizer state seperately w.r.t variant
 
     print(f'[INFO]: Start training procedure')
 
@@ -135,6 +122,7 @@ def main():
             # TODO init criterion once with .to(cuda)
             training_epoch(config, model, train_loader,
                            optimizer, epoch, vae_type)
+                           
             # Validation
             val_loss, recon, target, z, z_attr = validation_epoch(
                 config, model, val_loader, epoch, vae_type)
@@ -183,11 +171,11 @@ def main():
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
-# TODO handle train crash
-# def exit_handler(config, wandb):
-#     print("[INFO]: Sync wandb before terminating")
-#     config.logger = None  # wandb cant have objects in its config
-#     wandb.config.update(config)
+
+def sync_before_exit(config, wandb):
+    print("[INFO]: Sync wandb before terminating")
+    config.logger = None  # wandb cant have objects in its config
+    wandb.config.update(config)
 
 
 def training_specific_args():
