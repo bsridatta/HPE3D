@@ -106,15 +106,16 @@ def main():
                 # TODO load optimizer state seperately w.r.t variant
 
     print(f'[INFO]: Start training procedure')
-    wandb.save(
-        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
 
     cb = CallbackList([ModelCheckpoint()])
+    cb.on_train_start(config=config, models=models, optimizers=optimizers)
+
+    wandb.save(
+        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
 
     config.val_loss_min = float('inf')
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
-
     config.beta = 0
 
     # Training
@@ -162,10 +163,6 @@ def main():
 
             cb.on_epoch_end(config=config, val_loss=val_loss,
                             mpjpe=mpjpe, model=model, optimizer=optimizer, epoch=epoch)
-            # # Model Chechpoint
-            # if use_cuda:
-            #     train_utils.model_checkpoint(
-            #         config, val_loss, mpjpe, model, optimizer, epoch)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9

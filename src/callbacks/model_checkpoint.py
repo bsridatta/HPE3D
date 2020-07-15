@@ -3,13 +3,23 @@ import torch
 
 class ModelCheckpoint(Callback):
     
-    # def on_train_start(self, **kwargs):
-    #     # Resume training
+    def on_train_start(self, config, models, optimizers, **kwargs):
+        # Resume training   
+        if config.resume_run not in "None":
+            for vae in range(len(models)):
+                for model_ in models[vae]:
+                    state = torch.load(
+                        f'{config.save_dir}/{config.resume_run}_{model_.name}.pt', map_location=config.device)
+                    print(
+                        f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
+                    model_.load_state_dict(state['model_state_dict'])
+                    optimizers[vae].load_state_dict(state['optimizer_state_dict'])
+                    # TODO load optimizer state seperately w.r.t variant
     
     def on_epoch_end(self, config, val_loss, mpjpe, model, optimizer, epoch,**kwargs):
-        if val_loss < config.val_loss_min:
+        # Save if doing some real training
+        if val_loss < config.val_loss_min and config.device!='cpu':
             config.val_loss_min = val_loss
-            
             config.mpjpe_at_min_val = mpjpe
 
             for model_ in model:
