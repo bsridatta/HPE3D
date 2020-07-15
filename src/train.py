@@ -12,7 +12,7 @@ import train_utils
 import wandb
 from models import PJPE, weight_init
 from trainer import training_epoch, validation_epoch
-from viz import plot_diff, plot_diffs
+import viz
 from dataloader import train_dataloader, val_dataloader
 # from additional_dataset import train_dataloader, val_dataloader
 
@@ -89,7 +89,7 @@ def main():
 
         # models[vae][0].apply(weight_init)
         # models[vae][1].apply(weight_init)
-        
+
         config.logger.watch(models[vae][0], log='all')
         config.logger.watch(models[vae][1], log='all')
 
@@ -148,7 +148,6 @@ def main():
                 wandb.log({f'{vae_type}_mpjpe': mpjpe})
                 if mpjpe < config.mpjpe_min:
                     config.mpjpe_min = mpjpe
-                import viz
                 viz.plot_diffs(recon[1:3].cpu(), target[1:3].cpu(), pjpe[1:3].cpu())
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:

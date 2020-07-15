@@ -5,19 +5,10 @@ from torch.utils.data import SubsetRandomSampler
 
 from dataset import H36M
 
-'''
-Since the data is same across all subjects, 
-the dataloader is same for test/train/val
-'''
-
-
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M(config.train_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
-    # alterantive for debug dataset
-    # sampler = SubsetRandomSampler(
-    #     range(2*config.batch_size)) if config.fast_dev_run else None
 
     sampler = None
     loader = torch.utils.data.DataLoader(
@@ -52,7 +43,7 @@ def val_dataloader(config):
 
 
 '''
-test function for time p
+test function
 '''
 
 
