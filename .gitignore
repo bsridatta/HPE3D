@@ -18,7 +18,6 @@ results
 *.h5
 
 # Exceptions
-!light-morning-232*
 !norm_stats.h5
 
 # cache
