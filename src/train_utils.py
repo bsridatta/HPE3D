@@ -4,48 +4,6 @@ import torch
 
 from src.models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
 
-def beta_annealing(config, epoch):
-    """anneal beta from 0 to 1 during annealing_epochs after waiting for warmup_epochs
-
-    Arguments:
-        config {namespace} -- the pipleline configuration
-        epoch {integer} -- current training epoch
-    """
-    # TODO Callback with number of epochs
-    if epoch > config.beta_warmup_epochs:
-        if epoch <= config.beta_warmup_epochs + config.beta_annealing_epochs:
-            config.beta += 0.01/config.beta_annealing_epochs
-            print(f"[INFO] Beta increased to: {config.beta}")
-        else:
-            print(f"[INFO] Beta constant at: {config.beta}")
-    else:
-        print(f"[INFO] Beta warming: {config.beta}")
-
-    config.logger.log({"beta": config.beta})
-
-
-def beta_cycling(config, epoch):
-    """cycling beta btw 0 and 1 during annealing_epochs after waiting for warmup_epochs
-
-    Arguments:
-        config {namespace} -- the pipleline configuration
-        epoch {integer} -- current training epoch
-    """
-    # TODO Callback with number of epochs
-    if epoch % config.beta_annealing_epochs == 0:
-        config.beta = 0
-        print(f"[INFO] Beta reset to: {config.beta}")
-    elif epoch % config.beta_annealing_epochs < config.beta_annealing_epochs/2:   
-        config.beta += 0.01/config.beta_annealing_epochs*0.5
-        print(f"[INFO] Beta increased to: {config.beta}")
-    else:
-        print(f"[INFO] Beta constant: {config.beta}")
-
-    config.logger.log({"beta": config.beta})
-
-
-
-
 
 def get_models(variants, config):
     '''
