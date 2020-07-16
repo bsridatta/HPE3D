@@ -8,7 +8,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-from processing import preprocess
+from src.processing import preprocess
 
 
 class H36M(Dataset):

@@ -4,13 +4,14 @@ import os
 import torch
 from torch.utils.data import SubsetRandomSampler
 
-from .h36m_inf_dataset import H36M_MPII
-from dataset import H36M
-from .mpiinf_dataset import MPIINF
+from src.additional_dataset.h36m_inf_dataset import H36M_MPII
+from src.dataset import H36M
+from src.additional_dataset.mpiinf_dataset import MPIINF
 '''
 Since the data is same across all subjects, 
 the dataloader is same for test/train/val
 '''
+
 
 def h36m_inf_collate(batch):
     for sample in batch:
@@ -19,12 +20,13 @@ def h36m_inf_collate(batch):
                 sample.pop(key, None)
     return batch
 
+
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M_MPII(config.train_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
+                        config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
     # dataset = MPIINF(train=True)
-                   
+
     # alterantive for debug dataset
     # sampler = SubsetRandomSampler(
     #     range(2*config.batch_size)) if config.fast_dev_run else None
@@ -101,10 +103,10 @@ def test():
     config.ignore_images = True
     config.device = "cpu"
     train_loader = train_dataloader(config)
-    
+
     for batch_idx, batch in enumerate(train_loader):
         print(batch_idx, len(batch))
-        
+
         pass
 
 

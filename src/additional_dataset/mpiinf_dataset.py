@@ -1,15 +1,12 @@
 import torch
 from h5py import File
-from torch.utils.data import Dataset
 import os
 import gc
 import sys
 import numpy as np
 import pdb
-
-sys.path.insert(
-    0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
-from processing import preprocess
+from torch.utils.data import Dataset
+from src.processing import preprocess
 
 '''Code adapted from dataset provided by https://github.com/juyongchang/PoseLifter
 '''
@@ -37,7 +34,6 @@ class MPIINF(Dataset):
         self.annotations['camera'] = self.annotations['subject']
         self.annotations['idx'] = self.annotations['subject']
         self.annotations['subaction'] = self.annotations['subject']
-    
 
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
@@ -94,7 +90,7 @@ def test_mpiinf():
         print(k, v.size(), v.dtype, end="\t")
         pass
 
-    import viz
+    from src import viz
     import numpy as np
 
     print(sample['pose2d'])

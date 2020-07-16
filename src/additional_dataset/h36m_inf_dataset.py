@@ -4,20 +4,20 @@ import os
 import sys
 
 import torch.utils.data as data
-sys.path.insert(0, f'{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}')
 
-from dataset import H36M
-from .mpiinf_dataset import MPIINF
+from src.dataset import H36M
+from src.additional_dataset.mpiinf_dataset import MPIINF
 
 
 class H36M_MPII(data.Dataset):
     def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False):
         self.H36M = H36M(subjects, annotation_file,
-                   image_path, no_images, device, annotation_path, train)
+                         image_path, no_images, device, annotation_path, train)
         self.MPII = MPIINF(train)
         self.num_h36m = len(self.H36M)
         self.num_mpii = len(self.MPII)
-        print('Load %d H36M and %d MPII samples' % (self.num_h36m, self.num_mpii))
+        print('Load %d H36M and %d MPII samples' %
+              (self.num_h36m, self.num_mpii))
 
     def __getitem__(self, index):
         if index < self.num_mpii:
@@ -27,6 +27,7 @@ class H36M_MPII(data.Dataset):
 
     def __len__(self):
         return self.num_h36m + self.num_mpii
+
 
 def test_mpiinf():
     '''
@@ -38,7 +39,7 @@ def test_mpiinf():
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m"
 
     dataset = H36M_MPII([1, 5, 6, 7, 8],
-                   annotation_file, image_path, train=True, no_images=True)
+                        annotation_file, image_path, train=True, no_images=True)
 
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
@@ -49,7 +50,7 @@ def test_mpiinf():
         print(k, v.size(), v.dtype, end="\t")
         pass
 
-    import viz
+    from src import viz
     import numpy as np
 
     print(sample['pose2d'])
