@@ -16,11 +16,10 @@ class ModelCheckpoint(Callback):
                     optimizers[vae].load_state_dict(state['optimizer_state_dict'])
                     # TODO load optimizer state seperately w.r.t variant
     
-    def on_epoch_end(self, config, val_loss, mpjpe, model, optimizer, epoch,**kwargs):
+    def on_epoch_end(self, config, val_loss, model, optimizer, epoch,**kwargs):
         # Save if doing some real training
         if val_loss < config.val_loss_min and config.device!='cpu':
             config.val_loss_min = val_loss
-            config.mpjpe_at_min_val = mpjpe
 
             for model_ in model:
                 try:

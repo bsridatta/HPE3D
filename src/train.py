@@ -14,7 +14,7 @@ from src import viz
 from src.dataloader import train_dataloader, val_dataloader
 from src.models import PJPE, weight_init
 from src.trainer import training_epoch, validation_epoch
-from src.callbacks import CallbackList, ModelCheckpoint
+from src.callbacks import CallbackList, ModelCheckpoint, Logging, MaxNorm
 
 
 def main():
@@ -26,8 +26,8 @@ def main():
     np.random.seed(config.seed)
 
     # log intervals
-    eval_interval = 1  # interval to get MPJPE of 3d decoder
-    manifold_interval = 1  # interval to visualize encoding in manifold
+    config.eval_interval = 1  # interval to get MPJPE of 3d decoder
+    config.manifold_interval = 1  # interval to visualize encoding in manifold
 
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
@@ -43,7 +43,7 @@ def main():
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        # os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
     config.logger = wandb
@@ -94,7 +94,7 @@ def main():
 
     print(f'[INFO]: Start training procedure')
 
-    cb = CallbackList([ModelCheckpoint()])
+    cb = CallbackList([ModelCheckpoint(), Logging()])
     cb.on_train_start(config=config, models=models, optimizers=optimizers)
 
     wandb.save(
@@ -120,37 +120,23 @@ def main():
 
             # Train
             # TODO init criterion once with .to(cuda)
-            training_epoch(config, model, train_loader,
+            training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
-                           
+
             # Validation
-            val_loss, recon, target, z, z_attr = validation_epoch(
-                config, model, val_loader, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, cb, model, val_loader, epoch, vae_type)
 
             if val_loss != val_loss:
                 print("[INFO]: NAN loss")
                 break
 
-            # Evaluate Performance
-            if variants[variant][1] == '3d' and epoch % eval_interval == 0:
-                pjpe = torch.mean(PJPE(recon, target), dim=0)
-                mpjpe = torch.mean(pjpe).item()
-                print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
-                wandb.log({f'{vae_type}_mpjpe': mpjpe})
-                if mpjpe < config.mpjpe_min:
-                    config.mpjpe_min = mpjpe
-
-                # viz.plot_diffs(recon[1:3].cpu(), target[1:3].cpu(), pjpe[1:3].cpu())
-
             # Latent Space Sampling
             # if epoch % manifold_interval == 0:
             #     sample_manifold(config, model)
 
-            del recon, target, z, z_attr
-            gc.collect()
-
-            cb.on_epoch_end(config=config, val_loss=val_loss,
-                            mpjpe=mpjpe, model=model, optimizer=optimizer, epoch=epoch)
+            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
+                            optimizer=optimizer, epoch=epoch)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
