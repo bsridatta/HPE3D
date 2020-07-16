@@ -14,7 +14,7 @@ from src import viz
 from src.dataloader import train_dataloader, val_dataloader
 from src.models import PJPE, weight_init
 from src.trainer import training_epoch, validation_epoch
-from src.callbacks import CallbackList, ModelCheckpoint, Logging, MaxNorm
+from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler
 
 
 def main():
@@ -94,7 +94,7 @@ def main():
 
     print(f'[INFO]: Start training procedure')
 
-    cb = CallbackList([ModelCheckpoint(), Logging()])
+    cb = CallbackList([ModelCheckpoint(), Logging(), BetaScheduler(config, strategy="cycling")])
     cb.setup(config=config, models=models, optimizers=optimizers)
 
     wandb.save(
@@ -103,7 +103,6 @@ def main():
     config.val_loss_min = float('inf')
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
-    config.beta = 0
 
     # Training
     for epoch in range(1, config.epochs+1):
@@ -130,10 +129,6 @@ def main():
             if val_loss != val_loss:
                 print("[INFO]: NAN loss")
                 break
-
-            # Latent Space Sampling
-            # if epoch % manifold_interval == 0:
-            #     sample_manifold(config, model)
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9

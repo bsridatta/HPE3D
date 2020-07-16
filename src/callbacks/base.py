@@ -130,12 +130,12 @@ class CallbackList(Callback):
     def on_train_start(self, **kwargs):
         """Called when training loop begins"""
         for callback in self.callbacks:
-            callback.on_train_batch_start(**kwargs)
+            callback.on_train_start(**kwargs)
 
     def on_train_end(self, **kwargs):
         """Called when training loop ends"""
         for callback in self.callbacks:
-            callback.on_train_batch_end(**kwargs)
+            callback.on_train_end(**kwargs)
 
     def on_validation_start(self, **kwargs):
         """Called when validation loop begins"""

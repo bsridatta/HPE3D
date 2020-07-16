@@ -14,7 +14,6 @@ from src.train_utils import (beta_annealing, beta_cycling,
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     """Logic for each epoch"""
-
     # note -- model.train() in training step
 
     # TODO perform get_inp_target_criterion for the whole epoch directly
@@ -32,13 +31,12 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)
 
-    # Anneal beta 0 - 0.01
-    # beta_annealing(config, epoch)
-    beta_cycling(config, epoch)
+    cb.on_train_end(config=config, epoch=epoch)
 
 
 def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
     # note -- model.eval() in validation step
+    
     loss = 0
     recon_loss = 0
     kld_loss = 0
@@ -106,9 +104,8 @@ def _training_step(batch, batch_idx, model, config):
     recon = decoder(z)
     recon = recon.view(target.shape)
 
-    recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
-
     # TODO clip kld loss to prevent explosion
+    recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
     loss = recon_loss + config.beta * kld_loss
 
@@ -124,6 +121,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
+
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar, eval=True)
     recon = decoder(z)
