@@ -3,7 +3,7 @@ import torch
 
 class ModelCheckpoint(Callback):
     
-    def on_train_start(self, config, models, optimizers, **kwargs):
+    def setup(self, config, models, optimizers, **kwargs):
         # Resume training   
         if config.resume_run not in "None":
             for vae in range(len(models)):

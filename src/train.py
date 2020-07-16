@@ -95,7 +95,7 @@ def main():
     print(f'[INFO]: Start training procedure')
 
     cb = CallbackList([ModelCheckpoint(), Logging()])
-    cb.on_train_start(config=config, models=models, optimizers=optimizers)
+    cb.setup(config=config, models=models, optimizers=optimizers)
 
     wandb.save(
         f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
@@ -135,12 +135,12 @@ def main():
             # if epoch % manifold_interval == 0:
             #     sample_manifold(config, model)
 
-            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
-                            optimizer=optimizer, epoch=epoch)
-
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
             scheduler.step(val_loss)
+
+            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
+                            optimizer=optimizer, epoch=epoch)
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})

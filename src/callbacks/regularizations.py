@@ -5,7 +5,7 @@ import torch
 class MaxNorm(Callback):
     '''Max norm constraint. Regularization to prevent norm of weights going beyond 1
     '''
-    def on_batch_end(self, models, max_val=1, eps=1e-8, **kwargs):
+    def on_train_batch_end(self, models, max_val=1, eps=1e-8, **kwargs):
         """
         clip the norm of the weights to 1, as suggested in Martinez et. al
         Performed after update step

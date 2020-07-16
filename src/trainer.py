@@ -26,12 +26,11 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         optimizer.zero_grad()
         output = _training_step(batch, batch_idx, model, config)
         loss = output['loss']
-
         loss.backward()
         optimizer.step()
 
-        cb.on_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
-                        batch=batch, dataloader=train_loader, output=output, models=model)
+        cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
+                              batch=batch, dataloader=train_loader, output=output, models=model)
 
     # Anneal beta 0 - 0.01
     # beta_annealing(config, epoch)
@@ -56,28 +55,31 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
             output = _validation_step(batch, batch_idx, model, epoch, config)
 
+            loss += output['loss'].item()
+            recon_loss += output['log']['recon_loss'].item()
+            kld_loss += output['log']['kld_loss'].item()
+
             all_recons.append(output["recon"])
             all_targets.append(output['target'])
             all_zs.append(output["z"])
             all_z_attrs.append(output["z_attr"])
 
-            loss += output['loss'].item()
-            recon_loss += output['log']['recon_loss'].item()
-            kld_loss += output['log']['kld_loss'].item()
             del output
             gc.collect()
 
     avg_loss = loss/len(val_loader)  # return for scheduler
 
-    # Return Predictions and Target for performace visualization
+    # predictions and targets for performace and visualization
     all_recons = torch.cat(all_recons, 0)
     all_targets = torch.cat(all_targets, 0)
     all_zs = torch.cat(all_zs, 0)
     all_z_attrs = torch.cat(all_z_attrs, 0)
 
+    # performance
     if '3D' in model[1].name:
         if normalize_pose == True:
-            all_recons, all_targets = post_process(config, all_recons, all_targets)
+            all_recons, all_targets = post_process(
+                config, all_recons, all_targets)
         pjpe = torch.mean(PJPE(all_recons, all_targets), dim=0)
         mpjpe = torch.mean(pjpe).item()
 
@@ -91,18 +93,15 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
 
 def _training_step(batch, batch_idx, model, config):
-    encoder = model[0]
-    decoder = model[1]
-    encoder.train()
-    decoder.train()
+    encoder = model[0].train()
+    decoder = model[1].train()
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
-    mean, logvar = encoder(inp)
 
     # clip logvar to prevent inf when exp is calculated
+    mean, logvar = encoder(inp)
     logvar = torch.clamp(logvar, max=30)
-
     z = reparameterize(mean, logvar)
     recon = decoder(z)
     recon = recon.view(target.shape)
@@ -120,10 +119,8 @@ def _training_step(batch, batch_idx, model, config):
 
 
 def _validation_step(batch, batch_idx, model, epoch, config):
-    encoder = model[0]
-    decoder = model[1]
-    encoder.eval()
-    decoder.eval()
+    encoder = model[0].eval()
+    decoder = model[1].eval()
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)

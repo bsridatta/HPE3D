@@ -6,7 +6,7 @@ from src.models import PJPE
 class Logging(Callback):
     """Logging and printing metrics"""
 
-    def on_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
+    def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
         # wandb
         config.logger.log({
             f"{vae_type}": {
