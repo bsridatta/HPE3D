@@ -29,8 +29,11 @@ divided by the number of frames
 
 import os
 import h5py
+from src.viz.mpl_plots import plot_data, plot_errors
+from src.viz.mayavi_plots import plot_3D_models
 
-def get_samples(self, idx=1):
+
+def get_sample(idx=1):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
     f = h5py.File(h5name, 'r')
@@ -38,10 +41,41 @@ def get_samples(self, idx=1):
     sample = {}
     for x in f.keys():
         sample[x] = f[x][idx]
-
     sample["pose3d_noise"] = sample["pose3d"].copy()
-    sample["pose3d_noise"][0, 2] = 1  # noise
+    sample["pose3d_noise"][0, 0] = 1  # noise
+    # sample["pose3d_noise"] = f["pose3d"][20]
 
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
-        sample.subject, sample.action, sample.subaction, sample.camera)
-    image = image_path+dirname+"/"+dirname+"_"+("%06d" % (sample.idx))+".jpg"
+        sample['subject'], sample['action'], sample['subaction'], sample['camera'])
+    image = image_path+dirname+"/"+dirname + \
+        "_"+("%06d" % (sample['idx']))+".jpg"
+    sample['image'] = image
+
+    f.close()
+    return sample
+
+
+if __name__ == "__main__":
+    sample = get_sample()
+    image = sample['image']
+    pose2d = sample['pose2d']
+    pose3d = sample['pose3d']
+    pose3d_noise = sample['pose3d_noise']
+
+    plot = 1
+
+    # 2D, 3D, Image
+    if plot == 1:
+        plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
+    # 3D Model
+    elif plot == 2:
+        plot_3D_models(pose3d)
+    # 3D Model diff
+    elif plot == 3:
+        plot_3D_models([pose3d, pose3d_noise])
+    elif plot == 4:
+        pass
+    # MPL Grid diff
+    elif plot == 5:
+        plot_errors(poses=[pose3d, pose3d, pose3d, pose3d], targets=[
+                  pose3d_noise, pose3d_noise, pose3d_noise, pose3d_noise])

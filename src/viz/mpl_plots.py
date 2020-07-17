@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-from PIL import Image
-import numpy as np
-from torchvision import transforms
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+from PIL import Image
+from torchvision import transforms
 
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
@@ -12,7 +14,7 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
 
-def plot_3d(pose, mode="show"):
+def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True):
     """Base function for 3D pose plotting, choose from 'show', 'image', 'axis'
 
     Args:
@@ -28,7 +30,7 @@ def plot_3d(pose, mode="show"):
     """
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
-    # ax._axis3don = False
+    ax._axis3don = axis3don
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
@@ -39,11 +41,16 @@ def plot_3d(pose, mode="show"):
 
     ax.scatter(x, y, z, alpha=0.6, s=0.1)
 
-    for link, color in zip(SKELETON, SKELETON_COLORS):
+    if color:
+        colors = [color]*len(SKELETON_COLORS)
+    else:
+        colors = SKELETON_COLORS
+
+    for link, color_ in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 z[([link[0], link[1]])],
-                c=color, alpha=0.6, lw=3)
+                c=color_, alpha=0.6, lw=3)
 
     fix_3D_aspect(ax, x, y, z)
 
@@ -52,10 +59,12 @@ def plot_3d(pose, mode="show"):
         ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
 
     # Plot floor
-    # xx, yy = np.meshgrid([-max(x), max(x)], [-max(y), max(y)])
-    # zz = np.ones((len(xx), len(yy))) * min(z)*1.01  # padding
-    # ax.plot_surface(xx, yy, zz, cmap='gray',
-    #                 linewidth=0, alpha=0.2)
+    if floor:
+        # xx, yy = np.meshgrid([-max(x), max(x)], [-max(y), max(y)])
+        xx, yy = np.meshgrid([x[3], x[6]], [y[3], y[5]])
+        zz = np.ones((len(xx), len(yy))) * min(z)*1.01  # padding
+        ax.plot_surface(xx, yy, zz, cmap='gray',
+                        linewidth=0, alpha=0.2)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -174,4 +183,29 @@ def plot_data(pose2d=None, pose3d=None, image=None):
         i += 1
         plot_3d(pose3d, mode="axis")
 
+    plt.show()
+
+
+def plot_errors(poses, targets, errors=None, grid=2, save=False):
+    """Show difference between predictions and targets
+
+    Arguments:
+        poses {list} -- list of prediction
+        targets {list} -- list of ground truths
+        errors {list} -- list of avg pjpe for each prediction
+
+    Keyword Arguments:
+        grid {int} -- number of plots to show (default: {5})
+    """
+    fig = plt.figure(figsize=(15., 12.))
+    plt.rcParams['savefig.dpi'] = 300
+
+    rows = cols = grid
+
+    i = 1
+    for pose, target in zip(poses, targets):
+        ax = fig.add_subplot(rows, cols, i, projection='3d')
+        plot_3d(pose, mode="axis", color='b', floor=True, axis3don=False)
+        plot_3d(target, mode="axis", color='grey', floor=True, axis3don=False)
+        i += 1
     plt.show()
