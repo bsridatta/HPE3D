@@ -4,6 +4,12 @@ from src.callbacks import Callback
 class BetaScheduler(Callback):
 
     def __init__(self, config, strategy='cyclic'):
+        """Schedules beta values based on the given strategy
+
+        Args:
+            config (namespace): params for the whole pipeline, contains the beta value to schedule 
+            strategy (str): Choose between cyclic and annealing. Defaults to 'cyclic'.
+        """
         config.beta = 0
         self.strategy = strategy
 

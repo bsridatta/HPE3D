@@ -6,6 +6,10 @@ from src.models import PJPE
 class Logging(Callback):
     """Logging and printing metrics"""
 
+    def setup(self, config, **kwargs):
+        print(
+            f'[INFO]: Start training procedure using device: {config.device}')
+
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
         # wandb
         config.logger.log({
@@ -60,8 +64,6 @@ class Logging(Callback):
 
         if mpjpe < config.mpjpe_min:
             config.mpjpe_min = mpjpe
-
-        
 
         # For Images
         # TODO can have this in eval instead and skip logging val

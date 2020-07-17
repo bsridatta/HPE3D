@@ -1,10 +1,18 @@
 from src.callbacks.base import Callback
 import torch
+import os
+
 
 class ModelCheckpoint(Callback):
-    
+    def __init__(self):
+        self.val_loss_min = float("inf")
+
     def setup(self, config, models, optimizers, **kwargs):
-        # Resume training   
+        # Save model code to wandb
+        config.logger.save(
+            f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
+
+        # Resume training
         if config.resume_run not in "None":
             for vae in range(len(models)):
                 for model_ in models[vae]:
@@ -13,13 +21,14 @@ class ModelCheckpoint(Callback):
                     print(
                         f'[INFO] Loaded Checkpoint {config.resume_run}: {model_.name} @ epoch {state["epoch"]}')
                     model_.load_state_dict(state['model_state_dict'])
-                    optimizers[vae].load_state_dict(state['optimizer_state_dict'])
+                    optimizers[vae].load_state_dict(
+                        state['optimizer_state_dict'])
                     # TODO load optimizer state seperately w.r.t variant
-    
-    def on_epoch_end(self, config, val_loss, model, optimizer, epoch,**kwargs):
+
+    def on_epoch_end(self, config, val_loss, model, optimizer, epoch, **kwargs):
         # Save if doing some real training
-        if val_loss < config.val_loss_min and config.device!='cpu':
-            config.val_loss_min = val_loss
+        if val_loss < self.val_loss_min and config.device != 'cpu':
+            self.val_loss_min = val_loss
 
             for model_ in model:
                 try:
@@ -42,5 +51,3 @@ class ModelCheckpoint(Callback):
                     f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
 
                 del state
-
-

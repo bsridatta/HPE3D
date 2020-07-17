@@ -179,12 +179,12 @@ def plot_3d(pose, return_image=True, axis=None):
     labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
-    if axis is None:
-        fig = plt.figure(1)
-        ax = fig.gca(projection='3d')
+    # if axis is None:
+    fig = plt.figure(1)
+    ax = fig.gca(projection='3d')
         # ax._axis3don = False
-    else:
-        ax = axis
+    # else:
+    #     ax = axis
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
@@ -201,19 +201,21 @@ def plot_3d(pose, return_image=True, axis=None):
                 z[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
 
-    # From https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-tohttps://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
-    # Create cubic bounding box to simulate equal aspect ratio
-    max_range = np.array(
-        [x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max()
-    Xb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
-                                1:2:2][0].flatten() + 0.5*(x.max()+x.min())
-    Yb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
-                                1:2:2][1].flatten() + 0.5*(y.max()+y.min())
-    Zb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
-                                1:2:2][2].flatten() + 0.5*(z.max()+z.min())
-    # Comment or uncomment following both lines to test the fake bounding box:
-    for xb, yb, zb in zip(Xb, Yb, Zb):
-        ax.plot([xb], [yb], [zb], 'w')
+    fix_aspect_equal(ax, x, y, z)
+
+    # # From https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-tohttps://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
+    # # Create cubic bounding box to simulate equal aspect ratio
+    # max_range = np.array(
+    #     [x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max()
+    # Xb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+    #                             1:2:2][0].flatten() + 0.5*(x.max()+x.min())
+    # Yb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+    #                             1:2:2][1].flatten() + 0.5*(y.max()+y.min())
+    # Zb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+    #                             1:2:2][2].flatten() + 0.5*(z.max()+z.min())
+    # # Comment or uncomment following both lines to test the fake bounding box:
+    # for xb, yb, zb in zip(Xb, Yb, Zb):
+    #     ax.plot([xb], [yb], [zb], 'w')
 
     for i, j, k, l in zip(x, y, z, labels):
         ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
@@ -227,10 +229,7 @@ def plot_3d(pose, return_image=True, axis=None):
     ax.set_yticks([])
     ax.set_zticks([])
 
-    if axis:
-        return ax
-
-    plt.show()
+    return ax
 
     if return_image:
         """for latent viz"""
@@ -259,7 +258,7 @@ def plot_3d(pose, return_image=True, axis=None):
                     linewidth=0, alpha=0.2)
 
     # trick to make aspect ratio equal
-    ### Make axes limits
+    # Make axes limits
     xyzlim = np.array([ax.get_xlim3d(), ax.get_ylim3d(), ax.get_zlim3d()]).T
     XYZlim = [min(xyzlim[0]), max(xyzlim[1])]
     ax.set_xlim3d(XYZlim)
@@ -269,8 +268,8 @@ def plot_3d(pose, return_image=True, axis=None):
         ax.set_aspect('equal')
     except NotImplementedError:
         pass
-    
-    
+
+
     # animate rotation of pose
     plt.show()
     for angle in range(0, 360):
@@ -279,7 +278,8 @@ def plot_3d(pose, return_image=True, axis=None):
         plt.pause(.001)
     """
 
-def plot_2d(pose, image=False, axis=None):
+
+def plot_2d(pose, image=False):
     """plot the prediction and ground with error
 
     Arguments:
@@ -293,11 +293,8 @@ def plot_2d(pose, image=False, axis=None):
     labels = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
               'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
-    if axis == None:
-        fig = plt.figure(1)
-        ax = fig.gca()
-    else:
-        ax = axis
+    fig = plt.figure(1)
+    ax = fig.gca()
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
@@ -322,11 +319,24 @@ def plot_2d(pose, image=False, axis=None):
     ax.set_xticks([])
     ax.set_yticks([])
 
-    if axis:
-        return ax
+    return ax
+    # plt.show()
 
-    plt.show()
+def fix_aspect_equal(ax, x, y, z):
 
+    # From https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-tohttps://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
+    # Create cubic bounding box to simulate equal aspect ratio
+    max_range = np.array(
+        [x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max()
+    Xb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+                                1:2:2][0].flatten() + 0.5*(x.max()+x.min())
+    Yb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+                                1:2:2][1].flatten() + 0.5*(y.max()+y.min())
+    Zb = 0.5*max_range*np.mgrid[-1:2:2, -1:2:2, -
+                                1:2:2][2].flatten() + 0.5*(z.max()+z.min())
+    # Comment or uncomment following both lines to test the fake bounding box:
+    for xb, yb, zb in zip(Xb, Yb, Zb):
+        ax.plot([xb], [yb], [zb], 'w')
 
 def decode_embedding(config, model):
     decoder = model[1]
@@ -393,7 +403,7 @@ def plot_pose(pose2d=None, pose3d=None, image=None):
     Args:
         pose2d (numpy array): 2d pose
         pose3d (numpy array): 3d pose
-        image ([type], optional): image
+        image (path, optional): image
     """
     fig = plt.figure()
     i = 1
@@ -415,13 +425,15 @@ def plot_pose(pose2d=None, pose3d=None, image=None):
     if pose2d is not None:
         ax = fig.add_subplot(100+col*10+i)
         i += 1
-        plot_2d(pose2d, axis=ax)
-
+        axis = plot_2d(pose2d)
+        ax.update_from(axis)
+        
     if pose3d is not None:
         ax = fig.add_subplot(100+col*10+i, projection='3d')
         i += 1
-        plot_3d(pose3d, axis=ax)
-
+        axis = plot_3d(pose3d)
+        ax.update_from(axis)
+        
     plt.show()
 
 
@@ -445,24 +457,27 @@ if __name__ == "__main__":
                          [445.9429, -379.3877,   54.3570],
                          [641.9531, -382.0340,  210.9446]]
                         )
-    pose3d_error = np.asarray([[0.0000,    0.0000,    1.0000],
-                               [122.7085,  -17.2441,   42.9420],
-                               [126.0797,  444.2065,  119.1129],
-                               [158.8211,  904.9439,  108.8988],
-                               [-122.7145,   17.2554,  -42.7849],
-                               [-138.7586,  479.9395,   19.2924],
-                               [-106.0115,  940.2942,    5.0193],
-                               [12.2478, -243.5484,  -50.2997],
-                               [22.3039, -479.3382, -106.1938],
-                               [11.8855, -534.7589,  -60.3629],
-                               [33.6124, -643.4368, -119.8231],
-                               [-127.0257, -429.1896, -193.8714],
-                               [-384.9372, -379.3297, -305.7618],
-                               [-627.3461, -393.2285, -330.2295],
-                               [188.2248, -445.5474,  -52.9106],
-                               [445.9429, -379.3877,   54.3570],
-                               [641.9531, -382.0340,  210.9446]]
-                              )
+
+    pose3d_error = pose3d.copy()
+    pose3d_error[0, 2] = 1
+    pose2d = np.asarray([[0.8972, -0.4805],
+                         [0.5606,  0.3630],
+                         [0.6572,  0.4746],
+                         [-0.9264,  0.4951],
+                         [-0.5271,  0.5147],
+                         [-0.2620,  0.5956],
+                         [0.6636, -0.0084],
+                         [0.3992, -0.1426],
+                         [0.0348, -0.3150],
+                         [0.2826, -0.3233],
+                         [-0.4954,  0.0015],
+                         [-0.8138,  0.2852],
+                         [-1.3792,  0.6448],
+                         [0.9455,  0.0365],
+                         [0.7849,  0.3574],
+                         [0.8135,  0.9058]])
+
     # plot_mayavi(np.asarray(pose), np.asarray(pose2))
-    plot_3d(np.asarray(pose3d))
-    # plot_pose(pose3d=pose3d)
+    # plot_3d(np.asarray(pose3d))
+    # plot_pose(pose2d=pose2d, pose3d=pose3d)
+    plot_pose( pose3d=pose3d)

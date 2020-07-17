@@ -37,6 +37,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_NOTES'] = 'divide by mean distance no norm'
+
     # ignore when debugging on cpu
     if not use_cuda:
         os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
@@ -45,19 +46,14 @@ def main():
     else:
         os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
-
     config.logger = wandb
     config.logger.run.save()
     config.run_name = config.logger.run.name  # handle name change in wandb
     atexit.register(sync_before_exit, config, wandb)
 
-    # print after init, so its logged in wandb
-    print(f'[INFO]: using device: {device}')
-
     # Data loading
     config.train_subjects = [1, 5, 6, 7, 8]
     config.val_subjects = [9, 11]
-
     train_loader = train_dataloader(config)
     val_loader = val_dataloader(config)
 
@@ -67,7 +63,6 @@ def main():
         2: [['2d', '3d']],
         3: [['rgb', '3d']],
         4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']]}
-
     variants = variant_dic[config.variant]
 
     # Intuition: Each variant is one model,
@@ -92,15 +87,10 @@ def main():
         config.logger.watch(models[vae][0], log='all')
         config.logger.watch(models[vae][1], log='all')
 
-    print(f'[INFO]: Start training procedure')
-
+    # initiate all required callbacks, keep the order in mind
     cb = CallbackList([ModelCheckpoint(), Logging(), BetaScheduler(config, strategy="cycling")])
     cb.setup(config=config, models=models, optimizers=optimizers)
 
-    wandb.save(
-        f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
-
-    config.val_loss_min = float('inf')
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
 
@@ -117,12 +107,10 @@ def main():
             config.logger.log(
                 {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
 
-            # Train
             # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            # Validation
             val_loss = validation_epoch(
                 config, cb, model, val_loader, epoch, vae_type)
 

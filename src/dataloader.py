@@ -10,7 +10,6 @@ def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M(config.train_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
-
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,
