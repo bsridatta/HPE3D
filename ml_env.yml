@@ -16,7 +16,7 @@ dependencies:
   - attrs=19.3.0=py_0
   - backcall=0.1.0=py_0
   - blas=1.0=mkl
-  - bleach=3.1.1=py_0
+  - bleach=3.1.4=py_0
   - blinker=1.4=py_1
   - bzip2=1.0.8=h516909a_2
   - c-ares=1.15.0=h516909a_1001
