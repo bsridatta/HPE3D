@@ -15,7 +15,7 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
 
-def plot_2d(pose, mode="show"):
+def plot_2d(pose, mode="show", color=None):
     """Base function for 2D pose plotting, choose from 'show', 'axis'
 
     Args:
@@ -39,7 +39,12 @@ def plot_2d(pose, mode="show"):
 
     ax.scatter(x, y, alpha=0.6, s=2)
 
-    for link, color in zip(SKELETON, SKELETON_COLORS):
+    if color:
+        colors = [color]*len(SKELETON_COLORS)
+    else:
+        colors = SKELETON_COLORS
+
+    for link, color in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
@@ -55,6 +60,15 @@ def plot_2d(pose, mode="show"):
         return ax
     elif mode == 'show':
         plt.show()
+    elif mode == "image":
+        DPI = fig.get_dpi()
+        fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
+        fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
+        fig.clf()
+        image = Image.open(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
+        image = image.convert('RGB')
+        image = transforms.ToTensor()(image).unsqueeze_(0)
+        return image
     else:
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 

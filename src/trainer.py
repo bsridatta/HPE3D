@@ -1,6 +1,6 @@
 import gc
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import h5py
 import torch
@@ -35,15 +35,13 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
 
 def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
     # note -- model.eval() in validation step
-    
+
     loss = 0
     recon_loss = 0
     kld_loss = 0
 
-    all_recons = []
-    all_targets = []
-    all_zs = []
-    all_z_attrs = []
+    # predictions and targets embeddings etc from val step for performace and visualization
+    t_data = defaultdict(list)
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(val_loader):
@@ -56,36 +54,32 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             recon_loss += output['log']['recon_loss'].item()
             kld_loss += output['log']['kld_loss'].item()
 
-            all_recons.append(output["recon"])
-            all_targets.append(output['target'])
-            all_zs.append(output["z"])
-            all_z_attrs.append(output["z_attr"])
+            for key in output['data'].keys():
+                t_data[key].append(output['data'][key])
 
             del output
             gc.collect()
 
     avg_loss = loss/len(val_loader)  # return for scheduler
 
-    # predictions and targets for performace and visualization
-    all_recons = torch.cat(all_recons, 0)
-    all_targets = torch.cat(all_targets, 0)
-    all_zs = torch.cat(all_zs, 0)
-    all_z_attrs = torch.cat(all_z_attrs, 0)
+    for key in t_data.keys():
+        t_data[key] = torch.cat(t_data[key], 0)
 
     # performance
     if '3D' in model[1].name:
         if normalize_pose == True:
-            all_recons, all_targets = post_process(
-                config, all_recons, all_targets)
-        pjpe = torch.mean(PJPE(all_recons, all_targets), dim=0)
+            t_data['recon'], t_data['target'] = post_process(
+                config, t_data['recon'], t_data['target'])
+
+        pjpe = torch.mean(PJPE(t_data['recon'], t_data['target']), dim=0)
         mpjpe = torch.mean(pjpe).item()
 
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch,
                          avg_loss=avg_loss, recon_loss=recon_loss, kld_loss=kld_loss,
-                         val_loader=val_loader, mpjpe=mpjpe, pjpe=pjpe,
-                         recons=all_recons, targets=all_targets, zs=all_zs, z_attrs=all_z_attrs)
+                         val_loader=val_loader, mpjpe=mpjpe, pjpe=pjpe, t_data=t_data
+                         )
 
-    del loss, kld_loss, recon_loss, all_recons, all_targets, all_zs, all_z_attrs
+    del loss, kld_loss, recon_loss, t_data
     return avg_loss
 
 
@@ -133,6 +127,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     logger_logs = {"kld_loss": kld_loss,
                    "recon_loss": recon_loss}
 
+    data = {"recon": recon, "target": target, "input": inp,
+            "z": z, "z_attr": batch['action']}
+
     return OrderedDict({'loss': loss, "log": logger_logs,
-                        "recon": recon, "target": target,
-                        "z": z, "z_attr": batch['action'], "epoch": epoch})
+                        'data': data, "epoch": epoch})

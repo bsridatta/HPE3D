@@ -22,7 +22,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/bsridatta/HPE3D",
     packages=setuptools.find_packages(),
-    requirements = get_requirements(),
     python_requires='>=3.6',
     classifiers=[      
         "Programming Language :: Python :: 3",

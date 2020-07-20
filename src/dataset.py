@@ -83,6 +83,8 @@ class H36M(Dataset):
             albumentations.Normalize(always_apply=True)
         ])
 
+        self.dataset_len = len(self.annotations['idx'])
+
         # clear the HDF5 datasets
         annotations_h5.close()
         del annotations_h5
@@ -90,7 +92,7 @@ class H36M(Dataset):
 
     def __len__(self):
         # idx - index of the image files
-        return len(self.annotations['idx'])
+        return self.dataset_len 
 
     def __getitem__(self, idx):
         sample = {}

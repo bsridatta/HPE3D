@@ -31,9 +31,10 @@ import os
 import h5py
 from src.viz.mpl_plots import plot_data, plot_errors
 from src.viz.mayavi_plots import plot_3D_models
+from src.dataset import H36M
 
 
-def get_sample(idx=1):
+def get_raw_sample(idx=1):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
     f = h5py.File(h5name, 'r')
@@ -41,9 +42,6 @@ def get_sample(idx=1):
     sample = {}
     for x in f.keys():
         sample[x] = f[x][idx]
-    sample["pose3d_noise"] = sample["pose3d"].copy()
-    sample["pose3d_noise"][0, 0] = 1  # noise
-    # sample["pose3d_noise"] = f["pose3d"][20]
 
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
         sample['subject'], sample['action'], sample['subaction'], sample['camera'])
@@ -55,21 +53,49 @@ def get_sample(idx=1):
     return sample
 
 
+def get_processed_sample(idx=1):
+
+    annotation_file = f'h36m17'
+    image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
+
+    dataset = H36M([9, 11],
+                   annotation_file, image_path, train=True, no_images=False)
+
+    print("[INFO]: Length of the dataset: ", len(dataset))
+    print("[INFO]: One sample -")
+
+    sample = dataset.__getitem__(1)
+
+    for key in sample.keys():
+        sample[key] = sample[key].numpy()
+    
+    del dataset
+    return sample
+
+
 if __name__ == "__main__":
-    sample = get_sample()
+
+    plot = 6
+    processed = False
+
+    if processed:
+        sample = get_processed_sample()
+    else:
+        sample = get_raw_sample()
+
     image = sample['image']
     pose2d = sample['pose2d']
     pose3d = sample['pose3d']
-    pose3d_noise = sample['pose3d_noise']
 
-    plot = 5
+    sample["pose3d_noise"] = sample["pose3d"].copy()
+    sample["pose3d_noise"][0, 0] = 1  # noise
 
     # 2D, 3D, Image
     if plot == 1:
         plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
-        plot_3D_models(pose3d)
+        plot_3D_models([pose3d])
     # 3D Model diff
     elif plot == 3:
         plot_3D_models([pose3d, pose3d_noise])
@@ -78,4 +104,7 @@ if __name__ == "__main__":
     # MPL Grid diff
     elif plot == 5:
         plot_errors(poses=[pose3d, pose3d, pose3d, pose3d], targets=[
-                  pose3d_noise, pose3d_noise, pose3d_noise, pose3d_noise])
+            pose3d_noise, pose3d_noise, pose3d_noise, pose3d_noise])
+    # Zeroed 3D Model
+    elif plot == 6:
+        plot_3D_models([pose3d-pose3d[0]])

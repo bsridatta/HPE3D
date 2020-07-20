@@ -14,7 +14,7 @@ from src import viz
 from src.dataloader import train_dataloader, val_dataloader
 from src.models import PJPE, weight_init
 from src.trainer import training_epoch, validation_epoch
-from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler
+from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler, Analyze
 
 
 def main():
@@ -44,8 +44,9 @@ def main():
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        os.environ['WANDB_MODE'] = 'dryrun'
+        # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
+
     config.logger = wandb
     config.logger.run.save()
     config.run_name = config.logger.run.name  # handle name change in wandb
@@ -63,6 +64,7 @@ def main():
         2: [['2d', '3d']],
         3: [['rgb', '3d']],
         4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']]}
+        
     variants = variant_dic[config.variant]
 
     # Intuition: Each variant is one model,
@@ -87,9 +89,10 @@ def main():
         config.logger.watch(models[vae][0], log='all')
         config.logger.watch(models[vae][1], log='all')
 
-    # initiate all required callbacks, keep the order in mind
-    cb = CallbackList([ModelCheckpoint(), Logging(), BetaScheduler(config, strategy="cycling")])
-    cb.setup(config=config, models=models, optimizers=optimizers)
+    # initiate all required callbacks, keep the order in mind!!!
+    # 
+    cb = CallbackList([Analyze("northern-snowflake-1584", 500),ModelCheckpoint(), Logging(), BetaScheduler(config, strategy="cycling")])
+    cb.setup(config=config, models=models, optimizers=optimizers, train_loader= train_loader, val_loader=val_loader)
 
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')

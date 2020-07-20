@@ -20,7 +20,7 @@ def plot_3D_models(poses, mode="show"):
 
     for pose, color in zip(poses, colors[0:len(poses)]):
         if pose.shape[0] == 16:
-            pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
+            pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
 
         # pose data specific
         x = pose[:, 0]
