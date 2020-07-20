@@ -218,7 +218,7 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     plt.show()
 
 
-def plot_errors(poses, targets, errors=None, grid=2, save=False):
+def plot_errors(poses, targets, errors=None, grid=2):
     """Show difference between predictions and targets
 
     Arguments:
