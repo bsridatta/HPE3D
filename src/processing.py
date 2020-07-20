@@ -140,9 +140,9 @@ def post_process(config, recon, target):
     # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
     # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
     recon = torch.cat(
-        (torch.zeros(recon.shape[0], 1, 3, device=config.device), recon), dim=1)
+        (torch.zeros(recon.shape[0], 1, recon.shape[2], device=config.device), recon), dim=1)
     target = torch.cat(
-        (torch.zeros(target.shape[0], 1, 3, device=config.device), target), dim=1)
+        (torch.zeros(target.shape[0], 1, recon.shape[2], device=config.device), target), dim=1)
 
     return recon, target
 

@@ -6,6 +6,7 @@ import tensorboard as tb
 from src.callbacks.base import Callback
 from torch.utils.tensorboard import SummaryWriter
 from src.viz.mpl_plots import plot_2d
+from src.processing import post_process
 
 tf.io.gfile = tb.compat.tensorflow_stub.io.gfile
 
@@ -34,8 +35,12 @@ class Analyze(Callback):
     def on_validation_end(self, config, t_data, **kwargs):
         writer = SummaryWriter(log_dir=config.logger.run.dir)
 
+        # trynig to reuse a method
+        t_data['input'], _ = post_process(config, t_data['input'], t_data['input'])
+
         images = []
         for i in t_data['input']:
+
             image_ = plot_2d(i.cpu().numpy(), mode='image', color='b')
             images.append(image_)
 

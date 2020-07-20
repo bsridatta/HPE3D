@@ -15,7 +15,7 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
 
-def plot_2d(pose, mode="show", color=None):
+def plot_2d(pose, mode="show", color=None, labels=False):
     """Base function for 2D pose plotting, choose from 'show', 'axis'
 
     Args:
@@ -49,8 +49,9 @@ def plot_2d(pose, mode="show", color=None):
                 y[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
 
-    for i, j, l in zip(x, y, LABELS):
-        ax.text(i, j, s=l, size=8, zorder=1, color='k')
+    if labels:
+        for i, j, l in zip(x, y, LABELS):
+            ax.text(i, j, s=l, size=8, zorder=1, color='k')
 
     ax.set_aspect('equal')
     ax.set_xticks([])
@@ -73,7 +74,7 @@ def plot_2d(pose, mode="show", color=None):
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True):
+def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=False):
     """Base function for 3D pose plotting, choose from 'show', 'image', 'axis'
 
     Args:
@@ -113,9 +114,10 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True):
 
     fix_3D_aspect(ax, x, y, z)
 
-    # Show coordinate values
-    for i, j, k, l in zip(x, y, z, LABELS):
-        ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
+    if labels:
+        # Show coordinate values
+        for i, j, k, l in zip(x, y, z, LABELS):
+            ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
 
     # Plot floor
     if floor:
