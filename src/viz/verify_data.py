@@ -62,7 +62,7 @@ if __name__ == "__main__":
     pose3d = sample['pose3d']
     pose3d_noise = sample['pose3d_noise']
 
-    plot = 1
+    plot = 5
 
     # 2D, 3D, Image
     if plot == 1:
