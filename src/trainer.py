@@ -8,8 +8,7 @@ import torch.nn.functional as F
 
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process
-from src.train_utils import (beta_annealing, beta_cycling,
-                             get_inp_target_criterion)
+from src.train_utils import get_inp_target_criterion
 
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
