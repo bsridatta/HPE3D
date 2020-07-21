@@ -4,7 +4,7 @@
 from .pose_models import Encoder2D, Decoder3D
 from .rgb_models import DecoderRGB, EncoderRGB
 from .model_utils import KLD, PJPE, reparameterize, weight_init
-
+from .critic import Critic
 
 __all__ = [
     'Encoder2D',
@@ -14,5 +14,6 @@ __all__ = [
     'reparameterize',
     'KLD',
     'PJPE',
-    'weight_init'
+    'weight_init',
+    'Critic',
 ]

@@ -259,3 +259,22 @@ def plot_errors(poses, targets, errors=None, grid=2):
         i += 1
 
     plt.show()
+
+
+def print_pose(pose):
+    """print pose with its joint name. for debugging
+
+    Args:
+        pose (numpy): 2D or 3D pose
+    """
+    joint_names = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
+                   'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+
+    if torch.is_tensor(pose):
+        pose = pose.numpy()
+    if len(pose) == 17:
+        for x in range(len(pose)):
+            print(f'{joint_names[x]:10} {pose[x]}')
+    else:
+        for x in range(len(pose)):
+            print(f'{joint_names[x+1]:10} {pose[x]}')

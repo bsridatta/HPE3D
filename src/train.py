@@ -12,7 +12,7 @@ import wandb
 from src import train_utils
 from src import viz
 from src.dataloader import train_dataloader, val_dataloader
-from src.models import PJPE, weight_init
+from src.models import PJPE, weight_init, Critic
 from src.trainer import training_epoch, validation_epoch
 from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler, Analyze
 
@@ -59,27 +59,32 @@ def main():
     val_loader = val_dataloader(config)
 
     # combinations of Encoder, Decoder to train in each epoch
-    # Adding discriminator will change the training to self-supervised
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
         3: [['rgb', '3d']],
         4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']],
-        5: [['2d', '3d'], ['discriminator']],
+        5: [['2d', '3d']],
     }
 
     variant = variant_dic[config.variant]
 
     # NOTE: Terminology
-    # 'net' (say, '2d') - single nn.module 
+    # 'net' (say, '2d') - single nn.module
     # 'model' (['2d','3d'])- a list of 'net' in a variant is one full model (input to output),
     # 'models' (['2d', '3d'], ['rgb', '3d'])- list of 'model' i.e all 'net's.
     # -- only 1 instance of a particular 'net' is created i.e identical net types share the weights
     # -- All 'model's in 'models' share the same latent space
-    
+
     models = train_utils.get_models(variant, config)
     optimizers = train_utils.get_optims(models, config)
     schedulers = train_utils.get_schedulers(optimizers)
+
+    if config.reproject:
+        critic = Critic()
+        critic_optim
+    else:
+        critic = None
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
@@ -87,6 +92,9 @@ def main():
         for model_ in range(len(models)):
             for net_ in range(len(models[model_])):
                 models[model_][net_] = torch.nn.DataParallel(models[model_][net_])
+
+        if critic: 
+            critic = torch.nn.DataParallel(critic).to(device)
 
     # To CPU or GPU or TODO TPU
     for model_ in range(len(models)):
@@ -100,7 +108,7 @@ def main():
     # Analyze("northern-snowflake-1584", 500)
 
     cb.setup(config=config, models=models, optimizers=optimizers,
-             train_loader=train_loader, val_loader=val_loader)
+             train_loader=train_loader, val_loader=val_loader, critic=critic)
 
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
@@ -182,6 +190,8 @@ def training_specific_args():
                         help='KLD weight annealing time')
     parser.add_argument('--learning_rate', default=4e-4, type=float,
                         help='learning rate for all optimizers')
+    parser.add_argument('--reproject', default=True, type=bool,
+                        help='training strategy')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
     parser.add_argument('--train_last_block', default=True, type=lambda x: (str(x).lower() == 'true'),

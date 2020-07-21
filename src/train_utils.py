@@ -5,13 +5,13 @@ import torch
 from src.models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
 
 
-def get_models(variants, config):
+def get_models(variant, config):
     '''
-    get models based on variant name
+    get models based on model name
     Model -> pair of Encoder and Decoder
 
     Arguments:
-        variants (list(list)) -- list of [encoder_type, decoder_type] pairs
+        variant (list(list)) -- list of [encoder_type, decoder_type] pairs
         config (namespace) -- contain all params for the pipeline
 
     Returns:
@@ -19,11 +19,11 @@ def get_models(variants, config):
     '''
     models = []
 
-    for variant in variants:
+    for model in variant:
         encoder = getattr(sys.modules[__name__],
-                          f"Encoder{variant[0].upper()}")
+                            f"Encoder{model[0].upper()}")
         decoder = getattr(sys.modules[__name__],
-                          f"Decoder{variant[1].upper()}")
+                            f"Decoder{model[1].upper()}")
         models.append([encoder(config.latent_dim), decoder(config.latent_dim)])
 
     return models
@@ -34,11 +34,11 @@ def get_optims(models, config):
     get optimizers for models
 
     Arguments:
-        models (list(list)) -- list of VAE [encoder_object, decoder_object]
+        models (list(list)) -- list of VAE models [encoder, decoder]
         config (namespace) -- contain all params for the pipeline
 
     Returns:
-        optims (list) -- one optimizer for an enoceder and decoder pair
+        optims (list) -- one optimizer for a model [encoder, decoder]
     '''
     optims = []
     for encoder, decoder in models:
@@ -113,20 +113,4 @@ def get_inp_target_criterion(encoder, decoder, batch):
     return (inp, target, criterion)
 
 
-def print_pose(pose):
-    """print pose with its joint name. for debugging
 
-    Args:
-        pose (numpy): 2D or 3D pose
-    """
-    joint_names = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
-                   'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-
-    if torch.is_tensor(pose):
-        pose = pose.numpy()
-    if len(pose) == 17:
-        for x in range(len(pose)):
-            print(f'{joint_names[x]:10} {pose[x]}')
-    else:
-        for x in range(len(pose)):
-            print(f'{joint_names[x+1]:10} {pose[x]}')

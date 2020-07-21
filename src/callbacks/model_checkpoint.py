@@ -7,7 +7,7 @@ class ModelCheckpoint(Callback):
     def __init__(self):
         self.val_loss_min = float("inf")
 
-    def setup(self, config, models, optimizers, **kwargs):
+    def setup(self, config, models, optimizers, critic, **kwargs):
         # Save model code to wandb
         config.logger.save(
             f"{os.path.dirname(os.path.abspath(__file__))}/models/pose*")
@@ -25,6 +25,7 @@ class ModelCheckpoint(Callback):
                         state['optimizer_state_dict'])
                     # TODO load optimizer state seperately w.r.t variant
 
+            
     def on_epoch_end(self, config, val_loss, model, optimizer, epoch, **kwargs):
         # Save if doing some real training
         if val_loss < self.val_loss_min and config.device != 'cpu':
