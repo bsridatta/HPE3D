@@ -35,7 +35,7 @@ class Analyze(Callback):
     def on_validation_end(self, config, t_data, **kwargs):
         writer = SummaryWriter(log_dir=config.logger.run.dir)
 
-        # trynig to reuse a method
+        # trynig to reuse the method
         t_data['input'], _ = post_process(config, t_data['input'], t_data['input'])
 
         images = []
