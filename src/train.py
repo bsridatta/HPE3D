@@ -36,7 +36,7 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_NOTES'] = 'divide by mean distance no norm'
+    os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -58,55 +58,63 @@ def main():
     train_loader = train_dataloader(config)
     val_loader = val_dataloader(config)
 
-    # combinations of Encoder, Decoder to train in an epoch
+    # combinations of Encoder, Decoder to train in each epoch
+    # Adding discriminator will change the training to self-supervised
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
         2: [['2d', '3d']],
         3: [['rgb', '3d']],
-        4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']]}
-        
-    variants = variant_dic[config.variant]
+        4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']],
+        5: [['2d', '3d'], ['discriminator']],
+    }
 
-    # Intuition: Each variant is one model,
-    # except they use the same weights and same latent_dim
-    models = train_utils.get_models(variants, config)
+    variant = variant_dic[config.variant]
+
+    # NOTE: Terminology
+    # 'net' (say, '2d') - single nn.module 
+    # 'model' (['2d','3d'])- a list of 'net' in a variant is one full model (input to output),
+    # 'models' (['2d', '3d'], ['rgb', '3d'])- list of 'model' i.e all 'net's.
+    # -- only 1 instance of a particular 'net' is created i.e identical net types share the weights
+    # -- All 'model's in 'models' share the same latent space
+    
+    models = train_utils.get_models(variant, config)
     optimizers = train_utils.get_optims(models, config)
     schedulers = train_utils.get_schedulers(optimizers)
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
         print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
-        for vae in range(len(models)):
-            models[vae][0] = torch.nn.DataParallel(models[vae][0])
-            models[vae][1] = torch.nn.DataParallel(models[vae][1])
+        for model_ in range(len(models)):
+            for net_ in range(len(models[model_])):
+                models[model_][net_] = torch.nn.DataParallel(models[model_][net_])
 
     # To CPU or GPU or TODO TPU
-    for vae in range(len(models)):
-        models[vae][0].to(device)
-        models[vae][1].to(device)
-        # models[vae][0].apply(weight_init)
-        # models[vae][1].apply(weight_init)
-        config.logger.watch(models[vae][0], log='all')
-        config.logger.watch(models[vae][1], log='all')
+    for model_ in range(len(models)):
+        for net_ in range(len(models[model_])):
+            models[model_][net_].to(device)
+            # models[model_][net_].apply(weight_init)
 
     # initiate all required callbacks, keep the order in mind!!!
-    # 
-    cb = CallbackList([Analyze("northern-snowflake-1584", 500),ModelCheckpoint(), Logging(), BetaScheduler(config, strategy="cycling")])
-    cb.setup(config=config, models=models, optimizers=optimizers, train_loader= train_loader, val_loader=val_loader)
+    cb = CallbackList([ModelCheckpoint(),
+                       Logging(), BetaScheduler(config, strategy="cycling")])
+    # Analyze("northern-snowflake-1584", 500)
+
+    cb.setup(config=config, models=models, optimizers=optimizers,
+             train_loader=train_loader, val_loader=val_loader)
 
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
-        for variant in range(len(variants)):
-            # Variant specific players
-            vae_type = "_2_".join(variants[variant])
+        for model_ in range(len(models)):
+            # VAE specific players
+            vae_type = "_2_".join(variant[model_])
 
             # model -- tuple of encoder decoder
-            model = models[variant]
-            optimizer = optimizers[variant]
-            scheduler = schedulers[variant]
+            model = models[model_]
+            optimizer = optimizers[model_]
+            scheduler = schedulers[model_]
             config.logger.log(
                 {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
 

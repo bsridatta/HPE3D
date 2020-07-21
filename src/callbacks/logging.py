@@ -6,9 +6,13 @@ from src.models import PJPE
 class Logging(Callback):
     """Logging and printing metrics"""
 
-    def setup(self, config, **kwargs):
+    def setup(self, config, models, **kwargs):
         print(
             f'[INFO]: Start training procedure using device: {config.device}')
+
+        for model_ in range(len(models)):
+            for net_ in range(len(models[model_])):
+                config.logger.watch(models[model_][net_], log='all')
 
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
         # wandb
