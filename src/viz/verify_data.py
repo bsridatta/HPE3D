@@ -29,14 +29,16 @@ divided by the number of frames
 
 import os
 import h5py
-from src.viz.mpl_plots import plot_data, plot_errors
+from src.viz.mpl_plots import plot_data, plot_errors, plot_projection
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
+from src.data_preparation.cameras import load_camera_params 
 
 
 def get_raw_sample(idx=1):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
+
     f = h5py.File(h5name, 'r')
 
     sample = {}
@@ -50,6 +52,14 @@ def get_raw_sample(idx=1):
     sample['image'] = image
 
     f.close()
+
+    h5cam = f'{os.getenv("HOME")}/lab/HPE3D/src/data/cameras.h5'
+    cam = h5py.File(h5cam, 'r')
+
+    
+
+    cam.close()
+
     return sample
 
 
@@ -68,14 +78,14 @@ def get_processed_sample(idx=1):
 
     for key in sample.keys():
         sample[key] = sample[key].numpy()
-    
+
     del dataset
     return sample
 
 
 if __name__ == "__main__":
 
-    plot = 6
+    plot = 7
     processed = False
 
     if processed:
@@ -103,8 +113,12 @@ if __name__ == "__main__":
         pass
     # MPL Grid diff
     elif plot == 5:
-        plot_errors(poses=[pose3d, pose3d, pose3d, pose3d], targets=[
-            pose3d_noise, pose3d_noise, pose3d_noise, pose3d_noise])
+        plot_errors(poses=[pose3d, pose3d], targets=[pose3d_noise, pose3d_noise])
     # Zeroed 3D Model
     elif plot == 6:
         plot_3D_models([pose3d-pose3d[0]])
+    # MPL projection
+    elif plot == 7:
+        plot_projection(sample)
+
+    print(sample)
