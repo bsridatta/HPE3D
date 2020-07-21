@@ -9,10 +9,9 @@ class Logging(Callback):
     def setup(self, config, models, **kwargs):
         print(
             f'[INFO]: Start training procedure using device: {config.device}')
-
-        for model_ in range(len(models)):
-            for net_ in range(len(models[model_])):
-                config.logger.watch(models[model_][net_], log='all')
+            
+        for model in models.values():
+            config.logger.watch(model, log='all')
 
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
         # wandb

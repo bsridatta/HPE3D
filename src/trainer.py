@@ -12,7 +12,6 @@ from src.train_utils import get_inp_target_criterion
 
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
-    """Logic for each epoch"""
     # note -- model.train() in training step
 
     # TODO perform get_inp_target_criterion for the whole epoch directly
@@ -33,14 +32,40 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     cb.on_train_end(config=config, epoch=epoch)
 
 
+def _training_step(batch, batch_idx, model, config):
+    encoder = model[0].train()
+    decoder = model[1].train()
+
+    if config.self_supervised:
+        critic = model[2].train()
+
+    inp, target, criterion = get_inp_target_criterion(
+        encoder, decoder, batch)
+
+    # clip logvar to prevent inf when exp is calculated
+    mean, logvar = encoder(inp)
+    logvar = torch.clamp(logvar, max=30)
+    z = reparameterize(mean, logvar)
+    recon = decoder(z)
+    recon = recon.view(target.shape)
+
+    # TODO clip kld loss to prevent explosion
+    recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
+    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
+    loss = recon_loss + config.beta * kld_loss
+
+    logger_logs = {"kld_loss": kld_loss,
+                   "recon_loss": recon_loss}
+
+    return OrderedDict({'loss': loss, 'log': logger_logs})
+
+
 def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
     # note -- model.eval() in validation step
 
     loss = 0
     recon_loss = 0
     kld_loss = 0
-
-    # predictions and targets embeddings etc from val step for performace and visualization
     t_data = defaultdict(list)
 
     with torch.no_grad():
@@ -83,34 +108,12 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
     return avg_loss
 
 
-def _training_step(batch, batch_idx, model, config):
-    encoder = model[0].train()
-    decoder = model[1].train()
-
-    inp, target, criterion = get_inp_target_criterion(
-        encoder, decoder, batch)
-
-    # clip logvar to prevent inf when exp is calculated
-    mean, logvar = encoder(inp)
-    logvar = torch.clamp(logvar, max=30)
-    z = reparameterize(mean, logvar)
-    recon = decoder(z)
-    recon = recon.view(target.shape)
-
-    # TODO clip kld loss to prevent explosion
-    recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
-    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
-    loss = recon_loss + config.beta * kld_loss
-
-    logger_logs = {"kld_loss": kld_loss,
-                   "recon_loss": recon_loss}
-
-    return OrderedDict({'loss': loss, 'log': logger_logs})
-
-
 def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
+
+    if config.self_supervised:
+        critic = model[2].eval()
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)

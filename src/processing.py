@@ -176,6 +176,8 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
     return img
 
 
+def project_3d_to_2d(pose, R, T, f, c,)
+
 # if __name__ == "__main__":
 #     for x in NORM_STATS.keys():
 #         print(x, '\n', NORM_STATS[x])

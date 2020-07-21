@@ -7,44 +7,49 @@ from src.models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
 
 def get_models(variant, config):
     '''
-    get models based on model name
-    Model -> pair of Encoder and Decoder
+    get models based on model names in the variant
 
     Arguments:
-        variant (list(list)) -- list of [encoder_type, decoder_type] pairs
+        variant (list(list)) -- all the combination of models
         config (namespace) -- contain all params for the pipeline
 
     Returns:
-        models (list(list)) -- list of VAE [encoder_object, decoder_object]
+        models (dic) -- dic of unique instances of required models 
     '''
-    models = []
+    models = {}
 
-    for model in variant:
+    for pair in variant:
         encoder = getattr(sys.modules[__name__],
-                            f"Encoder{model[0].upper()}")
+                          f"Encoder{pair[0].upper()}")
         decoder = getattr(sys.modules[__name__],
-                            f"Decoder{model[1].upper()}")
-        models.append([encoder(config.latent_dim), decoder(config.latent_dim)])
+                          f"Decoder{pair[1].upper()}")
+        models[f"Encoder{pair[0].upper()}"] = encoder(config.latent_dim)
+        models[f"Decoder{pair[1].upper()}"] = decoder(config.latent_dim)
 
     return models
 
 
-def get_optims(models, config):
+def get_optims(variant, models, config):
     '''
     get optimizers for models
 
     Arguments:
-        models (list(list)) -- list of VAE models [encoder, decoder]
+        variant (list(list)) -- all the combination of models
+        models (dict) -- dict of model instances
         config (namespace) -- contain all params for the pipeline
 
     Returns:
         optims (list) -- one optimizer for a model [encoder, decoder]
     '''
     optims = []
-    for encoder, decoder in models:
-        model_params = list(encoder.parameters())+list(decoder.parameters())
-        optimizer = torch.optim.Adam(model_params, lr=config.learning_rate)
+    for pair in variant:
+        encoder = models[f"Encoder{pair[0].upper()}"]
+        decoder = models[f"Decoder{pair[1].upper()}"]
+        params = list(encoder.parameters())+list(decoder.parameters())
+        # TODO have specific learning rate according to combo
+        optimizer = torch.optim.Adam(params, lr=config.learning_rate)
         optims.append(optimizer)
+
     return optims
 
 
@@ -111,6 +116,3 @@ def get_inp_target_criterion(encoder, decoder, batch):
         exit()
 
     return (inp, target, criterion)
-
-
-

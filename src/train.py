@@ -69,60 +69,59 @@ def main():
 
     variant = variant_dic[config.variant]
 
-    # NOTE: Terminology
-    # 'net' (say, '2d') - single nn.module
-    # 'model' (['2d','3d'])- a list of 'net' in a variant is one full model (input to output),
-    # 'models' (['2d', '3d'], ['rgb', '3d'])- list of 'model' i.e all 'net's.
+    # NOTE: Naming
+    # 'model' (['2d','3d'])- a list of 'net's/nn.Module in a variant is one full model (input to output),
+    # 'models' - dictionary of all nets
     # -- only 1 instance of a particular 'net' is created i.e identical net types share the weights
     # -- All 'model's in 'models' share the same latent space
 
-    models = train_utils.get_models(variant, config)
-    optimizers = train_utils.get_optims(models, config)
+    models = train_utils.get_models(variant, config)  # model instances
+    optimizers = train_utils.get_optims(variant, models, config)  # optimer for each pair
     schedulers = train_utils.get_schedulers(optimizers)
 
-    if config.reproject:
+    if config.self_supervised:
         critic = Critic()
-        critic_optim
-    else:
-        critic = None
+        models['Critic'] = critic
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
         print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
-        for model_ in range(len(models)):
-            for net_ in range(len(models[model_])):
-                models[model_][net_] = torch.nn.DataParallel(models[model_][net_])
-
-        if critic: 
-            critic = torch.nn.DataParallel(critic).to(device)
+        for key in models.keys():
+            models[key] = torch.nn.DataParallel(models[key])
 
     # To CPU or GPU or TODO TPU
-    for model_ in range(len(models)):
-        for net_ in range(len(models[model_])):
-            models[model_][net_].to(device)
-            # models[model_][net_].apply(weight_init)
+    for key in models.keys():
+        models[key] = models[key].to(device)
+        # models[key].apply(weight_init)
 
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),
-                       Logging(), BetaScheduler(config, strategy="cycling")])
-    # Analyze("northern-snowflake-1584", 500)
+                       Logging(),
+                       BetaScheduler(config, strategy="cycling")],)
+    # Analyze("northern-snowflake-1584", 500),)
 
     cb.setup(config=config, models=models, optimizers=optimizers,
-             train_loader=train_loader, val_loader=val_loader, critic=critic)
+             train_loader=train_loader, val_loader=val_loader, variant=variant)
 
     config.mpjpe_min = float('inf')
     config.mpjpe_at_min_val = float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
-        for model_ in range(len(models)):
-            # VAE specific players
-            vae_type = "_2_".join(variant[model_])
+        for n_pair, pair in enumerate(variant):
 
-            # model -- tuple of encoder decoder
-            model = models[model_]
-            optimizer = optimizers[model_]
-            scheduler = schedulers[model_]
+            # VAE specific players
+            vae_type = "_2_".join(pair)
+
+            # model -- encoder, decoder / critic
+            model = [models[f"Encoder{pair[0].upper()}"],
+                     models[f"Decoder{pair[1].upper()}"]]
+
+            if config.self_supervised:
+                model.append(models['Critic'])
+
+            optimizer = optimizers[n_pair]
+            scheduler = schedulers[n_pair]
             config.logger.log(
                 {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
 
@@ -142,7 +141,7 @@ def main():
             scheduler.step(val_loss)
 
             cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
-                            optimizer=optimizer, epoch=epoch)
+                            n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
@@ -171,6 +170,8 @@ def training_specific_args():
     parser = ArgumentParser()
 
     # training specific
+    parser.add_argument('--self_supervised', default=False, type=bool,
+                        help='training strategy')
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=2048, type=int,
@@ -190,8 +191,6 @@ def training_specific_args():
                         help='KLD weight annealing time')
     parser.add_argument('--learning_rate', default=4e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--reproject', default=True, type=bool,
-                        help='training strategy')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
     parser.add_argument('--train_last_block', default=True, type=lambda x: (str(x).lower() == 'true'),

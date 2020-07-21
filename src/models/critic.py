@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class Critic(nn.Module):
     def __init__(self, neurons=1024, activation=nn.ReLU, drop_out_p=0.2):
-        super(LBAD, self).__init__()
+        super(Critic, self).__init__()
         self.neurons = neurons
         self.activ = activation()
         self.drop_out_p = drop_out_p
