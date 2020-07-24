@@ -13,7 +13,7 @@ import sys
 import h5py
 import numpy as np
 import scipy.io as sio
-
+from src.data_preparation.camera_parameters import get_camera_data
 ###############################################################
 # Set Paths
 img_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
@@ -21,8 +21,8 @@ save_path = f'{os.getenv("HOME")}/lab/HPE3D/src/data/'
 annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
-# subject_list = [9, 11]
-subject_list = [1, 5, 6, 7, 8]
+subject_list = [9, 11]
+# subject_list = [1, 5, 6, 7, 8]
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str
 inds = range(17)
@@ -33,7 +33,7 @@ camera_list = np.arange(1, 5)
 # Get smaller subset of the data for fast dev?
 debug = False
 # Get Mean and Std of the data alone?
-mean_std = True
+mean_std = False
 
 #################################################################
 
@@ -52,6 +52,8 @@ cam_f = []
 cam_c = []
 cam_R = []
 cam_T = []
+cam_p = []
+cam_k = []
 subject = []
 action = []
 subaction = []
@@ -79,6 +81,8 @@ for subject_ in subject_list:
                 cam_c_ = data['c']
                 cam_R_ = data['R']
                 cam_T_ = data['T']
+                cam_p_ = get_camera_data(camera_, subject_, 'p')
+                cam_k_ = get_camera_data(camera_, subject_, 'k')
                 num_images = pose2d_.shape[2]
                 for i in range(num_images):
                     if i % 5 != 0:
@@ -92,6 +96,8 @@ for subject_ in subject_list:
                     cam_c.append(cam_c_[i])
                     cam_R.append(cam_R_[i])
                     cam_T.append(cam_T_[i])
+                    cam_p.append(cam_p_)
+                    cam_k.append(cam_k_)
                     subject.append(subject_)
                     action.append(action_)
                     subaction.append(subaction_)
@@ -158,6 +164,8 @@ f['cam_f'] = cam_f
 f['cam_c'] = cam_c
 f['cam_R'] = cam_R
 f['cam_T'] = cam_T
+f['cam_p'] = cam_p
+f['cam_k'] = cam_k
 f['subject'] = subject
 f['action'] = action
 f['subaction'] = subaction
