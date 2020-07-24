@@ -44,7 +44,7 @@ def main():
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="to_delete", config=config)
     else:
-        # os.environ['WANDB_MODE'] = 'dryrun'
+        os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
     config.logger = wandb

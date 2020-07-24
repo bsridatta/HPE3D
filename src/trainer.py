@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 from src.models import KLD, PJPE, reparameterize
-from src.processing import post_process
+from src.processing import post_process, project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
 
 
@@ -35,10 +35,9 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
 def _training_step(batch, batch_idx, model, config):
     encoder = model[0].train()
     decoder = model[1].train()
-
-    if config.self_supervised:
-        critic = model[2].train()
-
+    
+    logs = {}
+    
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
@@ -49,15 +48,23 @@ def _training_step(batch, batch_idx, model, config):
     recon = decoder(z)
     recon = recon.view(target.shape)
 
+    if config.self_supervised:
+        critic = model[2].train()
+        recon = project_3d_to_2d(recon, batch)
+        target = inp
+        guess = critic(recon)
+        critic_loss = guess  # TODO if fake = 1
+        logs['critic_loss'] = critic_loss
+    
     # TODO clip kld loss to prevent explosion
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
-    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
+    kld_loss = KLD(mean, logvar, decoder.name)
     loss = recon_loss + config.beta * kld_loss
 
-    logger_logs = {"kld_loss": kld_loss,
-                   "recon_loss": recon_loss}
+    logs["kld_loss"] = kld_loss
+    logs["recon_loss"] = recon_loss
 
-    return OrderedDict({'loss': loss, 'log': logger_logs})
+    return OrderedDict({'loss': loss, 'log': logs})
 
 
 def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
@@ -124,14 +131,14 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     recon = recon.view(target.shape)
 
     recon_loss = criterion(recon, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
-    kld_loss = KLD(mean, logvar, decoder.__class__.__name__)
+    kld_loss = KLD(mean, logvar, decoder.name)
     loss = recon_loss + config.beta * kld_loss
 
-    logger_logs = {"kld_loss": kld_loss,
-                   "recon_loss": recon_loss}
+    logs = {"kld_loss": kld_loss,
+            "recon_loss": recon_loss}
 
     data = {"recon": recon, "target": target, "input": inp,
             "z": z, "z_attr": batch['action']}
 
-    return OrderedDict({'loss': loss, "log": logger_logs,
+    return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})

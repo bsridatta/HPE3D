@@ -46,8 +46,7 @@ class H36M(Dataset):
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
 
-        ignore_data = ["pose3d_global",
-                       "cam_f", "cam_c", "cam_R", "cam_T"]
+        ignore_data = ["pose3d_global"]
 
         # get labels and metadata including camera parameters
         subj_name = "".join(str(sub) for sub in subjects)
@@ -92,7 +91,7 @@ class H36M(Dataset):
 
     def __len__(self):
         # idx - index of the image files
-        return self.dataset_len 
+        return self.dataset_len
 
     def __getitem__(self, idx):
         sample = {}
@@ -150,18 +149,8 @@ def test_h36m():
     sample = dataset.__getitem__(10)
 
     for k, v in zip(sample.keys(), sample.values()):
-        print(k, v.size(), v.dtype, end="\t")
+        print(k, v.size(), v.dtype, end="\n")
         pass
-
-    import viz
-    from torchvision import transforms
-
-    print(sample['pose2d'])
-    print(sample['pose3d'])
-
-    to_pil = transforms.ToPILImage()
-    viz.plot_pose(pose2d=sample['pose2d'],
-                  pose3d=sample['pose3d'], image=to_pil(sample['image']))
 
     del dataset
     del sample

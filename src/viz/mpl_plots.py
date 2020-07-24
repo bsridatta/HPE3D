@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from PIL import Image
 from torchvision import transforms
+from src.processing import project_3d_to_2d
 
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
@@ -279,16 +280,17 @@ def print_pose(pose):
         for x in range(len(pose)):
             print(f'{joint_names[x+1]:10} {pose[x]}')
 
+
 def plot_projection(sample):
     fig = plt.figure()
     i = 1
     col = 3
 
-    pose2d = sample['pose2d'] 
-    pose2d -= pose2d[0]
-    pose3d = sample['pose3d'] 
-    pose3d -= pose3d[0]
-    
+    pose2d = sample['pose2d']
+    # pose2d -= pose2d[0]
+    pose3d = sample['pose3d']
+    # pose3d -= pose3d[0]
+
     # if pose2d:
     ax = fig.add_subplot(100+col*10+i)
     i += 1
@@ -298,12 +300,12 @@ def plot_projection(sample):
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
     plot_3d(pose3d, mode="axis")
+    
+    # if pose2d_proj:
+    pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
 
-    # cam_f = []
-    # cam_c = []
-    # cam_R = []
-    # cam_T = []
-    print(sample['cam_c'])
-    plt.quiver(sample['cam_c'][0],sample['cam_c'][1],sample['cam_c'][2])
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(pose2d_proj, mode='axis')
 
     plt.show()

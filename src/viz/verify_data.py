@@ -32,7 +32,6 @@ import h5py
 from src.viz.mpl_plots import plot_data, plot_errors, plot_projection
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
-from src.data_preparation.cameras import load_camera_params 
 
 
 def get_raw_sample(idx=1):
@@ -52,13 +51,6 @@ def get_raw_sample(idx=1):
     sample['image'] = image
 
     f.close()
-
-    h5cam = f'{os.getenv("HOME")}/lab/HPE3D/src/data/cameras.h5'
-    cam = h5py.File(h5cam, 'r')
-
-    
-
-    cam.close()
 
     return sample
 
@@ -120,5 +112,3 @@ if __name__ == "__main__":
     # MPL projection
     elif plot == 7:
         plot_projection(sample)
-
-    print(sample)
