@@ -302,10 +302,10 @@ def plot_projection(sample):
     plot_3d(pose3d, mode="axis")
     
     # if pose2d_proj:
-    pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
+    # pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
 
-    ax = fig.add_subplot(100+col*10+i)
-    i += 1
-    plot_2d(pose2d_proj, mode='axis')
+    # ax = fig.add_subplot(100+col*10+i)
+    # i += 1
+    # plot_2d(pose2d_proj, mode='axis')
     plt.savefig("test.svg")
     plt.show()
