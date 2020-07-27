@@ -307,5 +307,5 @@ def plot_projection(sample):
     ax = fig.add_subplot(100+col*10+i)
     i += 1
     plot_2d(pose2d_proj, mode='axis')
-
+    plt.savefig("test.svg")
     plt.show()

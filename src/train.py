@@ -170,7 +170,7 @@ def training_specific_args():
     parser = ArgumentParser()
 
     # training specific
-    parser.add_argument('--self_supervised', default=False, type=bool,
+    parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')

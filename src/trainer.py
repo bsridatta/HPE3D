@@ -35,9 +35,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
 def _training_step(batch, batch_idx, model, config):
     encoder = model[0].train()
     decoder = model[1].train()
-    
-    logs = {}
-    
+
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
@@ -49,20 +47,22 @@ def _training_step(batch, batch_idx, model, config):
     recon = recon.view(target.shape)
 
     if config.self_supervised:
-        critic = model[2].train()
         recon = project_3d_to_2d(recon, batch)
         target = inp
-        guess = critic(recon)
-        critic_loss = guess  # TODO if fake = 1
-        logs['critic_loss'] = critic_loss
-    
+        
     # TODO clip kld loss to prevent explosion
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.name)
     loss = recon_loss + config.beta * kld_loss
 
-    logs["kld_loss"] = kld_loss
-    logs["recon_loss"] = recon_loss
+    logs = {"kld_loss": kld_loss,
+         "recon_loss": recon_loss}
+
+    if config.self_supervised:
+        critic = model[2].train()
+        guess = critic(recon)
+        critic_loss = guess  # TODO if fake = 1
+        logs['critic_loss'] = critic_loss
 
     return OrderedDict({'loss': loss, 'log': logs})
 
