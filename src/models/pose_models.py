@@ -74,7 +74,7 @@ class Encoder2D(nn.Module):
 
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
-        print(mean.max())
+
         '''BAD - BatchNorm Activation Dropout'''
         # mean = self.enc_out_block(mean)
         # logvar = self.enc_out_block(logvar)

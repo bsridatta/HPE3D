@@ -77,13 +77,13 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 7
+    plot = 5
     processed = False
 
     if processed:
         sample = get_processed_sample()
     else:
-        sample = get_raw_sample()
+        sample = get_raw_sample(15)
 
     image = sample['image']
     pose2d = sample['pose2d']
@@ -105,10 +105,12 @@ if __name__ == "__main__":
         pass
     # MPL Grid diff
     elif plot == 5:
-        plot_errors(poses=[pose3d, pose3d], targets=[pose3d_noise, pose3d_noise])
+        plot_errors(poses=[pose3d], targets=[sample['pose3d_global']])
+        # plot_errors(poses=[pose3d, pose3d], targets=[pose3d_noise, pose3d_noise])
     # Zeroed 3D Model
     elif plot == 6:
         plot_3D_models([pose3d-pose3d[0]])
     # MPL projection
     elif plot == 7:
         plot_projection(sample)
+

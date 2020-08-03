@@ -171,8 +171,43 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
 
     return img
 
-
 def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
+    """
+    Project 3d pose from camera coordiantes to image frame
+    using camera parameters including radial and tangential distortion
+
+    Args:
+        P: Nx3 points in camera coordinates
+        cam_params (dic):
+            R: 3x3 Camera rotation matrix
+            T: 3x1 Camera translation parameters
+            f: 2x1 Camera focal length accounting imprection in x, y
+            c: 2x1 Camera center
+            k: 3x1 Camera radial distortion coefficients
+            p: 2x1 Camera tangential distortion coefficients
+
+    Returns:
+        Proj: Nx2 points in pixel space
+        D: 1xN depth of each point in camera space
+        radial: 1xN radial distortion per point
+        tan: 1xN tangential distortion per point
+        r2: 1xN squared radius of the projected points before distortion
+    """
+    f = cam_params['cam_f'].view(-1, 2, 1)
+    c = cam_params['cam_c'].view(-1, 2, 1)
+    p = cam_params['cam_p'].view(-1, 2, 1)
+    k = cam_params['cam_k'].view(-1, 3, 1)
+
+    if coordinates == 'world':  # rotate and translate
+        R = cam_params('cam_R')
+        T = cam_params('cam_T')
+        X = R.dot(torch.transpose(pose3d, 1, 2) - T)
+    
+    pose2d_proj = (pose3d/pose3d[:,:,2][:,:,None].repeat(1,1,3))[:,:,:2]
+    
+    return pose2d_proj
+
+def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
     """
     from https://github.com/una-dinosauria/3d-pose-baseline
 
@@ -227,57 +262,3 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
 
     # return pose2d_proj, D, radial, tan, r2
     return pose2d_proj
-
-
-# def project_3d_to_2d(pose3d, cam_params):
-#     """
-#     from https://github.com/una-dinosauria/3d-pose-baseline
-
-#     Project 3d pose from camera coordiantes to image frame
-#     using camera parameters including radial and tangential distortion
-
-#     Args:
-#         P: Nx3 points in camera coordinates
-#         cam_params (dic):
-#             R: 3x3 Camera rotation matrix
-#             T: 3x1 Camera translation parameters
-#             f: 2x1 Camera focal length accounting imprection in x, y
-#             c: 2x1 Camera center
-#             k: 3x1 Camera radial distortion coefficients
-#             p: 2x1 Camera tangential distortion coefficients
-
-#     Returns:
-#         Proj: Nx2 points in pixel space
-#         D: 1xN depth of each point in camera space
-#         radial: 1xN radial distortion per point
-#         tan: 1xN tangential distortion per point
-#         r2: 1xN squared radius of the projected points before distortion
-#     """
-
-#     f = np.array(cam_params['cam_f']).reshape(2, 1)
-#     c = np.array(cam_params['cam_c']).reshape(2, 1)
-#     p = np.array(cam_params['cam_p'])
-#     k = np.array(cam_params['cam_k']).reshape(3, 1)
-
-#     # R = cam_params('cam_R')
-#     # T = cam_params('cam_T')
-#     # TODO if pose in world coordinates do:
-#     # X = R.dot(P.T - T)  # rotate and translate
-
-#     N = pose3d.shape[0]
-#     X = pose3d.T
-#     XX = X[:2, :] / X[2, :]
-#     r2 = XX[0, :]**2 + XX[1, :]**2
-
-#     radial = 1 + np.einsum('ij,ij->j', np.tile(k, (1, N)), np.array([r2, r2**2, r2**3]))
-#     tan = p[0]*XX[1, :] + p[1]*XX[0, :]
-
-#     XXX = XX * np.tile(radial+tan, (2, 1)) + np.outer(np.array([p[1], p[0]]).reshape(-1), r2)
-
-#     pose2d_proj = (f * XXX) + c
-#     pose2d_proj = pose2d_proj.T
-
-#     D = X[2, ]
-
-#     # return pose2d_proj, D, radial, tan, r2
-#     return pose2d_proj

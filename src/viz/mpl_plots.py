@@ -6,7 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from PIL import Image
 from torchvision import transforms
-from src.processing import project_3d_to_2d
+from src.processing import project_3d_to_2d, project_3d_to_2d_martinez
+import torch
 
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
@@ -16,27 +17,35 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
 
-def plot_2d(pose, mode="show", color=None, labels=False):
-    """Base function for 2D pose plotting, choose from 'show', 'axis'
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
+    """Base function for 2D pose plotting
 
     Args:
         pose (array): for 16 joints its numpy array (for adding root joint)
                       else tensor also works
-        mode (str): choice of what to do
+        mode (str, optional): choose from
             Image: plot -> png -> image tensor, useful for latent space viz 
             Axis: return only the matplotlib axis to plot via caller method.
             Show: Just show the plot 
+
+        color (str, optional): color of pose useful for comparision when overlayed
+        labels (bool, optional): Show joint labels
+        show_ticks (bool, optional): Show coordinates
+
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
+
     fig = plt.figure(1)
     ax = fig.gca()
+    plt.gca().invert_yaxis()
+    # plt.cla()
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
 
     x = pose[:, 0]
-    y = -1*pose[:, 1]
+    y = pose[:, 1] # Image coordinates origin on the top left corner
 
     ax.scatter(x, y, alpha=0.6, s=2)
 
@@ -54,9 +63,11 @@ def plot_2d(pose, mode="show", color=None, labels=False):
         for i, j, l in zip(x, y, LABELS):
             ax.text(i, j, s=l, size=8, zorder=1, color='k')
 
+    if not show_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
     ax.set_aspect('equal')
-    ax.set_xticks([])
-    ax.set_yticks([])
 
     if mode == 'axis':
         return ax
@@ -75,19 +86,23 @@ def plot_2d(pose, mode="show", color=None, labels=False):
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=False):
-    """Base function for 3D pose plotting, choose from 'show', 'image', 'axis'
+def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
+    """Base function for 3D pose plotting
 
     Args:
         pose (array): for 16 joints its numpy array (for adding root joint)
                       else tensor also works
-        mode (str): choice of what to do
+        mode (str, optional): choose from
             Image: plot -> png -> image tensor, useful for latent space viz 
             Axis: return only the matplotlib axis to plot via caller method.
             Show: Just show the plot 
+
+        color (str, optional): color of pose useful for comparision when overlayed
+        labels (bool, optional): Show joint labels
+        show_ticks (bool, optional): Show coordinates
+
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
-
     """
     fig = plt.figure(1)
     ax = fig.gca(projection='3d')
@@ -97,8 +112,8 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
         pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
 
     x = pose[:, 0]
-    y = -1*pose[:, 2]
-    z = -1*pose[:, 1]
+    y = pose[:, 1]
+    z = pose[:, 2]
 
     ax.scatter(x, y, z, alpha=0.6, s=0.1)
 
@@ -118,7 +133,11 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
     if labels:
         # Show coordinate values
         for i, j, k, l in zip(x, y, z, LABELS):
-            ax.text(i, j, k, s=f'{l}', size=7, zorder=1, color='k')
+            ax.text(i, j, k, s=f'{l[:2], int(i), int(j), int(k)}', size=7, zorder=1, color='k')
+
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
 
     # Plot floor
     if floor:
@@ -128,14 +147,16 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
         ax.plot_surface(xx, yy, zz, cmap='gray',
                         linewidth=0, alpha=0.2)
 
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_zticks([])
+    if not show_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
 
     if mode == "axis":
         return ax
     elif mode == "show":
         plt.show()
+        fig.clf()
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
@@ -225,12 +246,12 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     if pose2d is not None:
         ax = fig.add_subplot(100+col*10+i)
         i += 1
-        plot_2d(pose2d, mode='axis')
+        plot_2d(pose2d, mode='axis', show_ticks=True)
 
     if pose3d is not None:
         ax = fig.add_subplot(100+col*10+i, projection='3d')
         i += 1
-        plot_3d(pose3d, mode="axis")
+        plot_3d(pose3d, mode="axis", labels=True, show_ticks=True)
 
     plt.show()
 
@@ -290,22 +311,33 @@ def plot_projection(sample):
     # pose2d -= pose2d[0]
     pose3d = sample['pose3d']
     # pose3d -= pose3d[0]
+    # pose3d += (0,0,2)
 
-    # if pose2d:
+    print("[plot_proj] ", pose3d[0])
+
+    # pose2d
     ax = fig.add_subplot(100+col*10+i)
     i += 1
-    plot_2d(pose2d, mode='axis')
-
-    # if pose3d:
+    plot_2d(pose2d, color='g', mode='axis', show_ticks=True)
+    
+    # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(pose3d, mode="axis")
+    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True)
     
-    # if pose2d_proj:
-    # pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
+    # pose2d_proj
+    pose3d = torch.Tensor([pose3d])
+    for x in sample.keys():
+        if not isinstance(sample[x], str):
+            sample[x] = torch.Tensor(sample[x])
 
-    # ax = fig.add_subplot(100+col*10+i)
-    # i += 1
-    # plot_2d(pose2d_proj, mode='axis')
-    plt.savefig("test.svg")
+    pose2d_proj = project_3d_to_2d_martinez(pose3d, cam_params=sample)
+    # psoe2d_proj[0]
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(pose2d_proj[0], color="orange", mode='axis', show_ticks=True)
+
+    print(torch.equal(torch.Tensor(pose2d), pose2d_proj))
+    print(torch.allclose(torch.Tensor(pose2d), pose2d_proj))
     plt.show()
+    

@@ -58,11 +58,11 @@ def _training_step(batch, batch_idx, model, config):
     logs = {"kld_loss": kld_loss,
          "recon_loss": recon_loss}
 
-    if config.self_supervised:
-        critic = model[2].train()
-        guess = critic(recon)
-        critic_loss = guess  # TODO if fake = 1
-        logs['critic_loss'] = critic_loss
+    # if config.self_supervised:
+    #     critic = model[2].train()
+    #     guess = critic(recon)
+    #     critic_loss = guess  # TODO if fake = 1
+    #     logs['critic_loss'] = critic_loss
 
     return OrderedDict({'loss': loss, 'log': logs})
 
