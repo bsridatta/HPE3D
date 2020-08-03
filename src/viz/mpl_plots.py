@@ -61,7 +61,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
 
     if labels:
         for i, j, l in zip(x, y, LABELS):
-            ax.text(i, j, s=l, size=8, zorder=1, color='k')
+            ax.text(i, j, s=f"{l[:2], i, j}", size=8, zorder=1, color='k')
 
     if not show_ticks:
         ax.set_xticks([])
@@ -133,7 +133,7 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
     if labels:
         # Show coordinate values
         for i, j, k, l in zip(x, y, z, LABELS):
-            ax.text(i, j, k, s=f'{l[:2], int(i), int(j), int(k)}', size=7, zorder=1, color='k')
+            ax.text(i, j, k, s=f'{l[:2], round(i, 2), round(j, 2), round(k, 2)}', size=7, zorder=1, color='k')
 
         ax.set_xlabel('X axis')
         ax.set_ylabel('Y axis')
@@ -195,12 +195,12 @@ def plot_area(pose1, pose2):
         pose2 (array): ground truth
     """
     x1 = pose1[:, 0]
-    y1 = -1*pose1[:, 2]
-    z1 = -1*pose1[:, 1]
+    y1 = pose1[:, 1]
+    z1 = pose1[:, 2]
 
     x2 = pose2[:, 0]
-    y2 = -1*pose2[:, 2]
-    z2 = -1*pose2[:, 1]
+    y2 = pose2[:, 1]
+    z2 = pose2[:, 2]
 
     vertices = []
     for link in SKELETON:
@@ -224,7 +224,7 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     Args:
         pose2d (numpy array): 2d pose
         pose3d (numpy array): 3d pose
-        image ([type], optional): image
+        image (str, optional): image
     """
     fig = plt.figure()
     i = 1
@@ -277,7 +277,7 @@ def plot_errors(poses, targets, errors=None, grid=2):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
         plot_3d(pose, mode="axis", color='b', floor=True, axis3don=False)
         plot_3d(target, mode="axis", color='grey', floor=True, axis3don=False)
-        plot_area(pose, target)
+        # plot_area(pose, target)
         i += 1
 
     plt.show()
@@ -311,14 +311,24 @@ def plot_projection(sample):
     # pose2d -= pose2d[0]
     pose3d = sample['pose3d']
     # pose3d -= pose3d[0]
+    import numpy
+    # torch.dist(pose2d[0]-pose2d[10], p=2)
+    dist = numpy.linalg.norm(pose2d[0]-pose2d[10])
+    dist1 = numpy.linalg.norm(pose3d[0]-pose3d[10])
+
+    pose2d /= 2 * dist  
+    pose3d /= dist1  
+
     # pose3d += (0,0,2)
 
-    print("[plot_proj] ", pose3d[0])
+    dist2 = numpy.linalg.norm(pose2d[0]-pose2d[10])
+    dist3 = numpy.linalg.norm(pose3d[0]-pose3d[10])
 
+    print("[plot_proj] ", pose3d[0], pose3d[10])
     # pose2d
     ax = fig.add_subplot(100+col*10+i)
     i += 1
-    plot_2d(pose2d, color='g', mode='axis', show_ticks=True)
+    plot_2d(pose2d, color='g', mode='axis', show_ticks=True, labels=True)
     
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
@@ -332,10 +342,13 @@ def plot_projection(sample):
             sample[x] = torch.Tensor(sample[x])
 
     pose2d_proj = project_3d_to_2d_martinez(pose3d, cam_params=sample)
+    
+    print(dist, dist1, dist2, dist3, "scale", pose2d/pose2d_proj)
+    print(pose2d,"\n", pose2d_proj)
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
     i += 1
-    plot_2d(pose2d_proj[0], color="orange", mode='axis', show_ticks=True)
+    plot_2d(pose2d_proj[0], color="orange", mode='axis', show_ticks=True, labels=True)
 
     print(torch.equal(torch.Tensor(pose2d), pose2d_proj))
     print(torch.allclose(torch.Tensor(pose2d), pose2d_proj))

@@ -193,10 +193,10 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
         tan: 1xN tangential distortion per point
         r2: 1xN squared radius of the projected points before distortion
     """
-    f = cam_params['cam_f'].view(-1, 2, 1)
-    c = cam_params['cam_c'].view(-1, 2, 1)
-    p = cam_params['cam_p'].view(-1, 2, 1)
-    k = cam_params['cam_k'].view(-1, 3, 1)
+    f = cam_params['cam_f'].view(-1, 1, 2)
+    c = cam_params['cam_c'].view(-1, 1, 2)
+    p = cam_params['cam_p'].view(-1, 1, 2)
+    k = cam_params['cam_k'].view(-1, 1, 3)
 
     if coordinates == 'world':  # rotate and translate
         R = cam_params('cam_R')
@@ -205,6 +205,9 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
     
     pose2d_proj = (pose3d/pose3d[:,:,2][:,:,None].repeat(1,1,3))[:,:,:2]
     
+    f = 1
+    # c = 0
+    pose2d_proj = f * pose2d_proj + c
     return pose2d_proj
 
 def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
@@ -255,7 +258,7 @@ def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
     XXX = XX * (radial+tan)[:,None,:].repeat(1, 2, 1) + \
         torch.cat([p[:, 1], p[:, 0]], dim=1)[:, :, None] @ r2[:, None, :]
 
-    pose2d_proj = (f * XXX) + c
+    pose2d_proj = (1 * XXX) + 0
     pose2d_proj = torch.transpose(pose2d_proj, 1, 2)
 
     D = X[:, 2, ]

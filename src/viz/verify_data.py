@@ -77,7 +77,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 5
+    plot = 7
     processed = False
 
     if processed:
@@ -113,4 +113,3 @@ if __name__ == "__main__":
     # MPL projection
     elif plot == 7:
         plot_projection(sample)
-
