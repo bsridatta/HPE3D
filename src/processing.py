@@ -258,7 +258,8 @@ def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
     XXX = XX * (radial+tan)[:,None,:].repeat(1, 2, 1) + \
         torch.cat([p[:, 1], p[:, 0]], dim=1)[:, :, None] @ r2[:, None, :]
 
-    pose2d_proj = (1 * XXX) + 0
+    # pose2d_proj = (1 * XXX) + 0
+    pose2d_proj = (f * XXX) + c
     pose2d_proj = torch.transpose(pose2d_proj, 1, 2)
 
     D = X[:, 2, ]

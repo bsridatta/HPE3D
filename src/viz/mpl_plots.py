@@ -316,8 +316,8 @@ def plot_projection(sample):
     dist = numpy.linalg.norm(pose2d[0]-pose2d[10])
     dist1 = numpy.linalg.norm(pose3d[0]-pose3d[10])
 
-    pose2d /= 2 * dist  
-    pose3d /= dist1  
+    # pose2d /= 2 * dist  
+    # pose3d /= dist1  
 
     # pose3d += (0,0,2)
 
