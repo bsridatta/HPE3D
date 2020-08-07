@@ -9,15 +9,17 @@ from src.dataset import H36M
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
     dataset = H36M(config.train_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path, train=True)
-    sampler = None
+                   config.image_path, config.ignore_images, config.device, config.annotation_path, train=True, projection=config.self_supervised)
+    sampler = SubsetRandomSampler(range(0, 5)) if config.fast_dev_run else None
+    shuffle = False if sampler is not None else True
+
     loader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
         sampler=sampler,
-        shuffle=True
+        shuffle=shuffle
     )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
     print("samples -", len(loader.dataset))

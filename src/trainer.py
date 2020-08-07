@@ -38,31 +38,42 @@ def _training_step(batch, batch_idx, model, config):
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
+    
+    if config.self_supervised:
+        target =inp.clone() 
 
     # clip logvar to prevent inf when exp is calculated
     mean, logvar = encoder(inp)
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
     recon = decoder(z)
-    recon = recon.view(target.shape)
+    recon = recon.view(-1,16,3)
 
     if config.self_supervised:
-        recon = project_3d_to_2d(recon, batch)
-        target = inp
+        # Reprojection 
+        # recon = torch.clamp(recon, min=-2, max=2)
+        recon[:,:,2] += torch.tensor((2))
+        # recon_ = recon.detach()
+        recon = recon[Ellipsis, :-1]/(torch.clamp(recon[Ellipsis, -1:], min=1e-12))
+        # recon = recon[:,:,:-1]
+        # recon = project_3d_to_2d(recon, batch)
+        # proj_z = recon[:,:,2][:,:,None].repeat(1,1,3)
+        # recon = (recon/torch.max(1e-12, proj_z))[:,:,:2]
+
+        # # Critic
+        # critic = model[2].train()
+        # real_fake = recon()        
+        # critic_loss = guess  # TODO if fake = 1
+        # logs['critic_loss'] = critic_loss
         
     # TODO clip kld loss to prevent explosion
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.name)
+    config.beta = 0
     loss = recon_loss + config.beta * kld_loss
 
     logs = {"kld_loss": kld_loss,
          "recon_loss": recon_loss}
-
-    # if config.self_supervised:
-    #     critic = model[2].train()
-    #     guess = critic(recon)
-    #     critic_loss = guess  # TODO if fake = 1
-    #     logs['critic_loss'] = critic_loss
 
     return OrderedDict({'loss': loss, 'log': logs})
 

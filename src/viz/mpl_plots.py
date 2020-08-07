@@ -61,7 +61,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
 
     if labels:
         for i, j, l in zip(x, y, LABELS):
-            ax.text(i, j, s=f"{l[:2], i, j}", size=8, zorder=1, color='k')
+            ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
 
     if not show_ticks:
         ax.set_xticks([])
@@ -133,7 +133,7 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
     if labels:
         # Show coordinate values
         for i, j, k, l in zip(x, y, z, LABELS):
-            ax.text(i, j, k, s=f'{l[:2], round(i, 2), round(j, 2), round(k, 2)}',
+            ax.text(i, j, k, s=f'{l[:4], round(i, 2), round(j, 2), round(k, 2)}',
                     size=7, zorder=1, color='k')
 
         ax.set_xlabel('X axis')
@@ -279,7 +279,7 @@ def plot_errors(poses, targets, errors=None, grid=2):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
         plot_3d(pose, mode="axis", color='b', floor=True, axis3don=False)
         plot_3d(target, mode="axis", color='grey', floor=True, axis3don=False)
-        # plot_area(pose, target)
+        plot_area(pose, target)
         i += 1
 
     plt.show()
@@ -303,6 +303,30 @@ def print_pose(pose):
         for x in range(len(pose)):
             print(f'{joint_names[x+1]:10} {pose[x]}')
 
+def plot_proj(pose2d, pose3d, pose2d_proj):
+    fig = plt.figure()
+    i = 1
+    col = 3
+
+    # pose2d
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(pose2d, color='g', mode='axis', show_ticks=True, labels=True)
+
+    # pose3d
+    ax = fig.add_subplot(100+col*10+i, projection='3d')
+    i += 1
+    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True)
+
+
+    # psoe2d_proj[0]
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(pose2d_proj, color="orange", mode='axis', show_ticks=True, labels=True)
+
+    
+    plt.show()
+
 
 def plot_projection(sample):
     fig = plt.figure()
@@ -314,26 +338,18 @@ def plot_projection(sample):
 
     pose2d -= pose2d[0]
     pose3d -= pose3d[0]
-   
-    # dist = pose2d[0][1]-pose2d[10][1]
-    # dist1 = pose3d[0][1]-pose3d[10][1]
 
     dist = np.linalg.norm(pose2d[0]-pose2d[10])
     dist1 = np.linalg.norm(pose3d[0]-pose3d[10])
-    
 
     pose2d /= 2*dist
 
-    pose3d = pose3d/dist1 
+    pose3d = pose3d/dist1
 
     pose3d += (0, 0, 2)
 
-    # dist2 = np.linalg.norm(pose2d[0]-pose2d[10])
-    # dist3 = np.linalg.norm(pose3d[0]-pose3d[10])
-
-
-    dist2 = pose2d[0][1]-pose2d[10][1]
-    dist3 = pose3d[0][1]-pose3d[10][1]
+    # dist2 = pose2d[0][1]-pose2d[10][1]
+    # dist3 = pose3d[0][1]-pose3d[10][1]
     print("[plot_proj] ", pose3d[0], pose3d[10])
     # pose2d
     ax = fig.add_subplot(100+col*10+i)
@@ -358,7 +374,7 @@ def plot_projection(sample):
 
     pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
 
-    print("dist", dist, "dist1", dist1, "dist2", dist2, "dist3", dist3, "scale", pose2d/pose2d_proj)
+    # print("dist", dist, "dist1", dist1, "dist2", dist2, "dist3", dist3, "scale", pose2d/pose2d_proj)
     print(pose2d, "\n", pose2d_proj)
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
@@ -367,4 +383,8 @@ def plot_projection(sample):
 
     print(torch.equal(torch.Tensor(pose2d), pose2d_proj))
     print(torch.allclose(torch.Tensor(pose2d), pose2d_proj))
+    print(torch.mean(torch.tensor(pose2d)-pose2d_proj))
+    print(torch.tensor(pose2d))
+    print(pose3d)
+    
     plt.show()

@@ -13,7 +13,7 @@ from src.processing import preprocess
 
 class H36M(Dataset):
 
-    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False):
+    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False, projection=True):
         """
 
         Arguments:
@@ -66,13 +66,13 @@ class H36M(Dataset):
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
-
+        
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations = preprocess(
-            self.annotations, self.root_idx, normalize_pose=True)
+            self.annotations, self.root_idx, normalize_pose=True, projection=projection)
 
-        # covert data to tensor after preprocessing them as numpys (hard with tensors)
+        # covert data to tensor after preprocessing them as numpys (messy with tensors)
         for key in self.annotation_keys:
             self.annotations[key] = torch.tensor(
                 self.annotations[key], dtype=torch.float32)
