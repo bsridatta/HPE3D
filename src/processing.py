@@ -113,7 +113,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
     elif normalize_pose and projection:
         dist = np.linalg.norm(pose2d[0]-pose2d[10])
-        pose2d /= 2*dist
+        pose2d /= 10*dist
 
     annotations['pose2d'] = pose2d
     annotations['pose3d'] = pose3d

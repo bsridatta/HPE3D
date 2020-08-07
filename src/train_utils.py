@@ -108,9 +108,9 @@ def get_inp_target_criterion(encoder, decoder, batch):
         criterion = torch.nn.L1Loss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
-        # criterion = torch.nn.L1Loss()
+        criterion = torch.nn.L1Loss()
         # criterion = PJPE
-        criterion = torch.nn.MSELoss()
+        # criterion = torch.nn.MSELoss()
     else:
         print("MODEL NOT DEFINED")
         exit()

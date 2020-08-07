@@ -52,9 +52,10 @@ def _training_step(batch, batch_idx, model, config):
     if config.self_supervised:
         # Reprojection 
         # recon = torch.clamp(recon, min=-2, max=2)
-        recon[:,:,2] += torch.tensor((2))
-        # recon_ = recon.detach()
-        recon = recon[Ellipsis, :-1]/(torch.clamp(recon[Ellipsis, -1:], min=1e-12))
+        recon[:,:,2] += torch.tensor((10))
+        recon_ = recon.detach()
+        denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
+        recon = recon[Ellipsis, :-1]/denom
         # recon = recon[:,:,:-1]
         # recon = project_3d_to_2d(recon, batch)
         # proj_z = recon[:,:,2][:,:,None].repeat(1,1,3)

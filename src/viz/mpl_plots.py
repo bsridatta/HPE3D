@@ -312,7 +312,7 @@ def plot_proj(pose2d, pose3d, pose2d_proj):
     ax = fig.add_subplot(100+col*10+i)
     i += 1
     plot_2d(pose2d, color='g', mode='axis', show_ticks=True, labels=True)
-
+    plot_2d(pose2d_proj, color="orange", mode='axis', show_ticks=True, labels=True)
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
