@@ -22,7 +22,7 @@ annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
 subject_list = [9, 11]
-# subject_list = [1, 5, 6, 7, 8]
+subject_list = [1, 5, 6, 7, 8]
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str
 inds = range(17)
