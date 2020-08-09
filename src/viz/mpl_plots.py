@@ -1,6 +1,7 @@
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -86,7 +87,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
+def plot_3d(pose, root_z= None, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
     """Base function for 3D pose plotting
 
     Args:
@@ -109,8 +110,11 @@ def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True, labels=Fa
     ax._axis3don = axis3don
 
     if pose.shape[0] == 16:
-        pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
-
+        if root_z is None:
+            root_z = 0
+        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        pose = np.concatenate((root_, pose), axis=0)
+        
     x = pose[:, 0]
     y = pose[:, 1]
     z = pose[:, 2]
@@ -303,7 +307,8 @@ def print_pose(pose):
         for x in range(len(pose)):
             print(f'{joint_names[x+1]:10} {pose[x]}')
 
-def plot_proj(pose2d, pose3d, pose2d_proj):
+
+def plot_proj(pose2d, pose3d, pose2d_proj, log=False):
     fig = plt.figure()
     i = 1
     col = 3
@@ -312,20 +317,25 @@ def plot_proj(pose2d, pose3d, pose2d_proj):
     ax = fig.add_subplot(100+col*10+i)
     i += 1
     plot_2d(pose2d, color='g', mode='axis', show_ticks=True, labels=True)
-    plot_2d(pose2d_proj, color="orange", mode='axis', show_ticks=True, labels=True)
+
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True)
-
+    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True, root_z=10)
 
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
     i += 1
-    plot_2d(pose2d_proj, color="orange", mode='axis', show_ticks=True, labels=True)
+    plot_2d(pose2d_proj, color="orange", mode='axis',
+            show_ticks=True, labels=True)
 
+    if log:
+        plt.savefig("$HOME/temp.png")
+        img = Image("$HOME/temp.png")
+        return img
     
-    plt.show()
+    else:
+        plt.show()
 
 
 def plot_projection(sample):
@@ -359,7 +369,8 @@ def plot_projection(sample):
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(sample["pose3d"]-sample["pose3d"][0], mode="axis", show_ticks=True, labels=True)
+    plot_3d(sample["pose3d"]-sample["pose3d"][0],
+            mode="axis", show_ticks=True, labels=True)
 
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
@@ -379,12 +390,13 @@ def plot_projection(sample):
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
     i += 1
-    plot_2d(pose2d_proj[0], color="orange", mode='axis', show_ticks=True, labels=True)
+    plot_2d(pose2d_proj[0], color="orange",
+            mode='axis', show_ticks=True, labels=True)
 
     print(torch.equal(torch.Tensor(pose2d), pose2d_proj))
     print(torch.allclose(torch.Tensor(pose2d), pose2d_proj))
     print(torch.mean(torch.tensor(pose2d)-pose2d_proj))
     print(torch.tensor(pose2d))
     print(pose3d)
-    
+
     plt.show()

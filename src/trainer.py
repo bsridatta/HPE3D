@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
+from src.viz.mpl_plots import plot_proj, plot_2d
 
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
@@ -54,9 +55,9 @@ def _training_step(batch, batch_idx, model, config):
         # recon = torch.clamp(recon, min=-2, max=2)
         recon[:,:,2] += torch.tensor((10))
         recon_ = recon.detach()
-        # denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
-        # recon = recon[Ellipsis, :-1]/denom
-        recon = recon[:,:,:-1]
+        denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
+        recon = recon[Ellipsis, :-1]/denom
+        # recon = recon[:,:,:-1]
         # recon = project_3d_to_2d(recon, batch)
         # proj_z = recon[:,:,2][:,:,None].repeat(1,1,3)
         # recon = (recon/torch.max(1e-12, proj_z))[:,:,:2]
@@ -65,14 +66,15 @@ def _training_step(batch, batch_idx, model, config):
         # critic = model[2].train()
         # real_fake = recon()        
         # critic_loss = guess  # TODO if fake = 1
-        # logs['critic_loss'] = critic_loss
+        # logsB['critic_loss'] = critic_loss
         
     # TODO clip kld loss to prevent explosion
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.name)
     config.beta = 0
     loss = recon_loss + config.beta * kld_loss
-
+    plot_proj(target[0].detach(), recon_[0].detach(), recon[0].detach())
+    
     logs = {"kld_loss": kld_loss,
          "recon_loss": recon_loss}
 

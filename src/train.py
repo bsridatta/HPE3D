@@ -40,9 +40,9 @@ def main():
 
     # ignore when debugging on cpu
     if not use_cuda:
-        os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
+        # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="to_delete", config=config)
+        wandb.init(anonymous='allow', project="hpe3d", config=config) # to_delete
     else:
         # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
@@ -129,19 +129,19 @@ def main():
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            # val_loss = validation_epoch(
-            #     config, cb, model, val_loader, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, cb, model, val_loader, epoch, vae_type)
 
-            # if val_loss != val_loss:
-            #     print("[INFO]: NAN loss")
-            #     break
+            if val_loss != val_loss:
+                print("[INFO]: NAN loss")
+                break
 
-            # # TODO have different learning rates for all variants
-            # # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            # scheduler.step(val_loss)
+            # TODO have different learning rates for all variants
+            # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
+            scheduler.step(val_loss)
 
-            # cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
-            #                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
+            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
+                            n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
@@ -178,7 +178,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="None", type=str,
+    parser.add_argument('--resume_run', default="stoic-firebrand-1783", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
@@ -189,7 +189,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=1e-3, type=float,
+    parser.add_argument('--learning_rate', default=4e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

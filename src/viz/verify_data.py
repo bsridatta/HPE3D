@@ -100,7 +100,7 @@ if __name__ == "__main__":
         plot_3D_models([pose3d])
     # 3D Model diff
     elif plot == 3:
-        plot_3D_models([pose3d, pose3d_noise])
+        plot_3D_models([pose3d, sample["pose3d_noise"]])
     elif plot == 4:
         pass
     # MPL Grid diff

@@ -23,9 +23,9 @@ class ModelCheckpoint(Callback):
                 model.load_state_dict(state['model_state_dict'])
             
             # Optimizers
-            for n_pair in len(variant):
+            for n_pair in range(len(variant)):
                 optimizer_state_dic = torch.load(
-                    f'{config.save_dir}/{config.resume_run}__optimizer_{n_pair}.pt', map_location=config.device)            
+                    f'{config.save_dir}/{config.resume_run}_optimizer_{n_pair}.pt', map_location=config.device)            
                 optimizers[n_pair].load_state_dict(optimizer_state_dic)
     
     def on_epoch_end(self, config, val_loss, model, optimizers, epoch, n_pair, **kwargs):

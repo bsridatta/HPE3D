@@ -74,10 +74,10 @@ def denormalize(pose):
     # pose *= torch.tensor(norm_stats_val[f"mean_dist{pose.shape[2]}d"],
     #                      device=pose.device).reshape((-1, 1, 1))
 
-    pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
-                         device=pose.device)
-    pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"],
-                         device=pose.device)
+    # pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
+    #                      device=pose.device)
+    # pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"],
+    #                      device=pose.device)
 
     return pose
 
