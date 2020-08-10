@@ -39,22 +39,22 @@ def _training_step(batch, batch_idx, model, config):
 
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
-    
+
     if config.self_supervised:
-        target =inp.clone() 
+        target = inp.clone()
 
     # clip logvar to prevent inf when exp is calculated
     mean, logvar = encoder(inp)
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
     recon = decoder(z)
-    recon = recon.view(-1,16,3)
+    recon = recon.view(-1, 16, 3)
 
     if config.self_supervised:
-        # Reprojection 
-        # recon = torch.clamp(recon, min=-2, max=2)
-        recon[:,:,2] += torch.tensor((10))
-        recon_ = recon.detach()
+        # Reprojection
+        # recon = torch.clamp(recon, min=10-4, max=10+4)
+        recon[:, :, 2] += torch.tensor((10))
+        recon_3d = recon.detach()
         denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
         recon = recon[Ellipsis, :-1]/denom
 
@@ -64,21 +64,21 @@ def _training_step(batch, batch_idx, model, config):
         # proj_z = recon[:,:,2][:,:,None].repeat(1,1,3)
         # recon = (recon/torch.max(1e-12, proj_z))[:,:,:2]
 
-        # # Critic
+        # Critic
         # critic = model[2].train()
-        # real_fake = recon()        
+        # real_fake = recon()
         # critic_loss = guess  # TODO if fake = 1
-        # logsB['critic_loss'] = critic_loss
-        
+        # logs['critic_loss'] = critic_loss
+
     # TODO clip kld loss to prevent explosion
     recon_loss = criterion(recon, target)  # 3D-MSE/MPJPE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.name)
-    config.beta = 0
+    config.beta = 0  # ***************REMOVE***************************
     loss = recon_loss + config.beta * kld_loss
-    plot_proj(target[0].detach().cpu(), recon_[0].detach().cpu(), recon[0].detach().cpu())
-    
+    # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
+
     logs = {"kld_loss": kld_loss,
-         "recon_loss": recon_loss}
+            "recon_loss": recon_loss}
 
     return OrderedDict({'loss': loss, 'log': logs})
 
@@ -115,11 +115,15 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
     # performance
     if '3D' in model[1].name:
-        if normalize_pose == True:
+        if normalize_pose and not config.self_supervised:
             t_data['recon'], t_data['target'] = post_process(
-                config, t_data['recon'], t_data['target'])
+                config, t_data['recon'], target=t_data['target'])
+            pjpe = torch.mean(PJPE(t_data['recon'], t_data['target']), dim=0)
 
-        pjpe = torch.mean(PJPE(t_data['recon'], t_data['target']), dim=0)
+        elif config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(config, t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale'])
+            pjpe = torch.mean(PJPE(t_data['recon_3d'], t_data['target_3d']), dim=0)
+
         mpjpe = torch.mean(pjpe).item()
 
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch,
@@ -135,16 +139,30 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
 
-    if config.self_supervised:
-        critic = model[2].eval()
-
     inp, target, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
+
+    if config.self_supervised:
+        target_3d = target.clone()
+        target = inp.clone()
 
     mean, logvar = encoder(inp)
     z = reparameterize(mean, logvar, eval=True)
     recon = decoder(z)
-    recon = recon.view(target.shape)
+    recon = recon.view(-1, 16, 3)
+
+    if config.self_supervised:
+        # Reprojection
+        recon[:, :, 2] += torch.tensor((10))
+        recon_3d = recon.detach()
+        denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
+        recon = recon[Ellipsis, :-1]/denom
+
+        data = {"recon": recon, "recon_3d": recon_3d, "input": inp, "target_3d": target_3d,
+                "z": z, "z_attr": batch['action'], "scale": batch['scale']}
+    else:
+        data = {"recon": recon, "target": target, "input": inp,
+                "z": z, "z_attr": batch['action']}
 
     recon_loss = criterion(recon, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
     kld_loss = KLD(mean, logvar, decoder.name)
@@ -152,9 +170,6 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     logs = {"kld_loss": kld_loss,
             "recon_loss": recon_loss}
-
-    data = {"recon": recon, "target": target, "input": inp,
-            "z": z, "z_attr": batch['action']}
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})

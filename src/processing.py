@@ -110,8 +110,8 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         pose3d = normalize(pose3d)
 
     elif projection:
-        head = pose2d[:,9,:]
-        root = np.zeros_like(head) # since zeroed already
+        head = pose2d[:, 9, :]  # Note root joint removed
+        root = np.zeros_like(head)
         dist = np.linalg.norm(head-root, axis=1, keepdims=True)
         scale = 10*dist
         pose2d = np.divide(pose2d.T, scale.T).T
@@ -123,7 +123,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     return annotations
 
 
-def post_process(config, recon, target):
+def post_process(config, recon, target, scale=None):
     '''
     DeNormalize Validation Data
     Add root at 0,0,0
@@ -135,9 +135,9 @@ def post_process(config, recon, target):
 
         # de-standardize
         recon = recon*torch.tensor(NORM_STATS[f"max3d"],
-                             device=recon.device)
+                                   device=recon.device)
         target = target*torch.tensor(NORM_STATS[f"max3d"],
-                             device=target.device)
+                                     device=target.device)
 
         # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
         # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
@@ -148,8 +148,19 @@ def post_process(config, recon, target):
 
     else:
         # de-scale
-        recon = torch.cat((torch.tensor((0, 0, 10), device=config.device).repeat(
-            recon.shape[0], 1, 1), recon), dim=1)
+        recon = (recon.T*(scale*10).T).T
+        recon = torch.cat(
+            (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
+                recon.shape[0], 1, 1),
+                recon
+             ), dim=1)
+
+        target = torch.cat(
+            (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
+                target.shape[0], 1, 1),
+                target
+             ), dim=1)
+
 
     return recon, target
 

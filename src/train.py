@@ -125,13 +125,12 @@ def main():
             config.logger.log(
                 {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
 
-            # TODO init criterion once with .to(cuda)
+            # # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            # val_loss = validation_epoch(
-            #     config, cb, model, val_loader, epoch, vae_type)
-            val_loss = 0 # * *****************************************************
+            val_loss = validation_epoch(
+                config, cb, model, val_loader, epoch, vae_type)
 
             if val_loss != val_loss:
                 print("[INFO]: NAN loss")
@@ -147,13 +146,13 @@ def main():
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
 
-        # if val_loss != val_loss:
-        #     print("[INFO]: NAN loss")
-        #     break
+        if val_loss != val_loss:
+            print("[INFO]: NAN loss")
+            break
 
-        # if optimizer.param_groups[0]['lr'] < 1e-6:
-        #     print("[INFO]: LR < 1e-6. Stop training")
-        #     break
+        if optimizer.param_groups[0]['lr'] < 1e-6:
+            print("[INFO]: LR < 1e-6. Stop training")
+            break
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -179,7 +178,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="playful-dust-1837", type=str,
+    parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
