@@ -57,6 +57,8 @@ def _training_step(batch, batch_idx, model, config):
         recon_ = recon.detach()
         denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
         recon = recon[Ellipsis, :-1]/denom
+
+        # CAN REMOVE IT
         # recon = recon[:,:,:-1]
         # recon = project_3d_to_2d(recon, batch)
         # proj_z = recon[:,:,2][:,:,None].repeat(1,1,3)
@@ -73,7 +75,7 @@ def _training_step(batch, batch_idx, model, config):
     kld_loss = KLD(mean, logvar, decoder.name)
     config.beta = 0
     loss = recon_loss + config.beta * kld_loss
-    plot_proj(target[0].detach(), recon_[0].detach(), recon[0].detach())
+    plot_proj(target[0].detach().cpu(), recon_[0].detach().cpu(), recon[0].detach().cpu())
     
     logs = {"kld_loss": kld_loss,
          "recon_loss": recon_loss}

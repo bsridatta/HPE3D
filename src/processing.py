@@ -71,13 +71,10 @@ def denormalize(pose):
        numpy : denormalized pose [n, 16, 2/3]
     """
 
-    # pose *= torch.tensor(norm_stats_val[f"mean_dist{pose.shape[2]}d"],
-    #                      device=pose.device).reshape((-1, 1, 1))
-
-    # pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
-    #                      device=pose.device)
-    # pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"],
-    #                      device=pose.device)
+    pose *= torch.tensor(NORM_STATS[f"std{pose.shape[2]}d"],
+                         device=pose.device)
+    pose += torch.tensor(NORM_STATS[f"mean{pose.shape[2]}d"],
+                         device=pose.device)
 
     return pose
 
@@ -100,20 +97,25 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
     if normalize_pose and not projection:
         # Standardize
-        # mean_dist2d = np.mean(np.sqrt(
-        #     np.sum(np.power(np.subtract(pose2d, np.zeros((1, 2))), 2), axis=2)), axis=1)
-        # mean_dist3d = np.mean(np.sqrt(
-        #     np.sum(np.power(np.subtract(pose3d, np.zeros((1, 3))), 2), axis=2)), axis=1)
-        # pose2d = pose2d/mean_dist2d.reshape(-1, 1, 1)
-        # pose3d = pose3d/mean_dist3d.reshape(-1, 1, 1)
+        mean_dist2d = np.mean(np.sqrt(
+            np.sum(np.power(np.subtract(pose2d, np.zeros((1, 2))), 2), axis=2)), axis=1)
+        mean_dist3d = np.mean(np.sqrt(
+            np.sum(np.power(np.subtract(pose3d, np.zeros((1, 3))), 2), axis=2)), axis=1)
+
+        pose2d = pose2d/mean_dist2d.reshape(-1, 1, 1)
+        pose3d = pose3d/mean_dist3d.reshape(-1, 1, 1)
 
         # # Normalize
         pose2d = normalize(pose2d)
         pose3d = normalize(pose3d)
 
-    elif normalize_pose and projection:
-        dist = np.linalg.norm(pose2d[0]-pose2d[10])
-        pose2d /= 10*dist
+    elif projection:
+        head = pose2d[:,9,:]
+        root = np.zeros_like(head) # since zeroed already
+        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
+        scale = 10*dist
+        pose2d = np.divide(pose2d.T, scale.T).T
+        annotations['scale'] = scale
 
     annotations['pose2d'] = pose2d
     annotations['pose3d'] = pose3d
@@ -126,23 +128,28 @@ def post_process(config, recon, target):
     DeNormalize Validation Data
     Add root at 0,0,0
     '''
+    if not config.self_supervised:
+        # de-normalize data to original coordinates
+        recon = denormalize(recon)
+        target = denormalize(target)
 
-    # de-normalize data to original coordinates
-    recon = denormalize(recon)
-    target = denormalize(target)
+        # de-standardize
+        recon = recon*torch.tensor(NORM_STATS[f"max3d"],
+                             device=recon.device)
+        target = target*torch.tensor(NORM_STATS[f"max3d"],
+                             device=target.device)
 
-    # # # de-standardize
-    # recon = recon*torch.tensor(NORM_STATS[f"max3d"],
-    #                      device=recon.device)
-    # target = target*torch.tensor(NORM_STATS[f"max3d"],
-    #                      device=target.device)
+        # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
+        # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
+        recon = torch.cat(
+            (torch.zeros(recon.shape[0], 1, recon.shape[2], device=config.device), recon), dim=1)
+        target = torch.cat(
+            (torch.zeros(target.shape[0], 1, recon.shape[2], device=config.device), target), dim=1)
 
-    # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
-    # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
-    recon = torch.cat(
-        (torch.zeros(recon.shape[0], 1, recon.shape[2], device=config.device), recon), dim=1)
-    target = torch.cat(
-        (torch.zeros(target.shape[0], 1, recon.shape[2], device=config.device), target), dim=1)
+    else:
+        # de-scale
+        recon = torch.cat((torch.tensor((0, 0, 10), device=config.device).repeat(
+            recon.shape[0], 1, 1), recon), dim=1)
 
     return recon, target
 
@@ -175,6 +182,7 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
 
     return img
 
+
 def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
     """
     Project 3d pose from camera coordiantes to image frame
@@ -199,20 +207,20 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
     """
     # f = cam_params['cam_f'].view(-1, 1, 2)
     # c = cam_params['cam_c'].view(-1, 1, 2)
-  
-  
+
     if coordinates == 'world':  # rotate and translate
         R = cam_params('cam_R')
         T = cam_params('cam_T')
         X = R.dot(torch.transpose(pose3d, 1, 2) - T)
-    
-    pose2d_proj = (pose3d/pose3d[:,:,2][:,:,None].repeat(1,1,3))[:,:,:2]
-    
+
+    pose2d_proj = (pose3d/pose3d[:, :, 2][:, :, None].repeat(1, 1, 3))[:, :, :2]
+
     # f = 1
     # c = 0
     # pose2d_proj = f * pose2d_proj + c
-  
+
     return pose2d_proj
+
 
 def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
     """
@@ -248,10 +256,10 @@ def project_3d_to_2d_martinez(pose3d, cam_params, coordinates="camera"):
         T = cam_params('cam_T')
         X = R.dot(torch.transpose(pose3d, 1, 2) - T)
 
-    N = pose3d.shape[1]     
+    N = pose3d.shape[1]
     X = torch.transpose(pose3d, 1, 2)
-    
-    XX = X[:, :2, :] / X[:, 2, :][:,None,:].repeat(1,2,1)
+
+    XX = X[:, :2, :] / X[:, 2, :][:, None, :].repeat(1, 2, 1)
     r2 = XX[:, 0, :]**2 + XX[:, 1, :]**2
 
     radial = 1 + torch.einsum('bij,bij->bj', k.repeat(1, 1, N),
