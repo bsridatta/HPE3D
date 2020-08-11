@@ -45,7 +45,10 @@ class Critic(nn.Module):
         self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
-        self.out_block = nn.Linear(self.neurons, 1)
+        self.out_block = nn.Sequential(
+            nn.Linear(self.neurons, 1),
+            nn.Softmax()
+        )
 
     def forward(self, x):
         x = x.view(-1, 2*self.n_joints)
@@ -54,10 +57,10 @@ class Critic(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        residual = x
-        x = self.LBAD_3(x)
-        x = self.LBAD_4(x) + residual
+        # residual = x
+        # x = self.LBAD_3(x)
+        # x = self.LBAD_4(x) + residual
 
         out = self.out_block(x)
-
+        
         return out

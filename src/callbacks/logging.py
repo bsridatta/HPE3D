@@ -29,13 +29,25 @@ class Logging(Callback):
         batch_len = len(batch['pose2d'])
         dataset_len = len(dataloader.dataset)
         n_batches = len(dataloader)
-        print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:.4f}'.format(
+        print('\n {} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
             vae_type, epoch, batch_idx * batch_len,
             dataset_len, 100. *
             batch_idx / n_batches,
-            output['loss'], output['log']['recon_loss'], output['log']['kld_loss']))
+            output['loss'], output['log']['recon_loss'], output['log']['kld_loss']), end='')
 
-    def on_validation_end(self, config, vae_type, epoch, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, **kwargs):
+        if config.self_supervised:
+            print('\tCritic: {:.4f}'.format(output['log']['critic_loss']), end='')
+            
+            config.logger.log({
+                f"{vae_type}": {
+                    "train": {
+                        "critic_loss": output['log']['critic_loss']
+                    }
+                }
+            })
+
+
+    def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, **kwargs):
         # average epochs output
         avg_output = {}
         avg_output['loss'] = avg_loss
@@ -55,13 +67,25 @@ class Logging(Callback):
         })
 
         # print to console
-        print(f"{vae_type} Validation:",
+        print(f"\n{vae_type} Validation:",
               f"\t\tLoss: {round(avg_loss,4)}",
               f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
-              f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}")
+              f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
 
+        if config.self_supervised:
+            avg_output['log']['critic_loss'] = critic_loss/len(val_loader)
+            print(f"\tCritic: {round(avg_output['log']['critic_loss'], 4)}", end='')
+    
+            config.logger.log({
+                f"{vae_type}": {
+                    "val": {
+                        "critic_loss": avg_output['log']['critic_loss']
+                    }
+                }
+            })
+        
         # print and log MPJPE
-        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
+        print(f'\n{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
         config.mpjpe = mpjpe
 
