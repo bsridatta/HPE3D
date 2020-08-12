@@ -76,12 +76,11 @@ def main():
     # -- All 'model's in 'models' share the same latent space
 
     models = train_utils.get_models(variant, config)  # model instances
-    optimizers = train_utils.get_optims(variant, models, config)  # optimer for each pair
-    schedulers = train_utils.get_schedulers(optimizers)
-
     if config.self_supervised:
         critic = Critic()
         models['Critic'] = critic
+    optimizers = train_utils.get_optims(variant, models, config)  # optimer for each pair
+    schedulers = train_utils.get_schedulers(optimizers)
 
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
@@ -116,14 +115,16 @@ def main():
             # model -- encoder, decoder / critic
             model = [models[f"Encoder{pair[0].upper()}"],
                      models[f"Decoder{pair[1].upper()}"]]
+            optimizer = [optimizers[n_pair]]
+            scheduler = [schedulers[n_pair]]
 
             if config.self_supervised:
                 model.append(models['Critic'])
+                optimizer.append(optimizers[-1])  
+                scheduler.append(schedulers[-1]) 
 
-            optimizer = optimizers[n_pair]
-            scheduler = schedulers[n_pair]
             config.logger.log(
-                {f"{vae_type}_LR": optimizer.param_groups[0]['lr']})
+                {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
             # # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
@@ -138,7 +139,7 @@ def main():
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            scheduler.step(val_loss)
+            scheduler[0].step(val_loss)
 
             cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
                             n_pair=n_pair, optimizers=optimizers, epoch=epoch)

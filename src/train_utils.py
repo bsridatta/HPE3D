@@ -50,6 +50,10 @@ def get_optims(variant, models, config):
         optimizer = torch.optim.Adam(params, lr=config.learning_rate)
         optims.append(optimizer)
 
+    if config.self_supervised:
+        params = list(models['Critic'].parameters())
+        optimizer = torch.optim.Adam(params, lr=config.learning_rate)
+        optims.append(optimizer)
     return optims
 
 

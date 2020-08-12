@@ -21,11 +21,12 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
 
-        optimizer.zero_grad()
-        output = _training_step(batch, batch_idx, model, config)
+        # len(optimizer) is 1 or 2 with critic optim
+        optimizer[0].zero_grad()
+        output = _training_step(batch, batch_idx, model, config, optimizer[-1])
         loss = output['loss']
         loss.backward()
-        optimizer.step()
+        optimizer[0].step()
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)
@@ -33,7 +34,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     cb.on_train_end(config=config, epoch=epoch)
 
 
-def _training_step(batch, batch_idx, model, config):
+def _training_step(batch, batch_idx, model, config, critic_optimizer):
     encoder = model[0].train()
     decoder = model[1].train()
 
@@ -49,29 +50,35 @@ def _training_step(batch, batch_idx, model, config):
 
     if config.self_supervised:
         # Reprojection
-        target_2d = inp.clone()
+        target_2d = inp
         # recon_3d = torch.clamp(recon_3d, min=10-4, max=10+4)
         recon_3d[:, :, 2] += torch.tensor((10))
         recon_3d_z = (torch.clamp(recon_3d[Ellipsis, -1:], min=1e-12))
         recon_2d = recon_3d[Ellipsis, :-1]/recon_3d_z
 
-        # Critic
+        # Critic - maximize log(D(x)) + log(1 - D(G(z)))
         critic = model[2].train()
-        real_fake = torch.cat([inp, recon_2d], dim=0)
-        real_fake_target = torch.cat((
-            torch.ones((len(inp), 1), device=config.device),
-            torch.zeros((len(recon_2d), 1), device=config.device)
-        ), dim=0)
-        rand = torch.randint(10, (10, 10), device=config.device)
-        rand_idx = torch.randint(0, len(inp)*2-1, size=(len(inp),),
-                                 device=config.device)  # .tolist()
-        real_fake = real_fake[rand_idx]
-        real_fake_target = real_fake_target[rand_idx]
-
-        real_fake_guess = critic(real_fake)
+        real_label = 1
+        fake_label = 0
         binary_loss = torch.nn.BCELoss()
-        critic_loss = binary_loss(real_fake_guess, real_fake_target)
-        critic_weight = 0
+        
+        # train with real samples
+        critic_optimizer.zero_grad()
+        labels = torch.full((len(target_2d), 1), real_label, device=config.device, dtype=target_2d.dtype)
+        output = critic(target_2d.detach()) 
+        critic_loss_real = binary_loss(output, labels)
+        critic_loss_real.backward()
+
+        # train with fake samples
+        labels.fill_(fake_label)
+        # detach to avoid gradient prop to vae
+        output = critic(recon_2d.detach())
+        critic_loss_fake = binary_loss(output, labels)
+        critic_loss_fake.backward()
+
+        # update critic
+        critic_optimizer.step()
+ 
 
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
