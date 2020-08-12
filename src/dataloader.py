@@ -29,7 +29,7 @@ def train_dataloader(config):
 def val_dataloader(config):
     print(f'[INFO]: Validation data loader called')
     dataset = H36M(config.val_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path)
+                   config.image_path, config.ignore_images, config.device, config.annotation_path, projection=config.self_supervised)
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,
@@ -47,7 +47,7 @@ def val_dataloader(config):
 def test_dataloader(config):
     print(f'[INFO]: Test data loader called')
     dataset = H36M(config.subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path)
+                   config.image_path, config.ignore_images, config.device, config.annotation_path, projection=config.self_supervised)
     sampler = None
     loader = torch.utils.data.DataLoader(
         dataset=dataset,

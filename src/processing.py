@@ -79,7 +79,7 @@ def denormalize(pose):
     return pose
 
 
-def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=True):
+def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=False):
     '''
     Preprocessing steps on -
     pose3d - 3d pose in camera frame(data already coverted from world to camera)
@@ -96,16 +96,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     pose3d = zero_the_root(annotations['pose3d'], root_idx)
 
     if normalize_pose and not projection:
-        # Standardize
-        mean_dist2d = np.mean(np.sqrt(
-            np.sum(np.power(np.subtract(pose2d, np.zeros((1, 2))), 2), axis=2)), axis=1)
-        mean_dist3d = np.mean(np.sqrt(
-            np.sum(np.power(np.subtract(pose3d, np.zeros((1, 3))), 2), axis=2)), axis=1)
-
-        pose2d = pose2d/mean_dist2d.reshape(-1, 1, 1)
-        pose3d = pose3d/mean_dist3d.reshape(-1, 1, 1)
-
-        # # Normalize
+        # Normalize
         pose2d = normalize(pose2d)
         pose3d = normalize(pose3d)
 
@@ -132,12 +123,6 @@ def post_process(config, recon, target, scale=None):
         # de-normalize data to original coordinates
         recon = denormalize(recon)
         target = denormalize(target)
-
-        # de-standardize
-        recon = recon*torch.tensor(NORM_STATS[f"max3d"],
-                                   device=recon.device)
-        target = target*torch.tensor(NORM_STATS[f"max3d"],
-                                     device=target.device)
 
         # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
         # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!

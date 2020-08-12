@@ -37,31 +37,30 @@ def _training_step(batch, batch_idx, model, config):
     encoder = model[0].train()
     decoder = model[1].train()
 
-    inp, target, criterion = get_inp_target_criterion(
+    inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
-    # clip logvar to prevent inf when exp is calculated
     mean, logvar = encoder(inp)
+    # clip logvar to prevent inf when exp is calculated
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
-    recon = decoder(z)
-    recon = recon.view(-1, 16, 3)
+    recon_3d = decoder(z)
+    recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
         # Reprojection
-        target = inp.clone()
-        # recon = torch.clamp(recon, min=10-4, max=10+4)
-        recon[:, :, 2] += torch.tensor((10))
-        recon_3d = recon.detach()
-        denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
-        recon = recon[Ellipsis, :-1]/denom
+        target_2d = inp.clone()
+        # recon_3d = torch.clamp(recon_3d, min=10-4, max=10+4)
+        recon_3d[:, :, 2] += torch.tensor((10))
+        recon_3d_z = (torch.clamp(recon_3d[Ellipsis, -1:], min=1e-12))
+        recon_2d = recon_3d[Ellipsis, :-1]/recon_3d_z
 
         # Critic
         critic = model[2].train()
-        real_fake = torch.cat([inp, recon], dim=0)
+        real_fake = torch.cat([inp, recon_2d], dim=0)
         real_fake_target = torch.cat((
             torch.ones((len(inp), 1), device=config.device),
-            torch.zeros((len(recon), 1), device=config.device)
+            torch.zeros((len(recon_2d), 1), device=config.device)
         ), dim=0)
         rand = torch.randint(10, (10, 10), device=config.device)
         rand_idx = torch.randint(0, len(inp)*2-1, size=(len(inp),),
@@ -74,17 +73,22 @@ def _training_step(batch, batch_idx, model, config):
         critic_loss = binary_loss(real_fake_guess, real_fake_target)
         critic_weight = 0
 
-    # TODO clip kld loss to prevent explosion
-    recon_loss = criterion(recon, target)
-    kld_loss = KLD(mean, logvar, decoder.name)
-    loss = recon_loss + config.beta * kld_loss
-    # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
+        recon_loss = criterion(recon_2d, target_2d)
+        kld_loss = KLD(mean, logvar, decoder.name)
+        loss = recon_loss + config.beta * kld_loss
 
-    logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
-    if config.self_supervised:
-        loss=loss + critic_weight * critic_loss
-        logs['critic_loss']=critic_loss
+        # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
+        loss = loss + critic_weight * critic_loss
+        logs['critic_loss'] = critic_loss
+
+    else:
+        # TODO clip kld loss to prevent explosion
+        recon_loss = criterion(recon_3d, target_3d)
+        kld_loss = KLD(mean, logvar, decoder.name)
+        loss = recon_loss + config.beta * kld_loss
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
     return OrderedDict({'loss': loss, 'log': logs})
 
@@ -108,7 +112,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             loss += output['loss'].item()
             recon_loss += output['log']['recon_loss'].item()
             kld_loss += output['log']['kld_loss'].item()
-            
+
             if config.self_supervised:
                 critic_loss += output['log']['critic_loss'].item()
 
@@ -187,7 +191,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         real_fake_guess = critic(real_fake)
         binary_loss = torch.nn.BCELoss()
         critic_loss = binary_loss(real_fake_guess, real_fake_target)
-        critic_weight = 0 #############TODO
+        critic_weight = 0  # TODO
 
         data = {"recon": recon, "recon_3d": recon_3d, "input": inp, "target_3d": target_3d,
                 "z": z, "z_attr": batch['action'], "scale": batch['scale']}
@@ -205,7 +209,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     if config.self_supervised:
         loss = loss + critic_weight * critic_loss
-        logs['critic_loss']=critic_loss
+        logs['critic_loss'] = critic_loss
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})
