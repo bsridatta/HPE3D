@@ -47,7 +47,7 @@ class Critic(nn.Module):
 
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
-            nn.Softmax()
+            nn.Sigmoid()
         )
 
     def forward(self, x):

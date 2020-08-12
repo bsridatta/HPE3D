@@ -29,7 +29,7 @@ class Logging(Callback):
         batch_len = len(batch['pose2d'])
         dataset_len = len(dataloader.dataset)
         n_batches = len(dataloader)
-        print('\n {} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
+        print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
             vae_type, epoch, batch_idx * batch_len,
             dataset_len, 100. *
             batch_idx / n_batches,
@@ -45,7 +45,7 @@ class Logging(Callback):
                     }
                 }
             })
-
+        print('')
 
     def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, **kwargs):
         # average epochs output
@@ -67,7 +67,7 @@ class Logging(Callback):
         })
 
         # print to console
-        print(f"\n{vae_type} Validation:",
+        print(f"{vae_type} Validation:",
               f"\t\tLoss: {round(avg_loss,4)}",
               f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
               f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
@@ -84,8 +84,9 @@ class Logging(Callback):
                 }
             })
         
+        print('')
         # print and log MPJPE
-        print(f'\n{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
+        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
         config.mpjpe = mpjpe
 
