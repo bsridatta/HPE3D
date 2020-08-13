@@ -9,7 +9,7 @@ class Logging(Callback):
     def setup(self, config, models, **kwargs):
         print(
             f'[INFO]: Start training procedure using device: {config.device}')
-            
+
         for model in models.values():
             config.logger.watch(model, log='all')
 
@@ -35,9 +35,10 @@ class Logging(Callback):
             batch_idx / n_batches,
             output['loss'], output['log']['recon_loss'], output['log']['kld_loss']), end='')
 
+        # critic
         if config.self_supervised:
             print('\tCritic: {:.4f}'.format(output['log']['critic_loss']), end='')
-            
+
             config.logger.log({
                 f"{vae_type}": {
                     "train": {
@@ -72,10 +73,11 @@ class Logging(Callback):
               f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
               f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
 
+        # critic
         if config.self_supervised:
             avg_output['log']['critic_loss'] = critic_loss/len(val_loader)
             print(f"\tCritic: {round(avg_output['log']['critic_loss'], 4)}", end='')
-    
+
             config.logger.log({
                 f"{vae_type}": {
                     "val": {
@@ -83,8 +85,8 @@ class Logging(Callback):
                     }
                 }
             })
-        
         print('')
+
         # print and log MPJPE
         print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})

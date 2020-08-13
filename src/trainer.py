@@ -21,12 +21,11 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
 
-        # len(optimizer) is 1 or 2 with critic optim
-        optimizer[0].zero_grad()
-        output = _training_step(batch, batch_idx, model, config, optimizer[-1])
-        loss = output['loss']
-        loss.backward()
-        optimizer[0].step()
+        # optimizer[0].zero_grad()
+        output = _training_step(batch, batch_idx, model, config, optimizer)
+        # loss = output['loss']
+        # loss.backward()
+        # optimizer[0].step()
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)
@@ -34,10 +33,12 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     cb.on_train_end(config=config, epoch=epoch)
 
 
-def _training_step(batch, batch_idx, model, config, critic_optimizer):
+def _training_step(batch, batch_idx, model, config, optimizer):
     encoder = model[0].train()
     decoder = model[1].train()
 
+    # len(optimizer) is 1 or 2 with critic optim
+    vae_optimizer = optimizer[0]
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
@@ -48,20 +49,24 @@ def _training_step(batch, batch_idx, model, config, critic_optimizer):
     recon_3d = decoder(z)
     recon_3d = recon_3d.view(-1, 16, 3)
 
+
     if config.self_supervised:
         # Reprojection
         target_2d = inp
-        # recon_3d = torch.clamp(recon_3d, min=10-4, max=10+4)
+        # TODO recon_3d = torch.clamp(recon_3d, min=10-4, max=10+4)
         recon_3d[:, :, 2] += torch.tensor((10))
         recon_3d_z = (torch.clamp(recon_3d[Ellipsis, -1:], min=1e-12))
         recon_2d = recon_3d[Ellipsis, :-1]/recon_3d_z
 
+        ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
+        ################################################
         critic = model[2].train()
         real_label = 1
         fake_label = 0
         binary_loss = torch.nn.BCELoss()
-        
+        critic_optimizer = optimizer[-1]
+
         # train with real samples
         critic_optimizer.zero_grad()
         labels = torch.full((len(target_2d), 1), real_label, device=config.device, dtype=target_2d.dtype)
@@ -78,23 +83,37 @@ def _training_step(batch, batch_idx, model, config, critic_optimizer):
 
         # update critic
         critic_optimizer.step()
- 
 
+        ################################################
+        # Generator - maximize log(D(G(z)))
+        ################################################
+        vae_optimizer.zero_grad()
+
+        # Pass vae output to critic with labels as real
+        # TODO rotate and reproject
+        labels.fill_(real_label)
+        output = critic(recon_2d)
+        
+        # Sum 'recon', 'kld' and 'critic' losses
+        critic_loss = binary_loss(output, labels)
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
-        loss = recon_loss + config.beta * kld_loss
+        loss = recon_loss + config.beta * kld_loss + critic_loss
 
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
+        loss.backward() # Would include vae and critic but critic not updated
 
         # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
-        loss = loss + critic_weight * critic_loss
-        logs['critic_loss'] = critic_loss
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss}
 
     else:
-        # TODO clip kld loss to prevent explosion
+        vae_optimizer.zero_grad()
         recon_loss = criterion(recon_3d, target_3d)
+        # TODO clip kld loss to prevent explosion
         kld_loss = KLD(mean, logvar, decoder.name)
         loss = recon_loss + config.beta * kld_loss
+        loss.backward()
+        vae_optimizer.step()
+    
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
     return OrderedDict({'loss': loss, 'log': logs})
