@@ -51,6 +51,8 @@ class Critic(nn.Module):
         )
 
     def forward(self, x):
+        if not x.is_contiguous():
+            x = x.contiguous()
         x = x.view(-1, 2*self.n_joints)
         x = self.inp_block(x)
 

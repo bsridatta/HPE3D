@@ -3,6 +3,7 @@ Reference code - https://github.com/una-dinosauria/3d-pose-baseline
 '''
 import gc
 import os
+import math
 
 import h5py
 import numpy as np
@@ -146,7 +147,6 @@ def post_process(config, recon, target, scale=None):
                 target
              ), dim=1)
 
-
     return recon, target
 
 
@@ -207,6 +207,7 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
     if coordinates == 'world':  # rotate and translate
         R = cam_params('cam_R')
         T = cam_params('cam_T')
+        # TODO maybe works only for one
         X = R.dot(torch.transpose(pose3d, 1, 2) - T)
 
     pose2d_proj = (pose3d/pose3d[:, :, 2][:, :, None].repeat(1, 1, 3))[:, :, :2]
@@ -216,3 +217,58 @@ def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
     # pose2d_proj = f * pose2d_proj + c
 
     return pose2d_proj
+
+
+def create_rotation_matrices_3d(azimuths, elevations, rolls):
+
+    azi_cos = torch.cos(azimuths)
+    azi_sin = torch.sin(azimuths)
+    ele_cos = torch.cos(elevations)
+    ele_sin = torch.sin(elevations)
+    rol_cos = torch.cos(rolls)
+    rol_sin = torch.sin(rolls)
+    rotations_00 = azi_cos * ele_cos
+    rotations_01 = azi_cos * ele_sin * rol_sin - azi_sin * rol_cos
+    rotations_02 = azi_cos * ele_sin * rol_cos + azi_sin * rol_sin
+    rotations_10 = azi_sin * ele_cos
+    rotations_11 = azi_sin * ele_sin * rol_sin + azi_cos * rol_cos
+    rotations_12 = azi_sin * ele_sin * rol_cos - azi_cos * rol_sin
+    rotations_20 = -ele_sin
+    rotations_21 = ele_cos * rol_sin
+    rotations_22 = ele_cos * rol_cos
+    rotations_0 = torch.stack([rotations_00, rotations_10, rotations_20], axis=-1)
+    rotations_1 = torch.stack([rotations_01, rotations_11, rotations_21], axis=-1)
+    rotations_2 = torch.stack([rotations_02, rotations_12, rotations_22], axis=-1)
+
+    return torch.stack([rotations_0, rotations_1, rotations_2], axis=-1)
+
+
+def random_rotate_and_project_3d_to_2d(pose_3d,
+                                       azimuth_range=(-math.pi, math.pi),
+                                       elevation_range=(-math.pi / 6.0,
+                                                        math.pi / 6.0),
+                                       roll_range=(0.0, 0.0),
+                                       default_camera=True,
+                                       default_camera_z=10.0,
+                                       random_rotate=True
+                                       ):
+
+    if random_rotate:
+        azimuths = torch.rand(pose_3d.shape[:-2]) * \
+            (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
+        elevations = torch.rand(pose_3d.shape[:-2]) * \
+            (elevation_range[0]-elevation_range[1]) + elevation_range[1]
+        rolls = torch.rand(pose_3d.shape[:-2]) * \
+            (roll_range[0]-roll_range[1]) + roll_range[1]
+
+        rotation_matrices = create_rotation_matrices_3d(azimuths, elevations, rolls)
+        rotation_matrices = rotation_matrices.to(device=pose_3d.device)
+        # TODO flip x, y
+        pose_3d = torch.matmul(rotation_matrices, torch.transpose(pose_3d, 1, 2))
+        pose_3d = torch.transpose(pose_3d, 1, 2)
+   
+
+    pose_3d_z = (torch.clamp(pose_3d[Ellipsis, -1:], min=1e-12))
+    pose_2d_reprojection = pose_3d[Ellipsis, :-1]/pose_3d_z
+
+    return pose_2d_reprojection

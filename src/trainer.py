@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 from src.models import KLD, PJPE, reparameterize
-from src.processing import post_process, project_3d_to_2d
+from src.processing import post_process, random_rotate_and_project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
 from src.viz.mpl_plots import plot_proj, plot_2d
 
@@ -55,9 +55,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         target_2d = inp
         # TODO recon_3d = torch.clamp(recon_3d, min=10-4, max=10+4)
         recon_3d[:, :, 2] += torch.tensor((10))
-        recon_3d_z = (torch.clamp(recon_3d[Ellipsis, -1:], min=1e-12))
-        recon_2d = recon_3d[Ellipsis, :-1]/recon_3d_z
-
+        # recon_3d_z = (torch.clamp(recon_3d[Ellipsis, -1:], min=1e-12))
+        # recon_2d = recon_3d[Ellipsis, :-1]/recon_3d_z
+        recon_2d = random_rotate_and_project_3d_to_2d(recon_3d.detach(), random_rotate=False)
+        novel_2d_view = random_rotate_and_project_3d_to_2d(recon_3d.detach())
+        
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
         ################################################
@@ -77,7 +79,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # train with fake samples
         labels.fill_(fake_label)
         # detach to avoid gradient prop to vae
-        output = critic(recon_2d.detach())
+        output = critic(novel_2d_view)
         critic_loss_fake = binary_loss(output, labels)
         critic_loss_fake.backward()
 
@@ -92,13 +94,13 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Pass vae output to critic with labels as real
         # TODO rotate and reproject
         labels.fill_(real_label)
-        output = critic(recon_2d)
+        output = critic(novel_2d_view)
         
         # Sum 'recon', 'kld' and 'critic' losses
         critic_loss = binary_loss(output, labels)
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
-        loss = recon_loss + config.beta * kld_loss + critic_loss
+        loss = recon_loss + config.beta*kld_loss + critic_loss
 
         loss.backward() # Would include vae and critic but critic not updated
 

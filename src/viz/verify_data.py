@@ -61,7 +61,7 @@ def get_processed_sample(idx=1):
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
 
     dataset = H36M([9, 11],
-                   annotation_file, image_path, train=True, no_images=False)
+                   annotation_file, image_path, train=True, no_images=False, projection=True)
 
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
@@ -77,8 +77,8 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 7
-    processed = False
+    plot = 8
+    processed = True
 
     if processed:
         sample = get_processed_sample()
@@ -113,3 +113,18 @@ if __name__ == "__main__":
     # MPL projection
     elif plot == 7:
         plot_projection(sample)
+    # plot rotation
+    elif plot == 8:
+        from src.processing import random_rotate_and_project_3d_to_2d
+        import torch
+        import math
+        pose3d = torch.tensor(pose3d)
+        # pose3d = torch.index_select(pose3d, -1, torch.tensor([1,0,2]))
+        pose3d = torch.stack((pose3d, pose3d), axis=0)
+        while 1:
+            rot = random_rotate_and_project_3d_to_2d(
+                pose3d,
+                azimuth_range=(-math.pi / 6.0, math.pi / 6.0),
+                elevation_range=(-math.pi, math.pi),
+                default_camera=False)
+            plot_errors([pose3d[0].numpy()], [rot[0].numpy()], labels=True, grid=1, area=False, )

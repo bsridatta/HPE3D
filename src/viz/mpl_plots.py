@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from PIL import Image
 from torchvision import transforms
-from src.processing import project_3d_to_2d, project_3d_to_2d_martinez
+from src.processing import project_3d_to_2d
 import torch
 
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
@@ -200,6 +200,16 @@ def plot_area(pose1, pose2):
         pose1 (array): predicted 
         pose2 (array): ground truth
     """
+    if pose1.shape[0] == 16:
+        root_z = 0
+        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        pose1 = np.concatenate((root_, pose1), axis=0)
+
+    if pose2.shape[0] == 16:
+        root_z = 0
+        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        pose2 = np.concatenate((root_, pose2), axis=0)
+
     x1 = pose1[:, 0]
     y1 = pose1[:, 1]
     z1 = pose1[:, 2]
@@ -262,7 +272,7 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     plt.show()
 
 
-def plot_errors(poses, targets, errors=None, grid=2):
+def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
     """Show difference between predictions and targets
 
     Arguments:
@@ -279,11 +289,12 @@ def plot_errors(poses, targets, errors=None, grid=2):
     rows = cols = grid
 
     i = 1
-    for pose, target in zip(poses, targets):
+    for pose, target in zip(poses[:grid], targets[:grid]):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
-        plot_3d(pose, mode="axis", color='b', floor=True, axis3don=False)
-        plot_3d(target, mode="axis", color='grey', floor=True, axis3don=False)
-        plot_area(pose, target)
+        plot_3d(pose, mode="axis", color='b', floor=False, axis3don=True, labels=labels)
+        plot_3d(target, mode="axis", color='grey', floor=False, axis3don=True, labels=labels)
+        if area:
+            plot_area(pose, target)
         i += 1
 
     plt.show()
