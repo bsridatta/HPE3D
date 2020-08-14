@@ -39,12 +39,11 @@ def main():
     os.environ['WANDB_TAGS'] = 'Reprojection'
     os.environ['WANDB_NOTES'] = 'Reprojection'
 
-
     # ignore when debugging on cpu
     if not use_cuda:
         # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="hpe3d", config=config) # to_delete
+        wandb.init(anonymous='allow', project="hpe3d", config=config)  # to_delete
     else:
         # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
@@ -122,40 +121,40 @@ def main():
 
             if config.self_supervised:
                 model.append(models['Critic'])
-                optimizer.append(optimizers[-1])  
-                scheduler.append(schedulers[-1]) 
+                optimizer.append(optimizers[-1])
+                scheduler.append(schedulers[-1])
 
             config.logger.log(
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
             # TODO init criterion once with .to(cuda)
-            training_epoch(config, cb, model, train_loader,
-                           optimizer, epoch, vae_type)
+            # training_epoch(config, cb, model, train_loader,
+            #                optimizer, epoch, vae_type)
 
-            # val_loss = validation_epoch(
-            #     config, cb, model, val_loader, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, cb, model, val_loader, epoch, vae_type)
 
-            # if val_loss != val_loss:
-            #     print("[INFO]: NAN loss")
-            #     break
+            if val_loss != val_loss:
+                print("[INFO]: NAN loss")
+                break
 
             # TODO have different learning rates for all variants
             # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            # scheduler[0].step(val_loss)
+            scheduler[0].step(val_loss)
 
-            # cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
-            #                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
+            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
+                            n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
 
-        # if val_loss != val_loss:
-        #     print("[INFO]: NAN loss")
-        #     break
+        if val_loss != val_loss:
+            print("[INFO]: NAN loss")
+            break
 
-        # if optimizer.param_groups[0]['lr'] < 1e-6:
-        #     print("[INFO]: LR < 1e-6. Stop training")
-        #     break
+        if optimizer[0].param_groups[0]['lr'] < 1e-6:
+            print("[INFO]: LR < 1e-6. Stop training")
+            break
 
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
@@ -175,7 +174,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=200, type=int,
+    parser.add_argument('--epochs', default=1, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=256, type=int,
                         help='number of samples per step, have more than one for batch norm')

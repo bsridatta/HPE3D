@@ -1,8 +1,8 @@
 from src.callbacks.base import Callback
 import torch
 from src.models import PJPE
-
-
+from src.viz.mpl_plots import plot_projection, plot_3d
+from src.viz.mayavi_plots import plot_3D_models
 class Logging(Callback):
     """Logging and printing metrics"""
 
@@ -48,7 +48,7 @@ class Logging(Callback):
             })
         print('')
 
-    def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, **kwargs):
+    def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, t_data, **kwargs):
         # average epochs output
         avg_output = {}
         avg_output['loss'] = avg_loss
@@ -94,6 +94,22 @@ class Logging(Callback):
 
         if mpjpe < config.mpjpe_min:
             config.mpjpe_min = mpjpe
+
+        # log intermediate results
+        n = 2
+        fac = 100
+        plots = ['recon_3d']
+        for plot in plots:
+            for x in range(0,n):
+                print(x)
+                plot_3D_models([t_data[plot][n*fac].cpu().numpy()], mode='save')
+                config.logger.log({
+                    str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]          
+                })
+        # plot:{
+        # str(n*fac): plot_3d(t_data[plot][n*fac].cpu().numpy(), mode='plt', labels=True)                        
+        # }
+
 
         # For Images
         # TODO can have this in eval instead and skip logging val

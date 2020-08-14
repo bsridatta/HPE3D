@@ -42,6 +42,9 @@ def plot_3D_models(poses, mode="show"):
     # mlab.roll(0)
     
     if mode == 'save':
-        mlab.savefig("pose.obj")
+        mlab.savefig("/lhome/sbudara/lab/HPE3D/src/results/pose.obj")
+        mlab.close()
+        return 
     
-    mlab.show()
+    # else:
+    #    mlab.show()

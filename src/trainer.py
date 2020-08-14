@@ -21,11 +21,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
 
-        # optimizer[0].zero_grad()
         output = _training_step(batch, batch_idx, model, config, optimizer)
-        # loss = output['loss']
-        # loss.backward()
-        # optimizer[0].step()
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)
@@ -91,7 +87,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         vae_optimizer.zero_grad()
 
-        # real lables so as to train the vae such that a 
+        # real lables so as to train the vae such that a
         # trained discriminator predicts all fake as real
         labels.fill_(real_label)
         output = critic(novel_2d_view)
@@ -151,7 +147,8 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
             del output
             gc.collect()
-
+            # TODO REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?????????????????????????
+            break
     avg_loss = loss/len(val_loader)  # return for scheduler
 
     for key in t_data.keys():
@@ -160,9 +157,9 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
     # performance
     if '3D' in model[1].name:
         if normalize_pose and not config.self_supervised:
-            t_data['recon'], t_data['target'] = post_process(
-                config, t_data['recon'], target=t_data['target'])
-            pjpe = torch.mean(PJPE(t_data['recon'], t_data['target']), dim=0)
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                config, t_data['recon_3d'], target=t_data['target_3d'])
+            pjpe = torch.mean(PJPE(t_data['recon_3d'], t_data['target_3d']), dim=0)
 
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
@@ -184,62 +181,76 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
 
-    inp, target, criterion = get_inp_target_criterion(
+    inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
-    if config.self_supervised:
-        target_3d = target.clone()
-        target = inp.clone()
-
     mean, logvar = encoder(inp)
+    # clip logvar to prevent inf when exp is calculated
+    logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar, eval=True)
-    recon = decoder(z)
-    recon = recon.view(-1, 16, 3)
+    recon_3d = decoder(z)
+    recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
         # Reprojection
-        target = inp.clone()
-        # recon = torch.clamp(recon, min=10-4, max=10+4)
-        recon[:, :, 2] += torch.tensor((10))
-        recon_3d = recon.detach()
-        denom = (torch.clamp(recon[Ellipsis, -1:], min=1e-12))
-        recon = recon[Ellipsis, :-1]/denom
+        target_2d = inp.detach()
+        # ???????????????????
+        # recon_3d = torch.clamp(recon_3d, min=10-10, max=10+10)
 
+        recon_3d[:, :, 2] += torch.tensor((10))
+        recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
+        novel_2d_view = random_rotate_and_project_3d_to_2d(recon_3d.detach())
+
+        ################################################
         # Critic
-        critic = model[2].train()
-        real_fake = torch.cat([inp, recon], dim=0)
-        real_fake_target = torch.cat((
-            torch.ones((len(inp), 1), device=config.device),
-            torch.zeros((len(recon), 1), device=config.device)
-        ), dim=0)
-        rand = torch.randint(10, (10, 10), device=config.device)
-        rand_idx = torch.randint(0, len(inp)*2-1, size=(len(inp),),
-                                 device=config.device)  # .tolist()
-        real_fake = real_fake[rand_idx]
-        real_fake_target = real_fake_target[rand_idx]
-
-        real_fake_guess = critic(real_fake)
+        ################################################
+        critic = model[2].eval()
+        real_label = 1
+        fake_label = 0
         binary_loss = torch.nn.BCELoss()
-        critic_loss = binary_loss(real_fake_guess, real_fake_target)
-        critic_weight = 0  # TODO
 
-        data = {"recon": recon, "recon_3d": recon_3d, "input": inp, "target_3d": target_3d,
+        # eval with real samples
+        labels = torch.full((len(target_2d), 1), real_label,
+                            device=config.device, dtype=target_2d.dtype)
+        output = critic(target_2d.detach())
+        critic_loss_real = binary_loss(output, labels)
+
+        # eval with fake samples
+        labels.fill_(fake_label)
+        output = critic(novel_2d_view.detach())
+        critic_loss_fake = binary_loss(output, labels)
+
+        ################################################
+        # Generator
+        ################################################
+        # real lables so as to train the vae such that a
+        # trained discriminator predicts all fake as real
+        labels.fill_(real_label)
+        output = critic(novel_2d_view)
+
+        # Sum 'recon', 'kld' and 'critic' losses
+        critic_loss = binary_loss(output, labels)
+        recon_loss = criterion(recon_2d, target_2d)
+        kld_loss = KLD(mean, logvar, decoder.name)
+        critic_weight = 1
+        loss = recon_loss + config.beta*kld_loss + critic_loss * critic_weight
+
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss}
+
+        data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "input": inp, "target_3d": target_3d,
                 "z": z, "z_attr": batch['action'], "scale": batch['scale']}
 
     else:
+        recon_loss = criterion(recon_3d, target_3d)
+        # TODO clip kld loss to prevent explosion
+        kld_loss = KLD(mean, logvar, decoder.name)
+        loss = recon_loss + config.beta * kld_loss
+
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
+
         data = {"recon": recon, "target": target, "input": inp,
                 "z": z, "z_attr": batch['action']}
 
-    recon_loss = criterion(recon, target)  # 3D-MPJPE/MSE -- RGB/2D-L1/BCE
-    kld_loss = KLD(mean, logvar, decoder.name)
-    loss = recon_loss + config.beta * kld_loss
-
-    logs = {"kld_loss": kld_loss,
-            "recon_loss": recon_loss}
-
-    if config.self_supervised:
-        loss = loss + critic_weight * critic_loss
-        logs['critic_loss'] = critic_loss
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})

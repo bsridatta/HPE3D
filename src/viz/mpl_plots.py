@@ -94,9 +94,10 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
         pose (array): for 16 joints its numpy array (for adding root joint)
                       else tensor also works
         mode (str, optional): choose from
-            Image: plot -> png -> image tensor, useful for latent space viz 
-            Axis: return only the matplotlib axis to plot via caller method.
-            Show: Just show the plot 
+            image: plot -> png -> image tensor, useful for latent space viz 
+            sxis: return only the matplotlib axis to plot via caller method.
+            show: Just show the plot 
+            plt: return plt instance for logging to wandb
 
         color (str, optional): color of pose useful for comparision when overlayed
         labels (bool, optional): Show joint labels
@@ -172,8 +173,10 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
         image = image.convert('RGB')
         image = transforms.ToTensor()(image).unsqueeze_(0)
         return image
+    elif mode == "plt":
+        return plt
     else:
-        raise ValueError("Please choose from 'image', 'show', 'axis' only")
+        raise ValueError("Please choose from 'image', 'show', 'axis', 'plt' only")
 
 
 def fix_3D_aspect(ax, x, y, z):

@@ -77,7 +77,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 8
+    plot = 2
     processed = True
 
     if processed:
