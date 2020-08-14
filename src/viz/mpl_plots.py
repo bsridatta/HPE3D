@@ -87,7 +87,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z= None, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
+def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
     """Base function for 3D pose plotting
 
     Args:

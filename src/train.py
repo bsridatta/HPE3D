@@ -36,7 +36,9 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
+    os.environ['WANDB_TAGS'] = 'Reprojection'
     os.environ['WANDB_NOTES'] = 'Reprojection'
+
 
     # ignore when debugging on cpu
     if not use_cuda:
