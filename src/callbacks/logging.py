@@ -96,16 +96,16 @@ class Logging(Callback):
             config.mpjpe_min = mpjpe
 
         # log intermediate results
-        n = 2
-        fac = 100
-        plots = ['recon_3d']
-        for plot in plots:
-            for x in range(0,n):
-                print(x)
-                plot_3D_models([t_data[plot][n*fac].cpu().numpy()], mode='save')
-                config.logger.log({
-                    str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]          
-                })
+        # n = 2
+        # fac = 100
+        # plots = ['recon_3d']
+        # for plot in plots:
+        #     for x in range(0,n):
+        #         print(x)
+        #         plot_3D_models([t_data[plot][n*fac].cpu().numpy()], mode='save')
+        #         config.logger.log({
+        #             str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]          
+        #         })
         # plot:{
         # str(n*fac): plot_3d(t_data[plot][n*fac].cpu().numpy(), mode='plt', labels=True)                        
         # }

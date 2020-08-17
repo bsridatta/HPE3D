@@ -128,8 +128,8 @@ def main():
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
             # TODO init criterion once with .to(cuda)
-            # training_epoch(config, cb, model, train_loader,
-            #                optimizer, epoch, vae_type)
+            training_epoch(config, cb, model, train_loader,
+                           optimizer, epoch, vae_type)
 
             val_loss = validation_epoch(
                 config, cb, model, val_loader, epoch, vae_type)
@@ -174,7 +174,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=1, type=int,
+    parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=256, type=int,
                         help='number of samples per step, have more than one for batch norm')

@@ -87,8 +87,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         vae_optimizer.zero_grad()
 
-        # real lables so as to train the vae such that a
-        # trained discriminator predicts all fake as real
+        # real lables so as to train the vae such that a-
+        # -trained discriminator predicts all fake as real
         labels.fill_(real_label)
         output = critic(novel_2d_view)
 
