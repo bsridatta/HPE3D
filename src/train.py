@@ -37,7 +37,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'Reprojection'
-    os.environ['WANDB_NOTES'] = 'Reprojection'
+    os.environ['WANDB_NOTES'] = 'Reprojection critic update 2'
 
     # ignore when debugging on cpu
     if not use_cuda:

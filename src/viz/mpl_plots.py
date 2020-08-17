@@ -39,6 +39,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
 
     fig = plt.figure(1)
     ax = fig.gca()
+
+    # ax.set_aspect('equal')
     plt.gca().invert_yaxis()
     # plt.cla()
 
@@ -68,7 +70,6 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         ax.set_xticks([])
         ax.set_yticks([])
 
-    ax.set_aspect('equal')
 
     if mode == 'axis':
         return ax
@@ -352,7 +353,7 @@ def plot_proj(pose2d, pose3d, pose2d_proj, log=False):
         plt.show()
 
 
-def plot_projection(sample):
+def plot_projection_raw(sample):
     fig = plt.figure()
     i = 1
     col = 4
@@ -414,3 +415,35 @@ def plot_projection(sample):
     print(pose3d)
 
     plt.show()
+
+
+def plot_all_proj(recon_2d, novel_2d, target_2d, recon_3d, target_3d):
+    fig = plt.figure()
+    i = 1
+    col = 3
+
+    recon_2d = recon_2d.detach().cpu().numpy()
+    novel_2d = novel_2d.detach().cpu().numpy()
+    target_2d = target_2d.detach().cpu().numpy()
+    recon_3d = recon_3d.detach().cpu().numpy()
+    target_3d = target_3d.detach().cpu().numpy()
+    
+    # pose2d
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(target_2d, color='pink', mode='axis', show_ticks=False, labels=False)
+    plot_2d(recon_2d, color='blue', mode='axis', show_ticks=False, labels=False)
+    
+    # pose3d
+    ax = fig.add_subplot(100+col*10+i)
+    i += 1
+    plot_2d(novel_2d, color='blue', mode='axis', show_ticks=False, labels=False)
+    
+    # pose3d
+    ax = fig.add_subplot(100+col*10+i, projection='3d')
+    i += 1
+    plot_3d(target_3d,color='pink', mode="axis", show_ticks=False, labels=False)
+    plot_3d(recon_3d,color='blue', mode="axis", show_ticks=False, labels=False)
+    
+    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png")
+    plt.close()

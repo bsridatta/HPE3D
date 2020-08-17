@@ -53,7 +53,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         recon_3d[:, :, 2] += torch.tensor((10))
         recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
-        novel_2d_view = random_rotate_and_project_3d_to_2d(recon_3d.detach())
+        novel_2d = random_rotate_and_project_3d_to_2d(recon_3d.detach())
 
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
@@ -70,17 +70,17 @@ def _training_step(batch, batch_idx, model, config, optimizer):
                             device=config.device, dtype=target_2d.dtype)
         output = critic(target_2d.detach())
         critic_loss_real = binary_loss(output, labels)
-        critic_loss_real.backward()
+        # critic_loss_real.backward() TODO
 
         # train with fake samples
         labels.fill_(fake_label)
         # detach to avoid gradient prop to VAE
-        output = critic(novel_2d_view.detach())
+        output = critic(novel_2d.detach())
         critic_loss_fake = binary_loss(output, labels)
-        critic_loss_fake.backward()
+        # critic_loss_fake.backward() TODO
 
         # update critic
-        critic_optimizer.step()
+        # critic_optimizer.step() TODO
 
         ################################################
         # Generator - maximize log(D(G(z)))
@@ -89,21 +89,26 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
-        labels.fill_(real_label)
-        output = critic(novel_2d_view)
+        # labels.fill_(real_label) TODO
+        # output = critic(novel_2d)TODO
 
         # Sum 'recon', 'kld' and 'critic' losses
-        critic_loss = binary_loss(output, labels)
+        # critic_loss = binary_loss(output, labels)TODO
+        critic_loss = critic_loss_fake+critic_loss_fake  # TODO remove
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
-        critic_weight = 1
-        loss = recon_loss + config.beta*kld_loss + critic_loss * critic_weight
+
+        loss = 10 * recon_loss + config.beta*kld_loss + critic_loss * 0.1
         loss.backward()  # Would include VAE and critic but critic not updated
 
+        critic_optimizer.step()  # TODO remove
         # update VAE
         vae_optimizer.step()
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
+                "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d, 
+                "target_2d": target_2d, "target_3d": target_3d}
+
         # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss}
 
     else:
         vae_optimizer.zero_grad()
@@ -149,6 +154,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             gc.collect()
             # TODO REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?????????????????????????
             break
+
     avg_loss = loss/len(val_loader)  # return for scheduler
 
     for key in t_data.keys():
@@ -199,7 +205,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         recon_3d[:, :, 2] += torch.tensor((10))
         recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
-        novel_2d_view = random_rotate_and_project_3d_to_2d(recon_3d.detach())
+        novel_2d = random_rotate_and_project_3d_to_2d(recon_3d.detach())
 
         ################################################
         # Critic
@@ -217,7 +223,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         # eval with fake samples
         labels.fill_(fake_label)
-        output = critic(novel_2d_view.detach())
+        output = critic(novel_2d.detach())
         critic_loss_fake = binary_loss(output, labels)
 
         ################################################
@@ -226,7 +232,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # real lables so as to train the vae such that a
         # trained discriminator predicts all fake as real
         labels.fill_(real_label)
-        output = critic(novel_2d_view)
+        output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
         critic_loss = binary_loss(output, labels)
@@ -250,7 +256,6 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         data = {"recon": recon, "target": target, "input": inp,
                 "z": z, "z_attr": batch['action']}
-
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})

@@ -1,8 +1,13 @@
-from src.callbacks.base import Callback
+import os
+
 import torch
+
+from src.callbacks.base import Callback
 from src.models import PJPE
-from src.viz.mpl_plots import plot_projection, plot_3d
+from src.viz.mpl_plots import plot_all_proj, plot_3d
 from src.viz.mayavi_plots import plot_3D_models
+
+
 class Logging(Callback):
     """Logging and printing metrics"""
 
@@ -23,7 +28,7 @@ class Logging(Callback):
                     "total_train": output['loss']
                 }
             }
-        })
+        }, step=1+batch_idx)
 
         # print to console
         batch_len = len(batch['pose2d'])
@@ -45,7 +50,15 @@ class Logging(Callback):
                         "critic_loss": output['log']['critic_loss']
                     }
                 }
-            })
+            }, step=1+batch_idx)
+
+            for i in [0, 100, 200]:
+                plot_all_proj(output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
+                              output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
+                config.logger.log({
+                    f"plot_{i}": config.logger.Image(f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png")
+                }, step=1+batch_idx)
+
         print('')
 
     def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, t_data, **kwargs):
@@ -65,7 +78,7 @@ class Logging(Callback):
                     "total_val": avg_output['loss']
                 }
             }
-        })
+        }, step=1+batch_idx)
 
         # print to console
         print(f"{vae_type} Validation:",
@@ -84,7 +97,7 @@ class Logging(Callback):
                         "critic_loss": avg_output['log']['critic_loss']
                     }
                 }
-            })
+            }, step=1+batch_idx)
         print('')
 
         # print and log MPJPE
@@ -104,12 +117,11 @@ class Logging(Callback):
         #         print(x)
         #         plot_3D_models([t_data[plot][n*fac].cpu().numpy()], mode='save')
         #         config.logger.log({
-        #             str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]          
+        #             str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]
         #         })
         # plot:{
-        # str(n*fac): plot_3d(t_data[plot][n*fac].cpu().numpy(), mode='plt', labels=True)                        
+        # str(n*fac): plot_3d(t_data[plot][n*fac].cpu().numpy(), mode='plt', labels=True)
         # }
-
 
         # For Images
         # TODO can have this in eval instead and skip logging val
