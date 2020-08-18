@@ -9,8 +9,9 @@ import torch.nn.functional as F
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, random_rotate_and_project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
-from src.viz.mpl_plots import plot_proj, plot_2d
+from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
+torch.autograd.set_detect_anomaly(True)
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
@@ -35,6 +36,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
     # len(optimizer) is 1 or 2 with critic optim
     vae_optimizer = optimizer[0]
+    vae_optimizer.zero_grad()
+
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
@@ -73,9 +76,12 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # critic_loss_real.backward() TODO
 
         # train with fake samples
-        labels.fill_(fake_label)
+        # labels.fill_(fake_label)
+        labels = torch.full((len(target_2d), 1), fake_label,
+                            device=config.device, dtype=target_2d.dtype)
+
         # detach to avoid gradient prop to VAE
-        output = critic(novel_2d.detach())
+        output = critic(novel_2d)
         critic_loss_fake = binary_loss(output, labels)
         # critic_loss_fake.backward() TODO
 
@@ -85,8 +91,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         # Generator - maximize log(D(G(z)))
         ################################################
-        vae_optimizer.zero_grad()
-
+        
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
         # labels.fill_(real_label) TODO
@@ -94,16 +99,22 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # Sum 'recon', 'kld' and 'critic' losses
         # critic_loss = binary_loss(output, labels)TODO
-        critic_loss = critic_loss_fake+critic_loss_fake  # TODO remove
+        critic_loss = critic_loss_fake+critic_loss_real  # TODO remove
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = 10 * recon_loss + config.beta*kld_loss + critic_loss * 0.1
+        loss = 10*recon_loss + config.beta*kld_loss + 0.1*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
         critic_optimizer.step()  # TODO remove
         # update VAE
         vae_optimizer.step()
+    
+        ############################
+        # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval
+        # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale']/10))
+        ############################
+
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
                 "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d, 
                 "target_2d": target_2d, "target_3d": target_3d}

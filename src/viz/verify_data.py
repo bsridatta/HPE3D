@@ -29,10 +29,10 @@ divided by the number of frames
 
 import os
 import h5py
-from src.viz.mpl_plots import plot_data, plot_errors, plot_projection
+from src.viz.mpl_plots import plot_data, plot_errors
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
-
+from src.processing import preprocess
 
 def get_raw_sample(idx=1):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
@@ -77,7 +77,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 2
+    plot = 1
     processed = True
 
     if processed:
@@ -94,7 +94,8 @@ if __name__ == "__main__":
 
     # 2D, 3D, Image
     if plot == 1:
-        plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
+        plot_data(pose2d=pose2d,pose3d=pose3d)
+        # plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
         plot_3D_models([pose3d])

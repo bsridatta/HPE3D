@@ -13,7 +13,7 @@ from src.processing import preprocess
 
 class H36M(Dataset):
 
-    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False, projection=False):
+    def __init__(self, subjects, annotation_file, image_path, no_images=False, device='cpu', annotation_path=None, train=False, projection=True):
         """
 
         Arguments:

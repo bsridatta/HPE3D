@@ -18,7 +18,7 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False):
     """Base function for 2D pose plotting
 
     Args:
@@ -37,20 +37,22 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         Tensor/MatplotlibAxis: Depends on the mode
     """
 
-    fig = plt.figure(1)
+    fig = plt.figure(1, figsize=(19.20, 10.80))
     ax = fig.gca()
-
-    # ax.set_aspect('equal')
-    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    ax.set_aspect('equal')
     # plt.cla()
 
     if pose.shape[0] == 16:
         pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
 
     x = pose[:, 0]
-    y = pose[:, 1]  # Image coordinates origin on the top left corner
-
+    y = pose[:, 1]  
+    # Image coordinates origin on the top left corner
+    # Hence keypoints value increases as we move down to the bottom of the images
+    # Hence after 0ing legs would be positive and head would be negative
     ax.scatter(x, y, alpha=0.6, s=2)
+    plt.gca().invert_yaxis()
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -66,15 +68,20 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         for i, j, l in zip(x, y, LABELS):
             ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
 
+    if show_ticks:
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+
     if not show_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
 
-
     if mode == 'axis':
         return ax
+
     elif mode == 'show':
         plt.show()
+
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
@@ -84,11 +91,15 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False):
         image = image.convert('RGB')
         image = transforms.ToTensor()(image).unsqueeze_(0)
         return image
+
+    elif mode == "plt":
+        return plt
+
     else:
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
+def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
     """Base function for 3D pose plotting
 
     Args:
@@ -107,16 +118,17 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
-    fig = plt.figure(1)
+    fig = plt.figure(1, figsize=(19.20, 10.80))
     ax = fig.gca(projection='3d')
     ax._axis3don = axis3don
-
+    plt.tight_layout()
+    
     if pose.shape[0] == 16:
         if root_z is None:
             root_z = 0
-        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
         pose = np.concatenate((root_, pose), axis=0)
-        
+
     x = pose[:, 0]
     y = pose[:, 1]
     z = pose[:, 2]
@@ -142,10 +154,6 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
             ax.text(i, j, k, s=f'{l[:4], round(i, 2), round(j, 2), round(k, 2)}',
                     size=7, zorder=1, color='k')
 
-        ax.set_xlabel('X axis')
-        ax.set_ylabel('Y axis')
-        ax.set_zlabel('Z axis')
-
     # Plot floor
     if floor:
         # xx, yy = np.meshgrid([-max(x), max(x)], [-max(y), max(y)])
@@ -154,17 +162,25 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
         ax.plot_surface(xx, yy, zz, cmap='gray',
                         linewidth=0, alpha=0.2)
 
+    if show_ticks:
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
+
     if not show_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_zticks([])
 
-    ax.view_init(elev=0, azim=0)
+    ax.view_init(elev=-75, azim=-90)
+
     if mode == "axis":
         return ax
+
     elif mode == "show":
         plt.show()
         fig.clf()
+
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
@@ -174,8 +190,10 @@ def plot_3d(pose, root_z= 10, mode="show", color=None, floor=False, axis3don=Tru
         image = image.convert('RGB')
         image = transforms.ToTensor()(image).unsqueeze_(0)
         return image
+
     elif mode == "plt":
         return plt
+
     else:
         raise ValueError("Please choose from 'image', 'show', 'axis', 'plt' only")
 
@@ -206,12 +224,12 @@ def plot_area(pose1, pose2):
     """
     if pose1.shape[0] == 16:
         root_z = 0
-        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
         pose1 = np.concatenate((root_, pose1), axis=0)
 
     if pose2.shape[0] == 16:
         root_z = 0
-        root_ = np.array([0,0,float(root_z)]).reshape(1,3)
+        root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
         pose2 = np.concatenate((root_, pose2), axis=0)
 
     x1 = pose1[:, 0]
@@ -348,7 +366,7 @@ def plot_proj(pose2d, pose3d, pose2d_proj, log=False):
         plt.savefig("$HOME/temp.png")
         img = Image("$HOME/temp.png")
         return img
-    
+
     else:
         plt.show()
 
@@ -417,33 +435,60 @@ def plot_projection_raw(sample):
     plt.show()
 
 
-def plot_all_proj(recon_2d, novel_2d, target_2d, recon_3d, target_3d):
-    fig = plt.figure()
-    i = 1
-    col = 3
+def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d):
 
     recon_2d = recon_2d.detach().cpu().numpy()
     novel_2d = novel_2d.detach().cpu().numpy()
     target_2d = target_2d.detach().cpu().numpy()
     recon_3d = recon_3d.detach().cpu().numpy()
     target_3d = target_3d.detach().cpu().numpy()
-    
+
+    img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
+    config.logger.log({"target_2d": config.logger.Image(img)}, commit=False)
+
+    img = plot_2d(recon_2d, color='blue', mode='image', show_ticks=True, labels=False)
+    config.logger.log({"recon_2d": config.logger.Image(img)}, commit=False)
+
+    img = plot_2d(novel_2d, color='blue', mode='image', show_ticks=True, labels=False)
+    config.logger.log({"novel_2d": config.logger.Image(img)}, commit=False)
+
+    img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
+    config.logger.log({"target_3d": config.logger.Image(img)}, commit=False)
+
+    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False)
+    config.logger.log({"recon_3d": config.logger.Image(img)})
+
+
+def f():
+
     # pose2d
     ax = fig.add_subplot(100+col*10+i)
     i += 1
+    ax.title.set_text('target_2d')
     plot_2d(target_2d, color='pink', mode='axis', show_ticks=False, labels=False)
+    ax = fig.add_subplot(100+col*10+i)
+    ax.title.set_text('recon_2d')
+    i += 1
     plot_2d(recon_2d, color='blue', mode='axis', show_ticks=False, labels=False)
-    
+
     # pose3d
     ax = fig.add_subplot(100+col*10+i)
     i += 1
+    ax.title.set_text('novel_2d')
     plot_2d(novel_2d, color='blue', mode='axis', show_ticks=False, labels=False)
-    
+
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(target_3d,color='pink', mode="axis", show_ticks=False, labels=False)
-    plot_3d(recon_3d,color='blue', mode="axis", show_ticks=False, labels=False)
-    
-    fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png")
+    ax.title.set_text('target_3d')
+    plot_3d(target_3d, color='pink', mode="axis", show_ticks=False, labels=False)
+    ax = fig.add_subplot(100+col*10+i, projection='3d')
+    i += 1
+    ax.title.set_text('recon_3d')
+    plot_3d(recon_3d, color='blue', mode="axis", show_ticks=False, labels=False)
+
+    img_path = f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png"
+    if os.path.isfile(img_path):
+        os.remove(img_path)
+    plt.savefig(img_path)
     plt.close()

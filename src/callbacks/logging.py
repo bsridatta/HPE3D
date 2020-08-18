@@ -7,7 +7,6 @@ from src.models import PJPE
 from src.viz.mpl_plots import plot_all_proj, plot_3d
 from src.viz.mayavi_plots import plot_3D_models
 
-
 class Logging(Callback):
     """Logging and printing metrics"""
 
@@ -20,6 +19,7 @@ class Logging(Callback):
 
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
         # wandb
+        step_ = config.logger.summary["_step"]
         config.logger.log({
             f"{vae_type}": {
                 "train": {
@@ -28,7 +28,7 @@ class Logging(Callback):
                     "total_train": output['loss']
                 }
             }
-        }, step=1+batch_idx)
+        }, step=1+step_)
 
         # print to console
         batch_len = len(batch['pose2d'])
@@ -50,14 +50,12 @@ class Logging(Callback):
                         "critic_loss": output['log']['critic_loss']
                     }
                 }
-            }, step=1+batch_idx)
+            }, step=1+step_)
 
-            for i in [0, 100, 200]:
-                plot_all_proj(output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
-                              output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
-                config.logger.log({
-                    f"plot_{i}": config.logger.Image(f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png")
-                }, step=1+batch_idx)
+            if (batch_idx/n_batches) % 0.2 == 0 and batch_len==config.batch_size:
+                i =0
+                plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
+                            output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
 
         print('')
 
@@ -78,7 +76,7 @@ class Logging(Callback):
                     "total_val": avg_output['loss']
                 }
             }
-        }, step=1+batch_idx)
+        })
 
         # print to console
         print(f"{vae_type} Validation:",
@@ -97,7 +95,7 @@ class Logging(Callback):
                         "critic_loss": avg_output['log']['critic_loss']
                     }
                 }
-            }, step=1+batch_idx)
+            })
         print('')
 
         # print and log MPJPE

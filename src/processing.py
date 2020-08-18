@@ -80,7 +80,7 @@ def denormalize(pose):
     return pose
 
 
-def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=False):
+def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=True):
     '''
     Preprocessing steps on -
     pose3d - 3d pose in camera frame(data already coverted from world to camera)
@@ -267,7 +267,6 @@ def random_rotate_and_project_3d_to_2d(pose_3d,
         pose_3d = torch.matmul(rotation_matrices, torch.transpose(pose_3d, 1, 2))
         pose_3d = torch.transpose(pose_3d, 1, 2)
    
-
     pose_3d_z = (torch.clamp(pose_3d[Ellipsis, -1:], min=1e-12))
     pose_2d_reprojection = pose_3d[Ellipsis, :-1]/pose_3d_z
 
