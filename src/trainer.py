@@ -11,7 +11,7 @@ from src.processing import post_process, random_rotate_and_project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
 from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
@@ -21,7 +21,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
-
+        
         output = _training_step(batch, batch_idx, model, config, optimizer)
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,

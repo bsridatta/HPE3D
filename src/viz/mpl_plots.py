@@ -43,21 +43,26 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax.set_aspect('equal')
     # plt.cla()
 
+    if color:
+        colors = [color]*len(SKELETON_COLORS)
+    else:
+        colors = SKELETON_COLORS
+
     if pose.shape[0] == 16:
-        pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
+        if mean_root:
+            root = (pose[0] + pose[3])/2
+            pose = np.concatenate((root.reshape((1, 2)), pose), axis=0)
+            (colors[0], colors[10], colors[13]) = 'pink', 'pink', 'pink'
+        else:
+            pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
 
     x = pose[:, 0]
-    y = pose[:, 1]  
+    y = pose[:, 1]
     # Image coordinates origin on the top left corner
     # Hence keypoints value increases as we move down to the bottom of the images
     # Hence after 0ing legs would be positive and head would be negative
     ax.scatter(x, y, alpha=0.6, s=2)
     plt.gca().invert_yaxis()
-
-    if color:
-        colors = [color]*len(SKELETON_COLORS)
-    else:
-        colors = SKELETON_COLORS
 
     for link, color in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
@@ -99,7 +104,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False):
+def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False):
     """Base function for 3D pose plotting
 
     Args:
@@ -122,23 +127,28 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
     ax = fig.gca(projection='3d')
     ax._axis3don = axis3don
     plt.tight_layout()
-    
+
+    if color:
+        colors = [color]*len(SKELETON_COLORS)
+    else:
+        colors = SKELETON_COLORS
+
     if pose.shape[0] == 16:
-        if root_z is None:
-            root_z = 0
-        root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
-        pose = np.concatenate((root_, pose), axis=0)
+        if mean_root:
+            root = (pose[0] + pose[3])/2
+            pose = np.concatenate((root.reshape((1, 3)), pose), axis=0)
+            (colors[0], colors[10], colors[13]) = 'pink', 'pink', 'pink'
+        else:
+            if root_z is None:
+                root_z = 0
+            root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
+            pose = np.concatenate((root_, pose), axis=0)
 
     x = pose[:, 0]
     y = pose[:, 1]
     z = pose[:, 2]
 
     ax.scatter(x, y, z, alpha=0.6, s=0.1)
-
-    if color:
-        colors = [color]*len(SKELETON_COLORS)
-    else:
-        colors = SKELETON_COLORS
 
     for link, color_ in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
@@ -172,7 +182,7 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
         ax.set_yticks([])
         ax.set_zticks([])
 
-    ax.view_init(elev=-75, azim=-90)
+    ax.view_init(elev=-45, azim=-90)
 
     if mode == "axis":
         return ax
@@ -446,16 +456,18 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d):
     img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
     config.logger.log({"target_2d": config.logger.Image(img)}, commit=False)
 
-    img = plot_2d(recon_2d, color='blue', mode='image', show_ticks=True, labels=False)
+    img = plot_2d(recon_2d, color='blue', mode='image',
+                  show_ticks=True, labels=False, mean_root=True)
     config.logger.log({"recon_2d": config.logger.Image(img)}, commit=False)
-
-    img = plot_2d(novel_2d, color='blue', mode='image', show_ticks=True, labels=False)
+  
+    img = plot_2d(novel_2d, color='blue', mode='image',
+                  show_ticks=True, labels=False, mean_root=True)
     config.logger.log({"novel_2d": config.logger.Image(img)}, commit=False)
 
     img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
     config.logger.log({"target_3d": config.logger.Image(img)}, commit=False)
 
-    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False)
+    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True)
     config.logger.log({"recon_3d": config.logger.Image(img)})
 
 

@@ -29,10 +29,11 @@ divided by the number of frames
 
 import os
 import h5py
-from src.viz.mpl_plots import plot_data, plot_errors
+from src.viz.mpl_plots import plot_data, plot_errors, plot_3d
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
 from src.processing import preprocess
+
 
 def get_raw_sample(idx=1):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
@@ -77,7 +78,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 1
+    plot = 8
     processed = True
 
     if processed:
@@ -94,7 +95,7 @@ if __name__ == "__main__":
 
     # 2D, 3D, Image
     if plot == 1:
-        plot_data(pose2d=pose2d,pose3d=pose3d)
+        plot_data(pose2d=pose2d, pose3d=pose3d)
         # plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
@@ -125,7 +126,19 @@ if __name__ == "__main__":
         while 1:
             rot = random_rotate_and_project_3d_to_2d(
                 pose3d,
-                azimuth_range=(-math.pi / 6.0, math.pi / 6.0),
+                roll_range=(-math.pi / 6.0,
+                            math.pi / 6.0),
+                azimuth_range=(0, 0),
                 elevation_range=(-math.pi, math.pi),
-                default_camera=False)
-            plot_errors([pose3d[0].numpy()], [rot[0].numpy()], labels=True, grid=1, area=False, )
+                default_camera=True,
+                default_camera_z=10.0,
+                random_rotate=True)
+            # UNCOMMENT PROJ FOR THIS TO WORK, ONLY ROTATE
+            plot_3d(pose3d[0].numpy(), color='gray', mode="axis",
+                    show_ticks=True, labels=False, mean_root=True)
+            plot_3d(rot[0].numpy(), color='blue', mode="show",
+                    show_ticks=True, labels=False, mean_root=True)
+
+            # Azimuth roll (roll book wrt normal)
+            # Roll elevation (rotate wrt horizontal line)
+            # Elevation Azimuth (rotate wrt vertical line)

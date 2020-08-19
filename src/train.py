@@ -66,6 +66,7 @@ def main():
         3: [['rgb', '3d']],
         4: [['rgb', 'rgb'], ['2d', '3d'], ['rgb', '3d']],
         5: [['2d', '3d']],
+        6: [['rgb', 'rgb']],
     }
 
     variant = variant_dic[config.variant]
@@ -172,18 +173,18 @@ def training_specific_args():
     parser = ArgumentParser()
 
     # training specific
-    parser.add_argument('--self_supervised', default=True, type=bool,
+    parser.add_argument('--self_supervised', default=False, type=bool,
                         help='training strategy')
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=256, type=int,
+    parser.add_argument('--batch_size', default=512, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     # model specific
-    parser.add_argument('--variant', default=2, type=int,
+    parser.add_argument('--variant', default=3, type=int,
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=50, type=int,
                         help='dimensions of the cross model latent space')
@@ -207,7 +208,7 @@ def training_specific_args():
     # image data
     parser.add_argument('--image_path', default=f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
-    parser.add_argument('--ignore_images', default=True, type=lambda x: (str(x).lower() == 'true'),
+    parser.add_argument('--ignore_images', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='when true, do not load images for training')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,

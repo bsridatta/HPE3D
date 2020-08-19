@@ -14,9 +14,9 @@ class LBAD(nn.Module):
 
     def forward(self, x):
         x = self.w1(x)
-        x = self.bn1(x)
+        # x = self.bn1(x)
         x = self.activ(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
 
         return x
 
@@ -35,9 +35,9 @@ class Critic(nn.Module):
 
         self.inp_block = nn.Sequential(
             nn.Linear(2*self.n_joints, self.neurons),  # expand features
-            nn.BatchNorm1d(self.neurons),
+            # nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout(p=self.drop_out_p)
+            # nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)

@@ -104,7 +104,7 @@ class H36M(Dataset):
 
         if self.train and np.random.random() < 0.2:
             sample = self.flip(sample)
-
+        
         return sample
 
     def get_image_tensor(self, sample):
