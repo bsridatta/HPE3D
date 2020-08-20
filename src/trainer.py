@@ -54,7 +54,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # ???????????????????
         # recon_3d = torch.clamp(recon_3d, min=10-10, max=10+10)
 
-        recon_3d[:, :, 2] += torch.tensor((10))
+        # recon_3d[:, :, 2] += torch.tensor((10))
         recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
         novel_2d = random_rotate_and_project_3d_to_2d(recon_3d.detach())
 

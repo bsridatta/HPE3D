@@ -18,18 +18,6 @@ class Logging(Callback):
             config.logger.watch(model, log='all')
 
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
-        # wandb
-        step_ = config.logger.summary["_step"]
-        config.logger.log({
-            f"{vae_type}": {
-                "train": {
-                    "kld_loss": output['log']['kld_loss'],
-                    "recon_loss": output['log']['recon_loss'],
-                    "total_train": output['loss']
-                }
-            }
-        }, step=1+step_)
-
         # print to console
         batch_len = len(batch['pose2d'])
         dataset_len = len(dataloader.dataset)
@@ -50,13 +38,24 @@ class Logging(Callback):
                         "critic_loss": output['log']['critic_loss']
                     }
                 }
-            }, step=1+step_)
+            }, commit=False)
 
-            if (batch_idx/n_batches) % 0.2 == 0 and batch_len==config.batch_size:
+            if (batch_idx/n_batches) % 0.1 == 0 and batch_len==config.batch_size:
                 i =0
                 plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
                             output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
 
+        # other logs to wandb
+        config.logger.log({
+            f"{vae_type}": {
+                "train": {
+                    "kld_loss": output['log']['kld_loss'],
+                    "recon_loss": output['log']['recon_loss'],
+                    "total_train": output['loss']
+                }
+            }
+        }, commit=True)
+        
         print('')
 
     def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, t_data, **kwargs):
