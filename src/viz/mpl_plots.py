@@ -468,39 +468,5 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d):
     config.logger.log({"target_3d": config.logger.Image(img)}, commit=False)
 
     img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({"recon_3d": config.logger.Image(img)})
+    config.logger.log({"recon_3d": config.logger.Image(img)}, commit=True)
 
-
-def f():
-
-    # pose2d
-    ax = fig.add_subplot(100+col*10+i)
-    i += 1
-    ax.title.set_text('target_2d')
-    plot_2d(target_2d, color='pink', mode='axis', show_ticks=False, labels=False)
-    ax = fig.add_subplot(100+col*10+i)
-    ax.title.set_text('recon_2d')
-    i += 1
-    plot_2d(recon_2d, color='blue', mode='axis', show_ticks=False, labels=False)
-
-    # pose3d
-    ax = fig.add_subplot(100+col*10+i)
-    i += 1
-    ax.title.set_text('novel_2d')
-    plot_2d(novel_2d, color='blue', mode='axis', show_ticks=False, labels=False)
-
-    # pose3d
-    ax = fig.add_subplot(100+col*10+i, projection='3d')
-    i += 1
-    ax.title.set_text('target_3d')
-    plot_3d(target_3d, color='pink', mode="axis", show_ticks=False, labels=False)
-    ax = fig.add_subplot(100+col*10+i, projection='3d')
-    i += 1
-    ax.title.set_text('recon_3d')
-    plot_3d(recon_3d, color='blue', mode="axis", show_ticks=False, labels=False)
-
-    img_path = f"{os.getenv('HOME')}/lab/HPE3D/src/results/image.png"
-    if os.path.isfile(img_path):
-        os.remove(img_path)
-    plt.savefig(img_path)
-    plt.close()

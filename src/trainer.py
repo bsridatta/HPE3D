@@ -36,7 +36,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
     # len(optimizer) is 1 or 2 with critic optim
     vae_optimizer = optimizer[0]
-    vae_optimizer.zero_grad()
 
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
@@ -52,11 +51,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        # recon_3d = torch.clamp(recon_3d, min=10-10, max=10+10)
-
-        # recon_3d[:, :, 2] += torch.tensor((10))
+        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=)
+        recon_3d[:, :, 2] += torch.tensor((10))
         recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
-        novel_2d = random_rotate_and_project_3d_to_2d(recon_3d.detach())
+        novel_2d_detach = random_rotate_and_project_3d_to_2d(recon_3d).detach()
+        novel_2d = random_rotate_and_project_3d_to_2d(recon_3d)
 
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
@@ -66,47 +65,47 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         fake_label = 0
         binary_loss = torch.nn.BCELoss()
         critic_optimizer = optimizer[-1]
+        critic_optimizer.zero_grad()
 
         # train with real samples
-        critic_optimizer.zero_grad()
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
-        output = critic(target_2d.detach())
+        output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
-        # critic_loss_real.backward() TODO
+        critic_loss_real.backward()
 
         # train with fake samples
-        # labels.fill_(fake_label)
-        labels = torch.full((len(target_2d), 1), fake_label,
-                            device=config.device, dtype=target_2d.dtype)
-
+        labels.fill_(fake_label)
         # detach to avoid gradient prop to VAE
-        output = critic(novel_2d)
+        output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
-        # critic_loss_fake.backward() TODO
+        critic_loss_fake.backward() 
 
         # update critic
-        # critic_optimizer.step() TODO
+        critic_optimizer.step()
 
         ################################################
         # Generator - maximize log(D(G(z)))
         ################################################
-        
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
-        # labels.fill_(real_label) TODO
-        # output = critic(novel_2d)TODO
+        
+        vae_optimizer.zero_grad()
+        labels.fill_(real_label)
+        output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
-        # critic_loss = binary_loss(output, labels)TODO
-        critic_loss = critic_loss_fake+critic_loss_real  # TODO remove
+        critic_loss_vae = binary_loss(output, labels)
+
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = 10*recon_loss + config.beta*kld_loss + 0.1*critic_loss
+        critic_weight= 1
+        recon_weight = 10
+
+        loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss_vae
         loss.backward()  # Would include VAE and critic but critic not updated
 
-        critic_optimizer.step()  # TODO remove
         # update VAE
         vae_optimizer.step()
     
@@ -115,7 +114,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale']/10))
         ############################
 
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
+        # TODO log critic loss in training and here as critic_loss_vae **********************
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss_vae,
                 "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d, 
                 "target_2d": target_2d, "target_3d": target_3d}
 
