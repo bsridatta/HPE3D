@@ -132,26 +132,26 @@ def main():
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            val_loss = validation_epoch(
-                config, cb, model, val_loader, epoch, vae_type)
+            # val_loss = validation_epoch(
+            #     config, cb, model, val_loader, epoch, vae_type)
 
-            if val_loss != val_loss:
-                print("[INFO]: NAN loss")
-                break
+            # if val_loss != val_loss:
+            #     print("[INFO]: NAN loss")
+            #     break
 
-            # TODO have different learning rates for all variants
-            # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
-            scheduler[0].step(val_loss)
+            # # TODO have different learning rates for all variants
+            # # TODO exponential blowup of val loss and mpjpe when lr is lower than order of -9
+            # scheduler[0].step(val_loss)
 
-            cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
-                            n_pair=n_pair, optimizers=optimizers, epoch=epoch)
+            # cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
+            #                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
 
-        if val_loss != val_loss:
-            print("[INFO]: NAN loss")
-            break
+        # if val_loss != val_loss:
+        #     print("[INFO]: NAN loss")
+        #     break
 
         if optimizer[0].param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")

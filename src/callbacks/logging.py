@@ -35,7 +35,9 @@ class Logging(Callback):
             config.logger.log({
                 f"{vae_type}": {
                     "train": {
-                        "critic_loss": output['log']['critic_loss']
+                        "critic_loss": output['log']['critic_loss'],
+                        "critic_loss_fake": output['log']['critic_loss_fake'],
+                        "critic_loss_real": output['log']['critic_loss_real']
                     }
                 }
             }, commit=False)

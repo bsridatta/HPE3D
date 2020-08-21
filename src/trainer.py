@@ -53,9 +53,10 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         target_2d = inp.detach()
         # ???????????????????
         # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=)
-        T = torch.tensor((0,0,10), device=recon_3d.device, dtype=recon_3d.dtype)
+        T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
+
         novel_3d_detach = random_rotate(recon_3d.detach())
         novel_3d = random_rotate(recon_3d)
 
@@ -105,7 +106,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        critic_weight = 0.1
+        critic_weight = 0.001
         recon_weight = 10
 
         loss = recon_weight*recon_loss + 0*kld_loss + critic_weight*critic_loss_vae
@@ -122,7 +123,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # TODO log critic loss in training and here as critic_loss_vae **********************
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss_vae,
                 "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
-                "target_2d": target_2d, "target_3d": target_3d}
+                "target_2d": target_2d, "target_3d": target_3d,
+                "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
 
         # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
 
