@@ -7,11 +7,12 @@ import torch
 import torch.nn.functional as F
 
 from src.models import KLD, PJPE, reparameterize
-from src.processing import post_process, random_rotate_and_project_3d_to_2d
+from src.processing import post_process, random_rotate, project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
 from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
 # torch.autograd.set_detect_anomaly(True)
+
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
@@ -21,7 +22,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
-        
+
         output = _training_step(batch, batch_idx, model, config, optimizer)
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
@@ -52,10 +53,14 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         target_2d = inp.detach()
         # ???????????????????
         # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=)
-        recon_3d[:, :, 2] += torch.tensor((10))
-        recon_2d = random_rotate_and_project_3d_to_2d(recon_3d, random_rotate=False)
-        novel_2d_detach = random_rotate_and_project_3d_to_2d(recon_3d).detach()
-        novel_2d = random_rotate_and_project_3d_to_2d(recon_3d)
+        T = torch.tensor((0,0,10), device=recon_3d.device, dtype=recon_3d.dtype)
+
+        recon_2d = project_3d_to_2d(recon_3d+T)
+        novel_3d_detach = random_rotate(recon_3d.detach())
+        novel_3d = random_rotate(recon_3d)
+
+        novel_2d = project_3d_to_2d(novel_3d+T)
+        novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
 
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
@@ -79,7 +84,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
-        critic_loss_fake.backward() 
+        critic_loss_fake.backward()
 
         # update critic
         critic_optimizer.step()
@@ -89,7 +94,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
-        
+
         vae_optimizer.zero_grad()
         labels.fill_(real_label)
         output = critic(novel_2d)
@@ -100,15 +105,15 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        critic_weight= 1
+        critic_weight = 0.1
         recon_weight = 10
 
-        loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss_vae
+        loss = recon_weight*recon_loss + 0*kld_loss + critic_weight*critic_loss_vae
         loss.backward()  # Would include VAE and critic but critic not updated
 
         # update VAE
         vae_optimizer.step()
-    
+
         ############################
         # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval
         # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale']/10))
@@ -116,7 +121,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # TODO log critic loss in training and here as critic_loss_vae **********************
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss_vae,
-                "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d, 
+                "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
                 "target_2d": target_2d, "target_3d": target_3d}
 
         # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())

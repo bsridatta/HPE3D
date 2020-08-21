@@ -243,29 +243,32 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
     return torch.stack([rotations_0, rotations_1, rotations_2], axis=-1)
 
 
-def random_rotate_and_project_3d_to_2d(pose_3d,
-                                       roll_range=(-math.pi / 9.0,
-                                                   math.pi / 9.0),
-                                       azimuth_range=(0, 0),
-                                       elevation_range=(-math.pi, math.pi),
-                                       default_camera=True,
-                                       default_camera_z=10.0,
-                                       random_rotate=True
-                                       ):
+def random_rotate(pose_3d,
+                  roll_range=(-math.pi / 9.0,
+                              math.pi / 9.0),
+                  azimuth_range=(0, 0),
+                  elevation_range=(-math.pi, math.pi),
+                  default_camera=True,
+                  default_camera_z=10.0,
+                  ):
 
-    if random_rotate:
-        azimuths = torch.rand(pose_3d.shape[:-2]) * \
-            (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
-        elevations = torch.rand(pose_3d.shape[:-2]) * \
-            (elevation_range[0]-elevation_range[1]) + elevation_range[1]
-        rolls = torch.rand(pose_3d.shape[:-2]) * \
-            (roll_range[0]-roll_range[1]) + roll_range[1]
+    azimuths = torch.rand(pose_3d.shape[:-2]) * \
+        (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
+    elevations = torch.rand(pose_3d.shape[:-2]) * \
+        (elevation_range[0]-elevation_range[1]) + elevation_range[1]
+    rolls = torch.rand(pose_3d.shape[:-2]) * \
+        (roll_range[0]-roll_range[1]) + roll_range[1]
 
-        rotation_matrices = create_rotation_matrices_3d(azimuths, elevations, rolls)
-        rotation_matrices = rotation_matrices.to(device=pose_3d.device)
-        # TODO flip x, y
-        pose_3d = torch.matmul(rotation_matrices, torch.transpose(pose_3d, 1, 2))
-        pose_3d = torch.transpose(pose_3d, 1, 2)
+    rotation_matrices = create_rotation_matrices_3d(azimuths, elevations, rolls)
+    rotation_matrices = rotation_matrices.to(device=pose_3d.device)
+
+    pose_3d_rotated = torch.matmul(rotation_matrices, torch.transpose(pose_3d, 1, 2))
+    pose_3d_rotated = torch.transpose(pose_3d_rotated, 1, 2)
+
+    return pose_3d_rotated
+
+
+def project_3d_to_2d(pose_3d):
 
     pose_3d_z = (torch.clamp(pose_3d[Ellipsis, -1:], min=1e-12))
     pose_2d_reprojection = pose_3d[Ellipsis, :-1]/pose_3d_z
