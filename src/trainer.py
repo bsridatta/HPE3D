@@ -88,7 +88,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_loss_fake.backward()
 
         # update critic
-        critic_optimizer.step()
+        if batch_idx % 3 == 0:
+            critic_optimizer.step()
 
         ################################################
         # Generator - maximize log(D(G(z)))
@@ -109,7 +110,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_weight = 0.001
         recon_weight = 10
 
-        loss = recon_weight*recon_loss + 0*kld_loss + critic_weight*critic_loss_vae
+        loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss_vae
         loss.backward()  # Would include VAE and critic but critic not updated
 
         # update VAE
