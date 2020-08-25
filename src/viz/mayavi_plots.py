@@ -1,6 +1,7 @@
 from mayavi import mlab
 import numpy as np
 
+
 def plot_3D_models(poses, mode="show"):
     """plot single pose as save as wavefront
 
@@ -40,11 +41,11 @@ def plot_3D_models(poses, mode="show"):
     # And choose a nice view
     # mlab.view(330.6, 106, 6000.5, [0, 0, .05])
     # mlab.roll(0)
-    
+
     if mode == 'save':
-        mlab.savefig("/lhome/sbudara/lab/HPE3D/src/results/pose.obj")
+        mlab.savefig("/lhome/sbudara/lab/HPE3D/snapshot.obj")
         mlab.close()
-        return 
-    
-    # else:
-    #    mlab.show()
+        return
+
+    else:
+        mlab.show()

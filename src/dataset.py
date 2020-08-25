@@ -26,6 +26,7 @@ class H36M(Dataset):
             device {str} -- (default: {'cpu'})
             annotation_path {str} -- path to the annotation_file
             train {bool} -- triggers data augmentation during training (default: {False})
+            projetion -- default: True
         """
 
         self.no_images = no_images  # if only lifting 2D-3D

@@ -102,7 +102,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         pose3d = normalize(pose3d)
 
     elif projection:
-        head = pose2d[:, 9, :]  # Note root joint removed
+        head = pose2d[:, 9, :]  # Note root joint is removed
         root = np.zeros_like(head)
         dist = np.linalg.norm(head-root, axis=1, keepdims=True)
         scale = 10*dist
@@ -134,7 +134,7 @@ def post_process(config, recon, target, scale=None):
 
     else:
         # de-scale
-        recon = (recon.T*(scale*10).T).T
+        recon = (recon.T*(scale/10).T).T
         recon = torch.cat(
             (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
                 recon.shape[0], 1, 1),

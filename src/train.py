@@ -37,7 +37,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'Reprojection'
-    os.environ['WANDB_NOTES'] = 'None'
+    os.environ['WANDB_NOTES'] = 'upscaling'
 
     # ignore when debugging on cpu
     if not use_cuda:

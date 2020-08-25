@@ -445,7 +445,7 @@ def plot_projection_raw(sample):
     plt.show()
 
 
-def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d):
+def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, name=""):
 
     recon_2d = recon_2d.detach().cpu().numpy()
     novel_2d = novel_2d.detach().cpu().numpy()
@@ -454,19 +454,19 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d):
     target_3d = target_3d.detach().cpu().numpy()
 
     img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
-    config.logger.log({"target_2d": config.logger.Image(img)}, commit=False)
+    config.logger.log({name+"target_2d": config.logger.Image(img)}, commit=False)
 
     img = plot_2d(recon_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({"recon_2d": config.logger.Image(img)}, commit=False)
+    config.logger.log({name+"recon_2d": config.logger.Image(img)}, commit=False)
   
     img = plot_2d(novel_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({"novel_2d": config.logger.Image(img)}, commit=False)
+    config.logger.log({name+"novel_2d": config.logger.Image(img)}, commit=False)
 
     img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
-    config.logger.log({"target_3d": config.logger.Image(img)}, commit=False)
+    config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
 
     img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({"recon_3d": config.logger.Image(img)}, commit=True)
+    config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
 

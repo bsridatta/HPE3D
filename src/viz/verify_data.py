@@ -78,7 +78,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 8
+    plot = 2
     processed = True
 
     if processed:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         # plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
-        plot_3D_models([pose3d])
+        plot_3D_models([pose3d/100], mode='save')
     # 3D Model diff
     elif plot == 3:
         plot_3D_models([pose3d, sample["pose3d_noise"]])

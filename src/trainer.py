@@ -27,7 +27,6 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)
-        break
     cb.on_train_end(config=config, epoch=epoch)
 
 
@@ -169,9 +168,6 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
             del output
             gc.collect()
-            # TODO REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!?????????????????????????
-            print("**Remove break**")
-            break
 
     avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
 
@@ -275,7 +271,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
                 "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
 
-        data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "input": inp, "target_3d": target_3d,
+        data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
+                "target_2d": target_2d, "target_3d": target_3d,
                 "z": z, "z_attr": batch['action'], "scale": batch['scale']}
 
     else:
@@ -286,7 +283,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
-        data = {"recon": recon, "target": target, "input": inp,
+        data = {"recon_3d": recon_3d, "target_2d": target_2d, 
+                "target_3d": target_3d,
                 "z": z, "z_attr": batch['action']}
 
     return OrderedDict({'loss': loss, "log": logs,

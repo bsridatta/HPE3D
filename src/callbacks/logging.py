@@ -68,13 +68,13 @@ class Logging(Callback):
         avg_output = {}
         avg_output['log'] = {}
 
-        avg_output['loss'] = avg_loss
+        avg_output['loss'] = loss_dic['loss']/len(val_loader)
         avg_output['log']['recon_loss'] = loss_dic['recon_loss']/len(val_loader)
         avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
 
         # print to console
         print(f"{vae_type} Validation:",
-              f"\t\tLoss: {round(avg_loss,4)}",
+              f"\t\tLoss: {round(avg_output['loss'],4)}",
               f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
               f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
 
@@ -84,9 +84,9 @@ class Logging(Callback):
             avg_output['log']['critic_loss_real'] = loss_dic['critic_loss_real']/len(val_loader)
             avg_output['log']['critic_loss_fake'] = loss_dic['critic_loss_fake']/len(val_loader)
 
-            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}').format(
+            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}'.format(
                 avg_output['log']['critic_loss'], avg_output['log']['critic_loss_real'],
-                avg_output['log']['critic_loss_fake'], end='')
+                avg_output['log']['critic_loss_fake'], end=''))
 
             # log to wandb
             config.logger.log({
@@ -101,9 +101,9 @@ class Logging(Callback):
 
             # log intermediate visualizations
             for i in range(4):
-                i+=round(len(output["log"]["recon_2d"])/4.2)
-                plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
-                              output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
+                i+=round(len(t_data["recon_2d"])/4.2)
+                plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
+                              t_data["recon_3d"][i], t_data["target_3d"][i], name='val')
 
         # log main metrics to wandb
         config.logger.log({
@@ -115,8 +115,6 @@ class Logging(Callback):
                 }
             }
         }, commit=True)
-
-        print('')
 
         # print and log MPJPE
         print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
