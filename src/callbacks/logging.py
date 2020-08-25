@@ -7,6 +7,7 @@ from src.models import PJPE
 from src.viz.mpl_plots import plot_all_proj, plot_3d
 from src.viz.mayavi_plots import plot_3D_models
 
+
 class Logging(Callback):
     """Logging and printing metrics"""
 
@@ -30,22 +31,24 @@ class Logging(Callback):
 
         # critic
         if config.self_supervised:
-            print('\tCritic: {:.4f}'.format(output['log']['critic_loss']), end='')
+            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}'.format(
+                output['log']['critic_loss'], output['log']['critic_loss_real'],
+                output['log']['critic_loss_fake']), end='')
 
             config.logger.log({
                 f"{vae_type}": {
                     "train": {
                         "critic_loss": output['log']['critic_loss'],
-                        "critic_loss_fake": output['log']['critic_loss_fake'],
-                        "critic_loss_real": output['log']['critic_loss_real']
+                        "critic_loss_real": output['log']['critic_loss_real'],
+                        "critic_loss_fake": output['log']['critic_loss_fake']
                     }
                 }
             }, commit=False)
 
-            if (batch_idx/n_batches) % 0.1 == 0 and batch_len==config.batch_size:
-                i =0
+            if (batch_idx/n_batches) % 0.1 == 0 and batch_len == config.batch_size:
+                i = 0
                 plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
-                            output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
+                              output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
 
         # other logs to wandb
         config.logger.log({
@@ -57,27 +60,17 @@ class Logging(Callback):
                 }
             }
         }, commit=True)
-        
+
         print('')
 
-    def on_validation_end(self, config, vae_type, epoch, critic_loss, avg_loss, recon_loss, kld_loss, val_loader, mpjpe, pjpe, t_data, **kwargs):
+    def on_validation_end(self, config, vae_type, epoch, loss_dic, val_loader, mpjpe, pjpe, t_data, **kwargs):
         # average epochs output
         avg_output = {}
-        avg_output['loss'] = avg_loss
         avg_output['log'] = {}
-        avg_output['log']['recon_loss'] = recon_loss/len(val_loader)
-        avg_output['log']['kld_loss'] = kld_loss/len(val_loader)
 
-        # log to wandb
-        config.logger.log({
-            f"{vae_type}": {
-                "val": {
-                    "kld_loss": avg_output['log']['kld_loss'],
-                    "recon_loss": avg_output['log']['recon_loss'],
-                    "total_val": avg_output['loss']
-                }
-            }
-        })
+        avg_output['loss'] = avg_loss
+        avg_output['log']['recon_loss'] = loss_dic['recon_loss']/len(val_loader)
+        avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
 
         # print to console
         print(f"{vae_type} Validation:",
@@ -87,40 +80,51 @@ class Logging(Callback):
 
         # critic
         if config.self_supervised:
-            avg_output['log']['critic_loss'] = critic_loss/len(val_loader)
-            print(f"\tCritic: {round(avg_output['log']['critic_loss'], 4)}", end='')
+            avg_output['log']['critic_loss'] = loss_dic['critic_loss']/len(val_loader)
+            avg_output['log']['critic_loss_real'] = loss_dic['critic_loss_real']/len(val_loader)
+            avg_output['log']['critic_loss_fake'] = loss_dic['critic_loss_fake']/len(val_loader)
 
+            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}').format(
+                avg_output['log']['critic_loss'], avg_output['log']['critic_loss_real'],
+                avg_output['log']['critic_loss_fake'], end='')
+
+            # log to wandb
             config.logger.log({
                 f"{vae_type}": {
                     "val": {
-                        "critic_loss": avg_output['log']['critic_loss']
+                        "critic_loss": avg_output['log']['critic_loss'],
+                        "critic_loss_real": avg_output['log']['critic_loss_real'],
+                        "critic_loss_fake": avg_output['log']['critic_loss_fake']
                     }
                 }
-            })
+            }, commit=False)
+
+            # log intermediate visualizations
+            for i in range(4):
+                i+=round(len(output["log"]["recon_2d"])/4.2)
+                plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
+                              output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
+
+        # log main metrics to wandb
+        config.logger.log({
+            f"{vae_type}": {
+                "val": {
+                    "kld_loss": avg_output['log']['kld_loss'],
+                    "recon_loss": avg_output['log']['recon_loss'],
+                    "total_val": avg_output['loss']
+                }
+            }
+        }, commit=True)
+
         print('')
 
         # print and log MPJPE
         print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
-        config.mpjpe = mpjpe
+        config.mpjpe=mpjpe
 
         if mpjpe < config.mpjpe_min:
-            config.mpjpe_min = mpjpe
-
-        # log intermediate results
-        # n = 2
-        # fac = 100
-        # plots = ['recon_3d']
-        # for plot in plots:
-        #     for x in range(0,n):
-        #         print(x)
-        #         plot_3D_models([t_data[plot][n*fac].cpu().numpy()], mode='save')
-        #         config.logger.log({
-        #             str(n*fac): [config.logger.Object3D(open("/lhome/sbudara/lab/HPE3D/src/results/pose.obj"))]
-        #         })
-        # plot:{
-        # str(n*fac): plot_3d(t_data[plot][n*fac].cpu().numpy(), mode='plt', labels=True)
-        # }
+            config.mpjpe_min=mpjpe
 
         # For Images
         # TODO can have this in eval instead and skip logging val

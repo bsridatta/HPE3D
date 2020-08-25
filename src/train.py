@@ -37,7 +37,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'Reprojection'
-    os.environ['WANDB_NOTES'] = 'Reprojection critic update 2'
+    os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -132,8 +132,8 @@ def main():
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            # val_loss = validation_epoch(
-            #     config, cb, model, val_loader, epoch, vae_type)
+            val_loss = validation_epoch(
+                config, cb, model, val_loader, epoch, vae_type)
 
             # if val_loss != val_loss:
             #     print("[INFO]: NAN loss")
