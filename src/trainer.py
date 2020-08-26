@@ -106,8 +106,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        critic_weight = 0.0001
-        recon_weight = 1  # 10, 0.001
+        critic_weight = 0.001
+        recon_weight = 10  # 10, 0.001
 
         loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
@@ -179,17 +179,20 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         if normalize_pose and not config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 config, t_data['recon_3d'], target=t_data['target_3d'])
-            pjpe = torch.mean(PJPE(t_data['recon_3d'], t_data['target_3d']), dim=0)
+            pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
 
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
-                config, t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale'])
-            pjpe = torch.mean(PJPE(t_data['recon_3d'], t_data['target_3d']), dim=0)
+                config, t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'])
+            pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
 
-        mpjpe = torch.mean(pjpe).item()
+        avg_pjpe = torch.mean((pjpe), dim=0)
+        avg_mpjpe = torch.mean(avg_pjpe).item()
+
+        config.logger.log({"pjpe": pjpe.cpu()})
 
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
-                         val_loader=val_loader, mpjpe=mpjpe, pjpe=pjpe, t_data=t_data
+                         val_loader=val_loader, mpjpe=avg_mpjpe, pjpe=avg_pjpe, t_data=t_data
                          )
 
     del loss_dic, t_data
@@ -262,10 +265,10 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         recon_weight = 1  # 10, 0.001
 
         loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss
-   
+
         ############################
         # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval
-        # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale']/10))
+        # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale_3d']/10))
         ############################
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
@@ -273,7 +276,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
                 "target_2d": target_2d, "target_3d": target_3d,
-                "z": z, "z_attr": batch['action'], "scale": batch['scale']}
+                "z": z, "z_attr": batch['action'], "scale_3d": batch['scale_3d']}
 
     else:
         recon_loss = criterion(recon_3d, target_3d)
@@ -283,8 +286,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
-        data = {"recon_3d": recon_3d, "target_2d": target_2d, 
-                "target_3d": target_3d,
+        data = {"recon_3d": recon_3d, "target_3d": target_3d,
                 "z": z, "z_attr": batch['action']}
 
     return OrderedDict({'loss': loss, "log": logs,

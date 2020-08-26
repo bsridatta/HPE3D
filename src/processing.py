@@ -92,22 +92,40 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     Returns:
         annotations (dic) -- with normalized 16 joint 2d and 3d poses
     '''
+    pose2d = annotations['pose2d']
+    pose3d = annotations['pose3d']
+    
+    if projection:
+        # Scale 2D to 1/c units and save scale
+        c = 10 
+        #### 2D ####
+        head = pose2d[:, 10, :]  # Note heat @ 9 if root joint is removed
+        # root = np.zeros_like(head)
+        root = pose2d[:,0,:]
+        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
+        scale_2d = c*dist # 1/c units
+        pose2d = np.divide(pose2d.T, scale_2d.T).T
+        annotations['scale_2d'] = scale_2d
+        
+        #### 3D ####
+        # calculate scale required to make 3D to 1 unit
+        head = pose3d[:, 10, :]  # Note heat @ 9 if root joint is removed
+        # root = np.zeros_like(head)
+        root = pose3d[:,0,:]
+        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
+        scale_3d = dist # 1 unit
+        annotations['scale_3d'] = scale_3d
+
+        
     # center the 2d and 3d pose at the root and remove the root
-    pose2d = zero_the_root(annotations['pose2d'], root_idx)
-    pose3d = zero_the_root(annotations['pose3d'], root_idx)
+    pose2d = zero_the_root(pose2d, root_idx)
+    pose3d = zero_the_root(pose3d, root_idx)    
+    
 
     if normalize_pose and not projection:
         # Normalize
         pose2d = normalize(pose2d)
         pose3d = normalize(pose3d)
-
-    elif projection:
-        head = pose2d[:, 9, :]  # Note root joint is removed
-        root = np.zeros_like(head)
-        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
-        scale = 10*dist
-        pose2d = np.divide(pose2d.T, scale.T).T
-        annotations['scale'] = scale
 
     annotations['pose2d'] = pose2d
     annotations['pose3d'] = pose3d
@@ -118,6 +136,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 def post_process(config, recon, target, scale=None):
     '''
     DeNormalize Validation Data
+    3D poses only - to calc the evaluation metric
     Add root at 0,0,0
     '''
     if not config.self_supervised:
@@ -133,19 +152,23 @@ def post_process(config, recon, target, scale=None):
             (torch.zeros(target.shape[0], 1, recon.shape[2], device=config.device), target), dim=1)
 
     else:
-        # de-scale
-        recon = (recon.T*(scale/10).T).T
+        # 3D recon is at c, but GT is at 0
+        
+        # Add root at 0,0,c to recon and de-scale
+        recon = (recon.T*scale.T).T
         recon = torch.cat(
             (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
                 recon.shape[0], 1, 1),
                 recon
              ), dim=1)
-
+        
+        # add 0,0,0 as root and shift to c
         target = torch.cat(
-            (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
+            (torch.tensor((0, 0, 0), device=config.device, dtype=torch.float32).repeat(
                 target.shape[0], 1, 1),
                 target
              ), dim=1)
+        target += torch.tensor((0,0,10), device=config.device, dtype=torch.float32)
 
     return recon, target
 

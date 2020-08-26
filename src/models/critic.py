@@ -59,9 +59,9 @@ class Critic(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        residual = x
-        x = self.LBAD_3(x)
-        x = self.LBAD_4(x) + residual
+        # residual = x
+        # x = self.LBAD_3(x)
+        # x = self.LBAD_4(x) + residual
 
         out = self.out_block(x)
         
