@@ -88,6 +88,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # update critic
         if batch_idx % 3 == 0:
+            # Clip grad norm to 1
+            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -107,12 +109,15 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         kld_loss = KLD(mean, logvar, decoder.name)
 
         critic_weight = 0.001
-        recon_weight = 10  # 10, 0.001
+        recon_weight = 10  # gold - 10, 0.001
 
         loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
         # update VAE
+        # Clip grad norm to 1
+        torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1)
+        torch.nn.utils.clip_grad_norm_(decoder.parameters(), 1)
         vae_optimizer.step()
 
         ############################
@@ -178,18 +183,19 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
     if '3D' in model[1].name:
         if normalize_pose and not config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
-                config, t_data['recon_3d'], target=t_data['target_3d'])
-            pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
-
+                t_data['recon_3d'], t_data['target_3d'])
+        
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
-                config, t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'])
-            pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
+                t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'],
+            self_supervised = True, procrustes=True)
+        
+        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
 
         avg_pjpe = torch.mean((pjpe), dim=0)
         avg_mpjpe = torch.mean(avg_pjpe).item()
 
-        config.logger.log({"pjpe": pjpe.cpu()})
+        config.logger.log({"pjpe": torch.mean(pjpe, dim=1).cpu()})
 
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
                          val_loader=val_loader, mpjpe=avg_mpjpe, pjpe=avg_pjpe, t_data=t_data

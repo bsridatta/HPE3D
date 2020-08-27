@@ -33,7 +33,7 @@ class BetaScheduler(Callback):
         else:
             print(f"[INFO] Beta warming: {config.beta}")
 
-        config.logger.log({"beta": config.beta})
+        config.logger.log({"beta": config.beta}, commit=False)
 
     def beta_cycling(self, config, epoch):
         """cycling beta btw 0 and 1 during annealing_epochs after waiting for warmup_epochs
@@ -52,4 +52,4 @@ class BetaScheduler(Callback):
         else:
             print(f"[INFO] Beta constant: {config.beta}")
 
-        config.logger.log({"beta": config.beta})
+        config.logger.log({"beta": config.beta}, commit=False)

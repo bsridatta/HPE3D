@@ -14,7 +14,7 @@ from src import viz
 from src.dataloader import train_dataloader, val_dataloader
 from src.models import PJPE, weight_init, Critic
 from src.trainer import training_epoch, validation_epoch
-from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler, Analyze
+from src.callbacks import CallbackList, ModelCheckpoint, Logging, BetaScheduler, Analyze, MaxNorm
 
 
 def main():
@@ -98,7 +98,9 @@ def main():
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),
                        Logging(),
-                       BetaScheduler(config, strategy="cycling")],)
+                       BetaScheduler(config, strategy="cycling"),
+                       MaxNorm()
+                       ])
     # Analyze("northern-snowflake-1584", 500),)
 
     cb.setup(config=config, models=models, optimizers=optimizers,

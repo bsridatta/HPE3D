@@ -94,33 +94,31 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     '''
     pose2d = annotations['pose2d']
     pose3d = annotations['pose3d']
-    
+
     if projection:
         # Scale 2D to 1/c units and save scale
-        c = 10 
+        c = 10
         #### 2D ####
         head = pose2d[:, 10, :]  # Note heat @ 9 if root joint is removed
         # root = np.zeros_like(head)
-        root = pose2d[:,0,:]
+        root = pose2d[:, 0, :]
         dist = np.linalg.norm(head-root, axis=1, keepdims=True)
-        scale_2d = c*dist # 1/c units
+        scale_2d = c*dist  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
         annotations['scale_2d'] = scale_2d
-        
+
         #### 3D ####
         # calculate scale required to make 3D to 1 unit
         head = pose3d[:, 10, :]  # Note heat @ 9 if root joint is removed
         # root = np.zeros_like(head)
-        root = pose3d[:,0,:]
+        root = pose3d[:, 0, :]
         dist = np.linalg.norm(head-root, axis=1, keepdims=True)
-        scale_3d = dist # 1 unit
+        scale_3d = dist  # 1 unit
         annotations['scale_3d'] = scale_3d
 
-        
     # center the 2d and 3d pose at the root and remove the root
     pose2d = zero_the_root(pose2d, root_idx)
-    pose3d = zero_the_root(pose3d, root_idx)    
-    
+    pose3d = zero_the_root(pose3d, root_idx)
 
     if normalize_pose and not projection:
         # Normalize
@@ -133,13 +131,13 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     return annotations
 
 
-def post_process(config, recon, target, scale=None):
+def post_process(recon, target, scale=None, self_supervised=False, procrustes=False):
     '''
     DeNormalize Validation Data
     3D poses only - to calc the evaluation metric
     Add root at 0,0,0
     '''
-    if not config.self_supervised:
+    if not self_supervised:
         # de-normalize data to original coordinates
         recon = denormalize(recon)
         target = denormalize(target)
@@ -147,28 +145,32 @@ def post_process(config, recon, target, scale=None):
         # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
         # Not very fair, but the average is with 17 in the denom after adding root joiny at zero!
         recon = torch.cat(
-            (torch.zeros(recon.shape[0], 1, recon.shape[2], device=config.device), recon), dim=1)
+            (torch.zeros(recon.shape[0], 1, recon.shape[2], device=recon.device), recon), dim=1)
         target = torch.cat(
-            (torch.zeros(target.shape[0], 1, recon.shape[2], device=config.device), target), dim=1)
+            (torch.zeros(target.shape[0], 1, recon.shape[2], device=recon.device), target), dim=1)
 
     else:
         # 3D recon is at c, but GT is at 0
-        
+
         # Add root at 0,0,c to recon and de-scale
         recon = (recon.T*scale.T).T
         recon = torch.cat(
-            (torch.tensor((0, 0, 10), device=config.device, dtype=torch.float32).repeat(
+            (torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32).repeat(
                 recon.shape[0], 1, 1),
                 recon
              ), dim=1)
-        
+
         # add 0,0,0 as root and shift to c
         target = torch.cat(
-            (torch.tensor((0, 0, 0), device=config.device, dtype=torch.float32).repeat(
+            (torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
                 target.shape[0], 1, 1),
                 target
              ), dim=1)
-        target += torch.tensor((0,0,10), device=config.device, dtype=torch.float32)
+        target += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
+
+    # if procrustes:
+    #     # recon should be the second matrix
+    #     _, Z, T, b, c = get_transformation(target, recon, True)
 
     return recon, target
 
@@ -202,47 +204,10 @@ def normalize_image(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225), 
     return img
 
 
-def project_3d_to_2d(pose3d, cam_params, coordinates="camera"):
-    """
-    Project 3d pose from camera coordiantes to image frame
-    using camera parameters including radial and tangential distortion
-
-    Args:
-        P: Nx3 points in camera coordinates
-        cam_params (dic):
-            R: 3x3 Camera rotation matrix
-            T: 3x1 Camera translation parameters
-            f: 2x1 Camera focal length accounting imprection in x, y
-            c: 2x1 Camera center
-            k: 3x1 Camera radial distortion coefficients
-            p: 2x1 Camera tangential distortion coefficients
-
-    Returns:
-        Proj: Nx2 points in pixel space
-        D: 1xN depth of each point in camera space
-        radial: 1xN radial distortion per point
-        tan: 1xN tangential distortion per point
-        r2: 1xN squared radius of the projected points before distortion
-    """
-    # f = cam_params['cam_f'].view(-1, 1, 2)
-    # c = cam_params['cam_c'].view(-1, 1, 2)
-
-    if coordinates == 'world':  # rotate and translate
-        R = cam_params('cam_R')
-        T = cam_params('cam_T')
-        # TODO maybe works only for one
-        X = R.dot(torch.transpose(pose3d, 1, 2) - T)
-
-    pose2d_proj = (pose3d/pose3d[:, :, 2][:, :, None].repeat(1, 1, 3))[:, :, :2]
-
-    # f = 1
-    # c = 0
-    # pose2d_proj = f * pose2d_proj + c
-
-    return pose2d_proj
-
-
 def create_rotation_matrices_3d(azimuths, elevations, rolls):
+    '''
+    https://github.com/google-research/google-research/tree/68c738421186ce85339bfee16bf3ca2ea3ec16e4/poem
+    '''
 
     azi_cos = torch.cos(azimuths)
     azi_sin = torch.sin(azimuths)
@@ -267,14 +232,15 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 
 
 def random_rotate(pose_3d,
-                  roll_range=(-math.pi / 9.0,
-                              math.pi / 9.0),
+                  roll_range=(0, 0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi),
                   default_camera=True,
                   default_camera_z=10.0,
                   ):
-
+    #   roll_range=(-math.pi / 9.0,
+    #               math.pi / 9.0),
+    """roll_range is elevation as x and y arent swapped"""
     azimuths = torch.rand(pose_3d.shape[:-2]) * \
         (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
     elevations = torch.rand(pose_3d.shape[:-2]) * \
@@ -297,3 +263,54 @@ def project_3d_to_2d(pose_3d):
     pose_2d_reprojection = pose_3d[Ellipsis, :-1]/pose_3d_z
 
     return pose_2d_reprojection
+
+
+def procrustes(X, Y, allow_scaling=False, allow_reflection=False):
+    """Register the points in Y by rotation, translation, uniform scaling (optional) and reflection (optional) 
+    to be closest to the corresponding points in X, in a least-squares sense.
+
+    This function operates on batches. For each item in the batch a separate
+    transform is computed independently of the others.
+
+    https://gist.github.com/isarandi/95918dcf02c2ed5cf3db50613e5aaee7
+
+    Arguments:
+       X: Tensor with shape [batch_size, n_points, point_dimensionality]
+       Y: Tensor with shape [batch_size, n_points, point_dimensionality]
+       allow_scaling: boolean, specifying whether uniform scaling is allowed
+       allow_reflection: boolean, specifying whether reflections are allowed
+
+    Returns the transformed version of Y.
+    """
+
+    meanX = tf.reduce_mean(X, axis=1, keepdims=True)
+    centeredX = X - meanX
+    normX = tf.norm(centeredX, axis=(1, 2), ord='fro', keepdims=True)
+    normalizedX = centeredX / normX
+
+    meanY = tf.reduce_mean(Y, axis=1, keepdims=True)
+    centeredY = Y - meanY
+    normY = tf.norm(centeredY, axis=(1, 2), ord='fro', keepdims=True)
+    normalizedY = centeredY / normY
+
+    A = tf.einsum('Nij,Nik->Njk', normalizedX, normalizedY)
+    s, U, V = tf.linalg.svd(A, full_matrices=False)
+    T = tf.einsum('Nij,Nkj->Nik', V, U)
+
+    if allow_scaling:
+        output_scale = normX * tf.reduce_sum(s)
+    else:
+        output_scale = normY
+
+    if not allow_reflection:
+        # Check if T has a reflection component. If so, then remove it by flipping
+        # across the direction of least variance, i.e. the last singular value/vector.
+        have_reflection = tf.linalg.det(T) < 0
+        T_mirror = T - 2 * tf.einsum('Ni,Nk->Nik', V[..., -1], U[..., -1])
+        T = tf.where(have_reflection, T_mirror, T)
+
+        if allow_scaling:
+            output_scale_mirror = output_scale - 2 * normX * s[..., -1]
+            output_scale = tf.where(have_reflection, output_scale_mirror, output_scale)
+
+    return output_scale * (normalizedY @ T) + meanX
