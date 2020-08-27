@@ -108,10 +108,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        critic_weight = 0.001
-        recon_weight = 10  # gold - 10, 0.001
-
-        loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss
+        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
         # update VAE
@@ -267,10 +264,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        critic_weight = 0.0001
-        recon_weight = 1  # 10, 0.001
-
-        loss = recon_weight*recon_loss + config.beta*kld_loss + critic_weight*critic_loss
+        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
 
         ############################
         # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval

@@ -283,18 +283,18 @@ def procrustes(X, Y, allow_scaling=False, allow_reflection=False):
     Returns the transformed version of Y.
     """
 
-    meanX = tf.reduce_mean(X, axis=1, keepdims=True)
+    meanX = torch.mean(X, dim=1, keepdims=True)
     centeredX = X - meanX
-    normX = tf.norm(centeredX, axis=(1, 2), ord='fro', keepdims=True)
+    normX = torch.norm(centeredX, dim=(1, 2), p='fro', keepdims=True)
     normalizedX = centeredX / normX
 
-    meanY = tf.reduce_mean(Y, axis=1, keepdims=True)
+    meanY = torch.mean(Y, axis=1, keepdims=True)
     centeredY = Y - meanY
     normY = tf.norm(centeredY, axis=(1, 2), ord='fro', keepdims=True)
     normalizedY = centeredY / normY
 
-    A = tf.einsum('Nij,Nik->Njk', normalizedX, normalizedY)
-    s, U, V = tf.linalg.svd(A, full_matrices=False)
+    A = torch.einsum('nab,nad->nbd', normalizedX, normalizedY)
+    s, U, V = torch.svd(A, full_matrices=False)
     T = tf.einsum('Nij,Nkj->Nik', V, U)
 
     if allow_scaling:
