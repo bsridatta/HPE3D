@@ -113,8 +113,14 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # update VAE
         # Clip grad norm to 1
-        torch.nn.utils.clip_grad_norm_(encoder.parameters(), 1)
-        torch.nn.utils.clip_grad_norm_(decoder.parameters(), 1)
+        torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
+        torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
+        torch.nn.utils.clip_grad_norm_(critic.parameters(), 2)
+
+        torch.nn.utils.clip_grad_value_(encoder.parameters(), 1000)
+        torch.nn.utils.clip_grad_value_(decoder.parameters(), 1000)
+        torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
+        
         vae_optimizer.step()
 
         ############################
@@ -185,7 +191,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'],
-            self_supervised = True, procrustes=True)
+            self_supervised = True, procrustes_enabled=True)
         
         pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
 

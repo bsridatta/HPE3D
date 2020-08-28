@@ -131,7 +131,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     return annotations
 
 
-def post_process(recon, target, scale=None, self_supervised=False, procrustes=False):
+def post_process(recon, target, scale=None, self_supervised=False, procrustes_enabled=False):
     '''
     DeNormalize Validation Data
     3D poses only - to calc the evaluation metric
@@ -168,9 +168,9 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes=Fa
              ), dim=1)
         target += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
 
-    # if procrustes:
-    #     # recon should be the second matrix
-    #     _, Z, T, b, c = get_transformation(target, recon, True)
+    if procrustes_enabled:
+        # recon should be the second matrix
+        recon = procrustes(target, recon, allow_scaling=False, allow_reflection=True)
 
     return recon, target
 
@@ -283,34 +283,34 @@ def procrustes(X, Y, allow_scaling=False, allow_reflection=False):
     Returns the transformed version of Y.
     """
 
-    meanX = torch.mean(X, dim=1, keepdims=True)
+    meanX = torch.mean(X, dim=1, keepdim=True)
     centeredX = X - meanX
-    normX = torch.norm(centeredX, dim=(1, 2), p='fro', keepdims=True)
+    normX = torch.norm(centeredX, dim=(1, 2), p='fro', keepdim=True)
     normalizedX = centeredX / normX
 
-    meanY = torch.mean(Y, axis=1, keepdims=True)
+    meanY = torch.mean(Y, axis=1, keepdim=True)
     centeredY = Y - meanY
-    normY = tf.norm(centeredY, axis=(1, 2), ord='fro', keepdims=True)
+    normY = torch.norm(centeredY, dim=(1, 2), p='fro', keepdim=True)
     normalizedY = centeredY / normY
 
     A = torch.einsum('nab,nad->nbd', normalizedX, normalizedY)
-    s, U, V = torch.svd(A, full_matrices=False)
-    T = tf.einsum('Nij,Nkj->Nik', V, U)
+    U, s, V = torch.svd(A, some=True)
+    T = torch.einsum('nab,ndb->nad', V, U)
 
     if allow_scaling:
-        output_scale = normX * tf.reduce_sum(s)
+        output_scale = normX * torch.sum(s)
     else:
         output_scale = normY
 
     if not allow_reflection:
         # Check if T has a reflection component. If so, then remove it by flipping
         # across the direction of least variance, i.e. the last singular value/vector.
-        have_reflection = tf.linalg.det(T) < 0
-        T_mirror = T - 2 * tf.einsum('Ni,Nk->Nik', V[..., -1], U[..., -1])
-        T = tf.where(have_reflection, T_mirror, T)
+        have_reflection = torch.det(T) < 0
+        T_mirror = T - 2 * torch.einsum('na,nd->nad', V[..., -1], U[..., -1])
+        T = torch.where(have_reflection, T_mirror, T)
 
         if allow_scaling:
             output_scale_mirror = output_scale - 2 * normX * s[..., -1]
-            output_scale = tf.where(have_reflection, output_scale_mirror, output_scale)
+            output_scale = torch.where(have_reflection, output_scale_mirror, output_scale)
 
     return output_scale * (normalizedY @ T) + meanX
