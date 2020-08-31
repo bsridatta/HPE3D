@@ -120,7 +120,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         torch.nn.utils.clip_grad_value_(encoder.parameters(), 1000)
         torch.nn.utils.clip_grad_value_(decoder.parameters(), 1000)
         torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
-        
+
         vae_optimizer.step()
 
         ############################
@@ -151,6 +151,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
 def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
     # note -- model.eval() in validation step
+    cb.on_validation_start()
 
     t_data = defaultdict(list)
     loss_dic = defaultdict(int)
@@ -187,21 +188,21 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         if normalize_pose and not config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'], t_data['target_3d'])
-        
+
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'],
-            self_supervised = True, procrustes_enabled=True)
-        
-        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
+                self_supervised=True, procrustes_enabled=True)
 
+        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
         avg_pjpe = torch.mean((pjpe), dim=0)
         avg_mpjpe = torch.mean(avg_pjpe).item()
-
-        config.logger.log({"pjpe": torch.mean(pjpe, dim=1).cpu()})
+        pjpe = torch.mean(pjpe, dim=1)
+        
+        config.logger.log({"pjpe": pjpe.cpu()})
 
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
-                         val_loader=val_loader, mpjpe=avg_mpjpe, pjpe=avg_pjpe, t_data=t_data
+                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
                          )
 
     del loss_dic, t_data

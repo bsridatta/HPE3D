@@ -143,19 +143,22 @@ if __name__ == "__main__":
             # Roll elevation (rotate wrt horizontal line)
             # Elevation Azimuth (rotate wrt vertical line)
     elif plot==9:
-        from src.processing import random_rotate, procrustes, batch_compute_similarity_transform_torch
+        from src.processing import random_rotate, procrustes
         import torch
         import math
         pose3d = torch.tensor(pose3d)
+        print(pose3d)
+
         # pose3d = torch.index_select(pose3d, -1, torch.tensor([1,0,2]))
         pose3d = torch.stack((pose3d, pose3d), axis=0)
 
         rot3d = random_rotate(pose3d)
+        rot3d = torch.tensor((0,0,1000)) + rot3d
+        pose3d = torch.tensor((0,0,-1000)) + pose3d
 
         out = procrustes(pose3d, rot3d, allow_scaling=False, allow_reflection=True)
-        # out = batch_compute_similarity_transform_torch(rot3d, pose3d)
 
-        plot_3d(pose3d[0].numpy(), color='gray', mode="axis",
+        plot_3d(pose3d[0].numpy(), color='red', mode="axis",
                 show_ticks=True, labels=False, mean_root=True)
         plot_3d(rot3d[0].numpy(), color='blue', mode="axis",
                 show_ticks=True, labels=False, mean_root=True)

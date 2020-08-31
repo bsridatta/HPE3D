@@ -104,7 +104,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False):
+def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False, title=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -163,6 +163,9 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
         for i, j, k, l in zip(x, y, z, LABELS):
             ax.text(i, j, k, s=f'{l[:4], round(i, 2), round(j, 2), round(k, 2)}',
                     size=7, zorder=1, color='k')
+
+    if title:
+        plt.title(title)
 
     # Plot floor
     if floor:
@@ -445,7 +448,7 @@ def plot_projection_raw(sample):
     plt.show()
 
 
-def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, name=""):
+def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, name="", title=None):
 
     recon_2d = recon_2d.detach().cpu().numpy()
     novel_2d = novel_2d.detach().cpu().numpy()
@@ -467,6 +470,7 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, na
     img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
     config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
 
-    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True)
+    img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True, title=title)
     config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
 

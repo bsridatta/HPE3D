@@ -63,7 +63,10 @@ class Logging(Callback):
 
         print('')
 
-    def on_validation_end(self, config, vae_type, epoch, loss_dic, val_loader, mpjpe, pjpe, t_data, **kwargs):
+    def on_validation_start(self):
+        print("Start validation epoch")
+
+    def on_validation_end(self, config, vae_type, epoch, loss_dic, val_loader, mpjpe, avg_pjpe, pjpe, t_data, **kwargs):
         # average epochs output
         avg_output = {}
         avg_output['log'] = {}
@@ -100,10 +103,10 @@ class Logging(Callback):
             }, commit=False)
 
             # log intermediate visualizations
-            for i in range(4):
+            for i in range(6):
                 i+=round(len(t_data["recon_2d"])/4.2)
                 plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
-                              t_data["recon_3d"][i], t_data["target_3d"][i], name='val')
+                              t_data["recon_3d"][i], t_data["target_3d"][i], name='val', title=pjpe[i].data)
 
         # log main metrics to wandb
         config.logger.log({
@@ -117,7 +120,7 @@ class Logging(Callback):
         }, commit=True)
 
         # print and log MPJPE
-        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {pjpe}')
+        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {avg_pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
         config.mpjpe=mpjpe
 

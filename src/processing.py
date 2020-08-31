@@ -285,12 +285,12 @@ def procrustes(X, Y, allow_scaling=False, allow_reflection=False):
 
     meanX = torch.mean(X, dim=1, keepdim=True)
     centeredX = X - meanX
-    normX = torch.norm(centeredX, dim=(1, 2), p='fro', keepdim=True)
+    normX = torch.norm(centeredX, dim=(1, 2), p=2, keepdim=True)
     normalizedX = centeredX / normX
 
     meanY = torch.mean(Y, axis=1, keepdim=True)
     centeredY = Y - meanY
-    normY = torch.norm(centeredY, dim=(1, 2), p='fro', keepdim=True)
+    normY = torch.norm(centeredY, dim=(1, 2), p=2, keepdim=True)
     normalizedY = centeredY / normY
 
     A = torch.einsum('nab,nad->nbd', normalizedX, normalizedY)
