@@ -469,8 +469,8 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, na
 
     img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
     config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
-
-    img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+    if name is not "":
+        img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
     img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True, title=title)
     config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
 

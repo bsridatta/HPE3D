@@ -51,7 +51,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=)
+        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -177,7 +177,9 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
             del output
             gc.collect()
-
+            print('.', end='')
+    print("")
+    
     avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
 
     for key in t_data.keys():

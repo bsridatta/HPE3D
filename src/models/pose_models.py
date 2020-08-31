@@ -10,7 +10,7 @@ class LBAD(nn.Module):
         self.activ = activation()
         self.drop_out_p = drop_out_p
 
-        self.w1 = nn.Linear(self.neurons, self.neurons)
+        self.w1 = nn.Linear(self.neurons, self.neurons, bias=False)
         self.bn1 = nn.BatchNorm1d(self.neurons)
         self.dropout = nn.Dropout(p=self.drop_out_p)
 

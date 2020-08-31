@@ -134,7 +134,7 @@ def main():
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            if epoch%10==0 or epoch==1:
+            if epoch%20==0 or epoch==1:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -178,7 +178,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=200, type=int,
+    parser.add_argument('--epochs', default=300, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=2560, type=int,
                         help='number of samples per step, have more than one for batch norm')
@@ -189,7 +189,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=50, type=int,
+    parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--recon_weight', default=10, type=int,
                         help='recon weight used during self supervised procedure only')
