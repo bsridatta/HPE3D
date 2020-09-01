@@ -134,7 +134,7 @@ def main():
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
-            if epoch%20==0 or epoch==1:
+            if epoch%30==0 or epoch==1:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -180,7 +180,7 @@ def training_specific_args():
                         help='training strategy')
     parser.add_argument('--epochs', default=300, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=2560, type=int,
+    parser.add_argument('--batch_size', default=8000, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -199,7 +199,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=4e-4, type=float,
+    parser.add_argument('--learning_rate', default=1e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

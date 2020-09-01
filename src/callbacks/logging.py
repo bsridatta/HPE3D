@@ -45,7 +45,8 @@ class Logging(Callback):
                 }
             }, commit=False)
 
-            if (batch_idx/n_batches) % 0.1 == 0 and batch_len == config.batch_size:
+            # TODO change -1 to 0 to log images
+            if (batch_idx/n_batches) % 0.1 == -1 and batch_len == config.batch_size:
                 i = 0
                 plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
                               output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
