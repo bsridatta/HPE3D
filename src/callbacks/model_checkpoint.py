@@ -29,12 +29,7 @@ class ModelCheckpoint(Callback):
                 optimizers[n_pair].load_state_dict(optimizer_state_dic)
     
     def on_epoch_end(self, config, val_loss, model, optimizers, epoch, n_pair, **kwargs):
-        # Save if doing some real training
-        #*********************************************************************************
-        #***************************REMOVE VAL LOSS EQN***********************************
-        #*********************************************************************************
-        self.val_loss_min = val_loss+1
-        
+                
         if val_loss < self.val_loss_min and config.device != 'cpu':
             self.val_loss_min = val_loss
 
