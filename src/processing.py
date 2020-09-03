@@ -232,8 +232,7 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 
 
 def random_rotate(pose_3d,
-                  roll_range=(-math.pi / 9.0,
-                              math.pi / 9.0),
+                  roll_range=(0,0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi),
                   default_camera=True,

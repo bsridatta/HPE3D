@@ -75,6 +75,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
+        # label smoothing for real labels alone
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
         critic_loss_real.backward()
@@ -99,7 +102,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # -trained discriminator predicts all fake as real
 
         vae_optimizer.zero_grad()
+
         labels.fill_(real_label)
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
+
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
@@ -111,22 +118,18 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
+        if True:
+            # Clip grad norm to 1
+            torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
+            torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
+            torch.nn.utils.clip_grad_norm_(critic.parameters(), 2)
+
+            torch.nn.utils.clip_grad_value_(encoder.parameters(), 1000)
+            torch.nn.utils.clip_grad_value_(decoder.parameters(), 1000)
+            torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
+
         # update VAE
-        # Clip grad norm to 1
-        torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
-        torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
-        torch.nn.utils.clip_grad_norm_(critic.parameters(), 2)
-
-        torch.nn.utils.clip_grad_value_(encoder.parameters(), 1000)
-        torch.nn.utils.clip_grad_value_(decoder.parameters(), 1000)
-        torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
-
         vae_optimizer.step()
-
-        ############################
-        # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval
-        # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale']/10))
-        ############################
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
                 "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
@@ -149,68 +152,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     return OrderedDict({'loss': loss, 'log': logs})
 
 
-def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
-    # note -- model.eval() in validation step
-    cb.on_validation_start()
-
-    t_data = defaultdict(list)
-    loss_dic = defaultdict(int)
-
-    with torch.no_grad():
-        for batch_idx, batch in enumerate(val_loader):
-            for key in batch.keys():
-                batch[key] = batch[key].to(config.device)
-
-            output = _validation_step(batch, batch_idx, model, epoch, config)
-
-            loss_dic['loss'] += output['loss'].item()
-            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
-            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
-
-            if config.self_supervised:
-                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
-                loss_dic['critic_loss_real'] += output['log']['critic_loss_real'].item()
-                loss_dic['critic_loss_fake'] += output['log']['critic_loss_fake'].item()
-
-            for key in output['data'].keys():
-                t_data[key].append(output['data'][key])
-
-            del output
-            gc.collect()
-            print('.', end='')
-    print("")
-    
-    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
-
-    for key in t_data.keys():
-        t_data[key] = torch.cat(t_data[key], 0)
-
-    # performance
-    if '3D' in model[1].name:
-        if normalize_pose and not config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'], t_data['target_3d'])
-
-        elif config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'], t_data['target_3d'], scale=t_data['scale_3d'],
-                self_supervised=True, procrustes_enabled=True)
-
-        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
-        avg_pjpe = torch.mean((pjpe), dim=0)
-        avg_mpjpe = torch.mean(avg_pjpe).item()
-        pjpe = torch.mean(pjpe, dim=1)
-        
-        config.logger.log({"pjpe": pjpe.cpu()})
-
-    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
-                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
-                         )
-
-    del loss_dic, t_data
-    return avg_loss
-
-
 def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
@@ -229,7 +170,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=)
+        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -250,6 +191,9 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
+
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
 
@@ -266,6 +210,9 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # -trained discriminator predicts all fake as real
 
         labels.fill_(real_label)
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
+
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
@@ -300,3 +247,68 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})
+
+
+def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
+    # note -- model.eval() in validation step
+    cb.on_validation_start()
+
+    t_data = defaultdict(list)
+    loss_dic = defaultdict(int)
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
+            for key in batch.keys():
+                batch[key] = batch[key].to(config.device)
+
+            output = _validation_step(batch, batch_idx, model, epoch, config)
+
+            loss_dic['loss'] += output['loss'].item()
+            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
+            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
+
+            if config.self_supervised:
+                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
+                loss_dic['critic_loss_real'] += output['log']['critic_loss_real'].item()
+                loss_dic['critic_loss_fake'] += output['log']['critic_loss_fake'].item()
+
+            for key in output['data'].keys():
+                t_data[key].append(output['data'][key])
+
+            del output
+            gc.collect()
+
+    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
+
+    for key in t_data.keys():
+        t_data[key] = torch.cat(t_data[key], 0)
+
+    # performance
+    if '3D' in model[1].name:
+        if normalize_pose and not config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'], t_data['target_3d'])
+
+        elif config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
+                scale=t_data['scale_3d'].to('cpu'),
+                self_supervised=True, procrustes_enabled=True)
+
+        # Speed up procrustes alignment with CPU!
+        t_data['recon_3d'].to('cuda')
+        t_data['target_3d'].to('cuda')
+
+        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
+        avg_pjpe = torch.mean((pjpe), dim=0)
+        avg_mpjpe = torch.mean(avg_pjpe).item()
+        pjpe = torch.mean(pjpe, dim=1)
+
+        config.logger.log({"pjpe": pjpe.cpu()})
+
+    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
+                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
+                         )
+
+    del loss_dic, t_data
+    return avg_loss

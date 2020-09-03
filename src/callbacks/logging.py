@@ -43,7 +43,7 @@ class Logging(Callback):
                         "critic_loss_fake": output['log']['critic_loss_fake']
                     }
                 }
-            }, commit=False)
+            }, commit=True)
 
             # TODO change -1 to 0 to log images
             if (batch_idx/n_batches) % 0.1 == -1 and batch_len == config.batch_size:
@@ -101,10 +101,11 @@ class Logging(Callback):
                         "critic_loss_fake": avg_output['log']['critic_loss_fake']
                     }
                 }
-            }, commit=False)
+            }, commit=True)
 
             # log intermediate visualizations
-            for i in range(6):
+            n_samples = 0
+            for i in range(n_samples):
                 i+=round(len(t_data["recon_2d"])/4.2)
                 plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
                               t_data["recon_3d"][i], t_data["target_3d"][i], name='val', title=pjpe[i].item())
