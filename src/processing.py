@@ -162,7 +162,7 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
                 target.shape[0], 1, 1),
                 target
              ), dim=1)
-        target += torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32)
+        # target += torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32)
 
     if procrustes_enabled:
         # recon should be the second matrix

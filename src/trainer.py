@@ -50,7 +50,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
+        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -170,7 +170,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
+        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
