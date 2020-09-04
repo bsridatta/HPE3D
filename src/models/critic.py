@@ -14,15 +14,15 @@ class LBAD(nn.Module):
 
     def forward(self, x):
         x = self.w1(x)
-        # x = self.bn1(x)
+        x = self.bn1(x)
         x = self.activ(x)
-        # x = self.dropout(x)
+        x = self.dropout(x)
 
         return x
 
 
 class Critic(nn.Module):
-    def __init__(self, neurons=1024, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.2):
+    def __init__(self, neurons=1024, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons
@@ -34,16 +34,16 @@ class Critic(nn.Module):
     def __build_model(self):
 
         self.inp_block = nn.Sequential(
-            nn.Linear(2*self.n_joints, self.neurons),  # expand features
-            # nn.BatchNorm1d(self.neurons),
+            nn.Linear(2*self.n_joints, self.neurons), 
+            nn.BatchNorm1d(self.neurons),
             self.activation(),
-            # nn.Dropout(p=self.drop_out_p)
+            nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
@@ -59,9 +59,9 @@ class Critic(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        # residual = x
-        # x = self.LBAD_3(x)
-        # x = self.LBAD_4(x) + residual
+        residual = x
+        x = self.LBAD_3(x)
+        x = self.LBAD_4(x) + residual
 
         out = self.out_block(x)
         

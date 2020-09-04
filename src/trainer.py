@@ -13,7 +13,6 @@ from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
 # torch.autograd.set_detect_anomaly(True)
 
-
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
 
@@ -51,7 +50,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=2)
+        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -78,6 +77,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # label smoothing for real labels alone
         label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
+
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
         critic_loss_real.backward()
@@ -118,7 +118,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
-        if True:
+        if False:
             # Clip grad norm to 1
             torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
@@ -170,7 +170,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # Reprojection
         target_2d = inp.detach()
         # ???????????????????
-        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-2, max=2)
+        recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -222,10 +222,6 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
 
-        ############################
-        # recon_3d[Ellipsis,1] *= -1 # Invert 3D for eval
-        # recon_3d = torch.einsum("nab,nd->nab",(recon_3d, batch['scale_3d']/10))
-        ############################
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
                 "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
@@ -293,7 +289,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
                 scale=t_data['scale_3d'].to('cpu'),
-                self_supervised=True, procrustes_enabled=True)
+                self_supervised=True, procrustes_enabled=False)
 
         # Speed up procrustes alignment with CPU!
         t_data['recon_3d'].to('cuda')

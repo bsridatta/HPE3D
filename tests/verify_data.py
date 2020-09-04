@@ -67,7 +67,7 @@ def get_processed_sample(idx=1):
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(1)
+    sample = dataset.__getitem__(idx)
 
     for key in sample.keys():
         sample[key] = sample[key].numpy()
@@ -82,9 +82,9 @@ if __name__ == "__main__":
     processed = True
 
     if processed:
-        sample = get_processed_sample()
+        sample = get_processed_sample(1)
     else:
-        sample = get_raw_sample(15)
+        sample = get_raw_sample(200)
 
     image = sample['image']
     pose2d = sample['pose2d']
@@ -114,7 +114,8 @@ if __name__ == "__main__":
         plot_3D_models([pose3d-pose3d[0]])
     # MPL projection
     elif plot == 7:
-        plot_projection(sample)
+        from src.viz.mpl_plots import plot_projection_raw
+        plot_projection_raw(sample)
     # plot rotation
     elif plot == 8:
         from src.processing import random_rotate_and_project_3d_to_2d
@@ -147,20 +148,20 @@ if __name__ == "__main__":
         import torch
         import math
         pose3d = torch.tensor(pose3d)
-        print(pose3d)
 
         # pose3d = torch.index_select(pose3d, -1, torch.tensor([1,0,2]))
         pose3d = torch.stack((pose3d, pose3d), axis=0)
+        gt = pose3d
+        # rotate and scale and translate
+        inp = random_rotate(gt)
+        inp = torch.tensor((0,0,1000)) + inp
+        # pose3d = torch.tensor((0,0,-1000)) + pose3d
 
-        rot3d = random_rotate(pose3d)
-        rot3d = torch.tensor((0,0,1000)) + rot3d
-        pose3d = torch.tensor((0,0,-1000)) + pose3d
+        out = procrustes(gt, inp, allow_scaling=False, allow_reflection=True)
 
-        out = procrustes(pose3d, rot3d, allow_scaling=False, allow_reflection=True)
-
-        plot_3d(pose3d[0].numpy(), color='red', mode="axis",
+        plot_3d(gt[0].numpy(), color='gray', mode="axis",
                 show_ticks=True, labels=False, mean_root=True)
-        plot_3d(rot3d[0].numpy(), color='blue', mode="axis",
+        plot_3d(inp[0].numpy(), color='green', mode="axis",
                 show_ticks=True, labels=False, mean_root=True)
         plot_3d(out[0].numpy(), color='orange', mode="show",
                 show_ticks=True, labels=False, mean_root=True)

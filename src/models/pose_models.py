@@ -30,9 +30,10 @@ class Encoder2D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 1024
+        self.neurons = 512
         self.name = "Encoder2D"
-        self.drop_out_p = 0.2
+        self.drop_out_p = 0.0
+        self.blocks = 2
 
         self.__build_model()
 
@@ -47,8 +48,9 @@ class Encoder2D(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        if self.blocks > 1:
+            self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.fc_mean = nn.Linear(self.neurons, self.latent_dim)
         self.fc_logvar = nn.Linear(self.neurons, self.latent_dim)
@@ -68,9 +70,10 @@ class Encoder2D(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        # residual = x
-        # x = self.LBAD_3(x)
-        # x = self.LBAD_4(x) + residual
+        if self.blocks > 1:
+            residual = x
+            x = self.LBAD_3(x)
+            x = self.LBAD_4(x) + residual
 
         mean = self.fc_mean(x)
         logvar = self.fc_logvar(x)
@@ -88,9 +91,10 @@ class Decoder3D(nn.Module):
         self.latent_dim = latent_dim
         self.activation = activation
         self.n_joints = n_joints
-        self.neurons = 1024
+        self.neurons = 512
         self.name = "Decoder3D"
-        self.drop_out_p = 0.2
+        self.drop_out_p = 0.0
+        self.blocks = 2
 
         self.__build_model()
 
@@ -105,8 +109,9 @@ class Decoder3D(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        if self.blocks > 1:
+            self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.dec_out_block = nn.Sequential(
             nn.Linear(self.neurons, 3*self.n_joints),
@@ -124,9 +129,10 @@ class Decoder3D(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        # residual = x
-        # x = self.LBAD_3(x)
-        # x = self.LBAD_4(x) + residual
+        if self.blocks > 1:
+            residual = x
+            x = self.LBAD_3(x)
+            x = self.LBAD_4(x) + residual
 
         x = self.dec_out_block(x)
 

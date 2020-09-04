@@ -150,23 +150,19 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
             (torch.zeros(target.shape[0], 1, recon.shape[2], device=recon.device), target), dim=1)
 
     else:
-        # 3D recon is at c, but GT is at 0
-
-        # Add root at 0,0,c to recon and de-scale
         recon = (recon.T*scale.T).T
         recon = torch.cat(
-            (torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32).repeat(
+            (torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
                 recon.shape[0], 1, 1),
                 recon
              ), dim=1)
 
-        # add 0,0,0 as root and shift to c
         target = torch.cat(
             (torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
                 target.shape[0], 1, 1),
                 target
              ), dim=1)
-        target += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
+        target += torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32)
 
     if procrustes_enabled:
         # recon should be the second matrix

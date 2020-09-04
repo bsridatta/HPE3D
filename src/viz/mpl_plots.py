@@ -126,7 +126,6 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
     fig = plt.figure(1, figsize=(19.20, 10.80))
     ax = fig.gca(projection='3d')
     ax._axis3don = axis3don
-    plt.tight_layout()
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -186,6 +185,8 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
         ax.set_zticks([])
 
     ax.view_init(elev=-45, azim=-90)
+    
+    plt.tight_layout()
 
     if mode == "axis":
         return ax
@@ -367,7 +368,7 @@ def plot_proj(pose2d, pose3d, pose2d_proj, log=False):
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True, root_z=10)
+    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True, mean_root=True)
 
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
@@ -398,11 +399,11 @@ def plot_projection_raw(sample):
     dist = np.linalg.norm(pose2d[0]-pose2d[10])
     dist1 = np.linalg.norm(pose3d[0]-pose3d[10])
 
-    pose2d /= 2*dist
+    pose2d /= 10*dist
 
     pose3d = pose3d/dist1
 
-    pose3d += (0, 0, 2)
+    pose3d += (0, 0, 10)
 
     # dist2 = pose2d[0][1]-pose2d[10][1]
     # dist3 = pose3d[0][1]-pose3d[10][1]
@@ -429,7 +430,7 @@ def plot_projection_raw(sample):
         if not isinstance(sample[x], str):
             sample[x] = torch.Tensor(sample[x])
 
-    pose2d_proj = project_3d_to_2d(pose3d, cam_params=sample)
+    pose2d_proj = project_3d_to_2d(pose3d)
 
     # print("dist", dist, "dist1", dist1, "dist2", dist2, "dist3", dist3, "scale", pose2d/pose2d_proj)
     print(pose2d, "\n", pose2d_proj)
@@ -469,8 +470,10 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, na
 
     img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
     config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
-    if name is not "":
-        img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+    
+    # if name is not "":
+    #     img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+    print(recon_3d.shape)
     img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True, title=title)
     config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
 

@@ -46,7 +46,7 @@ class Logging(Callback):
             }, commit=True)
 
             # TODO change -1 to 0 to log images
-            if (batch_idx/n_batches) % 0.1 == -1 and batch_len == config.batch_size:
+            if (batch_idx/n_batches) % 1 == 0 and batch_len == config.batch_size:
                 i = 0
                 plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
                               output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
@@ -104,7 +104,7 @@ class Logging(Callback):
             }, commit=True)
 
             # log intermediate visualizations
-            n_samples = 0
+            n_samples = 3
             for i in range(n_samples):
                 i+=round(len(t_data["recon_2d"])/4.2)
                 plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],

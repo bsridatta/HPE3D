@@ -37,7 +37,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'gan'
-    os.environ['WANDB_NOTES'] = 'SGD + label smoothing + dropout 20 +leakyRElu'
+    os.environ['WANDB_NOTES'] = 'prev+ 500 z + low lr+blocks1'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -180,7 +180,7 @@ def training_specific_args():
                         help='training strategy')
     parser.add_argument('--epochs', default=200, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=2560, type=int,
+    parser.add_argument('--batch_size', default=4096, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -189,7 +189,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=50, type=int,
+    parser.add_argument('--latent_dim', default=100, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--recon_weight', default=10, type=int,
                         help='recon weight used during self supervised procedure only')
@@ -199,7 +199,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=4e-4, type=float,
+    parser.add_argument('--learning_rate', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
