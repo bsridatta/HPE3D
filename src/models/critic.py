@@ -22,7 +22,7 @@ class LBAD(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, neurons=1024, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
+    def __init__(self, neurons=512, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons

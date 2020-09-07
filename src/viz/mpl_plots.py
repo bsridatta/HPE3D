@@ -185,7 +185,7 @@ def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True
         ax.set_zticks([])
 
     ax.view_init(elev=-45, azim=-90)
-    
+
     plt.tight_layout()
 
     if mode == "axis":
@@ -449,13 +449,15 @@ def plot_projection_raw(sample):
     plt.show()
 
 
-def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, name="", title=None):
+def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, recon_3d_org=None, name="", title=None):
 
     recon_2d = recon_2d.detach().cpu().numpy()
     novel_2d = novel_2d.detach().cpu().numpy()
     target_2d = target_2d.detach().cpu().numpy()
     recon_3d = recon_3d.detach().cpu().numpy()
     target_3d = target_3d.detach().cpu().numpy()
+    if recon_3d_org is not None:
+        recon_3d_org = recon_3d_org.detach().cpu().numpy()
 
     img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
     config.logger.log({name+"target_2d": config.logger.Image(img)}, commit=False)
@@ -463,17 +465,25 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, na
     img = plot_2d(recon_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"recon_2d": config.logger.Image(img)}, commit=False)
-  
+
     img = plot_2d(novel_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"novel_2d": config.logger.Image(img)}, commit=False)
 
-    img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
-    config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
-    
-    # if name is not "":
-    #     img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
-    print(recon_3d.shape)
-    img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True, labels=False, mean_root=True, title=title)
-    config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
+    if name is "":  # Training
+        img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
+        config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
+    else:  # Validation
+        img = plot_3d(recon_3d_org, color='blue', mode="image", show_ticks=True, labels=False)
+        config.logger.log({name+"recon_3d_org": config.logger.Image(img)}, commit=False)
 
+    if name is "":  # Training
+        img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
+                      labels=False, mean_root=True, title=title)
+        config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
+    else:
+        # Move target 3d to post processed 3d plot
+        img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+        img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
+                      labels=False, mean_root=True, title=title)
+        config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)

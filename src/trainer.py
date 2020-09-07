@@ -46,8 +46,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     if config.self_supervised:
         # Reprojection
         target_2d = inp.detach()
-        # ???????????????????
-        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
+        # # enforce unit recon to avoid depth ambiguity
+        recon_3d = torch.clamp(recon_3d, min=-1, max=1)
+
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -88,8 +89,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # update critic
         if batch_idx % 1 == 0:
-            # Clip grad norm to 1
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            # Clip grad norm to 1  *******************************
+            # torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -115,8 +116,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
         loss.backward()  # Would include VAE and critic but critic not updated
 
-        if False:
-            # Clip grad norm to 1
+        if True:
+            # Clip grad norm to 1 *****************************************
             torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(critic.parameters(), 2)
@@ -166,8 +167,10 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     if config.self_supervised:
         # Reprojection
         target_2d = inp.detach()
-        # ???????????????????
-        # recon_3d = torch.clamp(recon_3d[Ellipsis], min=-1)#, max=2)
+        
+        # enforce unit recon to avoid depth ambiguity
+        recon_3d = torch.clamp(recon_3d, min=-1, max=1)
+
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -277,16 +280,18 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         t_data[key] = torch.cat(t_data[key], 0)
 
     # performance
+    t_data['recon_3d_org'] = t_data['recon_3d'].detach()
+
     if '3D' in model[1].name:
         if normalize_pose and not config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'], t_data['target_3d'])
-
+        
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
                 scale=t_data['scale_3d'].to('cpu'),
-                self_supervised=True, procrustes_enabled=False)
+                self_supervised=True, procrustes_enabled=True)
 
         # Speed up procrustes alignment with CPU!
         t_data['recon_3d'].to('cuda')
@@ -305,3 +310,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
     del loss_dic, t_data
     return avg_loss
+
+
+
+

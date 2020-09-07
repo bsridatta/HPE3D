@@ -99,7 +99,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         # Scale 2D to 1/c units and save scale
         c = 10
         #### 2D ####
-        head = pose2d[:, 10, :]  # Note heat @ 9 if root joint is removed
+        head = pose2d[:, 10, :]  # Note head @ 9 if root joint is removed
         # root = np.zeros_like(head)
         root = pose2d[:, 0, :]
         dist = np.linalg.norm(head-root, axis=1, keepdims=True)
@@ -156,13 +156,14 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
                 recon.shape[0], 1, 1),
                 recon
              ), dim=1)
+        # recon += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
 
         target = torch.cat(
             (torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
                 target.shape[0], 1, 1),
                 target
              ), dim=1)
-        # target += torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32)
+        # target += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
 
     if procrustes_enabled:
         # recon should be the second matrix
@@ -230,9 +231,7 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 def random_rotate(pose_3d,
                   roll_range=(0,0),
                   azimuth_range=(0, 0),
-                  elevation_range=(-math.pi, math.pi),
-                  default_camera=True,
-                  default_camera_z=10.0,
+                  elevation_range=(-math.pi, math.pi)
                   ):
     #   roll_range=(-math.pi / 9.0,
     #               math.pi / 9.0),

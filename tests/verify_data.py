@@ -78,7 +78,7 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 9
+    plot = 4
     processed = True
 
     if processed:
@@ -104,7 +104,8 @@ if __name__ == "__main__":
     elif plot == 3:
         plot_3D_models([pose3d, sample["pose3d_noise"]])
     elif plot == 4:
-        pass
+        img = plot_3d(pose3d, color='blue', mode="show", show_ticks=True, labels=False, 
+        title=str(min(pose3d[:,2]))+" "+str(max(pose3d[:,2]))) 
     # MPL Grid diff
     elif plot == 5:
         plot_errors(poses=[pose3d], targets=[sample['pose3d_global']])
