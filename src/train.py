@@ -25,10 +25,6 @@ def main():
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
-    # log intervals
-    config.eval_interval = 1  # interval to get MPJPE of 3d decoder
-    config.manifold_interval = 1  # interval to visualize encoding in manifold
-
     # GPU setup
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -71,12 +67,6 @@ def main():
 
     variant = variant_dic[config.variant]
 
-    # NOTE: Naming
-    # 'model' (['2d','3d'])- a list of 'net's/nn.Module in a variant is one full model (input to output),
-    # 'models' - dictionary of all nets
-    # -- only 1 instance of a particular 'net' is created i.e identical net types share the weights
-    # -- All 'model's in 'models' share the same latent space
-
     models = train_utils.get_models(variant, config)  # model instances
     if config.self_supervised:
         critic = Critic()
@@ -101,23 +91,22 @@ def main():
                        BetaScheduler(config, strategy="cycling"),
                        MaxNorm()
                        ])
-    # Analyze("northern-snowflake-1584", 500),)
 
-    cb.setup(config=config, models=models, optimizers=optimizers,
-             train_loader=train_loader, val_loader=val_loader, variant=variant)
+    cb.setup(config = config, models = models, optimizers = optimizers,
+             train_loader = train_loader, val_loader = val_loader, variant = variant)
 
-    config.mpjpe_min = float('inf')
-    config.mpjpe_at_min_val = float('inf')
+    config.mpjpe_min=float('inf')
+    config.mpjpe_at_min_val=float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
         for n_pair, pair in enumerate(variant):
 
             # VAE specific players
-            vae_type = "_2_".join(pair)
+            vae_type="_2_".join(pair)
 
             # model -- encoder, decoder / critic
-            model = [models[f"Encoder{pair[0].upper()}"],
+            model=[models[f"Encoder{pair[0].upper()}"],
                      models[f"Decoder{pair[1].upper()}"]]
             optimizer = [optimizers[n_pair]]
             scheduler = [schedulers[n_pair]]
@@ -130,9 +119,9 @@ def main():
             config.logger.log(
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
-            # # TODO init criterion once with .to(cuda)
+            # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
-                           optimizer, epoch, vae_type)
+                        optimizer, epoch, vae_type)
 
             if epoch%3==0 or epoch==1:
                 val_loss = validation_epoch(
@@ -186,6 +175,8 @@ def training_specific_args():
                         help='run all methods once to check integrity, not implemented!')
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
+    parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='run validatoin epoch only')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')

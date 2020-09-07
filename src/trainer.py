@@ -15,9 +15,6 @@ from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
-
-    # TODO perform get_inp_target_criterion for the whole epoch directly
-    # or change variantion every batch
     for batch_idx, batch in enumerate(train_loader):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
@@ -190,7 +187,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
-                            device=config.device, dtype=target_2d.dtype)
+                            device=recon_3d.device, dtype=target_2d.dtype)
         label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
