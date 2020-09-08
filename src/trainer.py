@@ -79,7 +79,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
         critic_loss_real.backward()
-
+        # TODO trick save the computation graph
+        # TODO interchange real fake
         # train with fake samples
         labels.fill_(fake_label)
         # detach to avoid gradient prop to VAE
