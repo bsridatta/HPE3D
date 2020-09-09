@@ -13,6 +13,7 @@ from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
 # torch.autograd.set_detect_anomaly(True)
 
+
 def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
     # note -- model.train() in training step
     for batch_idx, batch in enumerate(train_loader):
@@ -47,7 +48,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # # enforce unit recon to avoid depth ambiguity
-        recon_3d = torch.clamp(recon_3d, min=-1, max=1)
+        recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -90,8 +91,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # update critic
         if batch_idx % 1 == 0:
-            # Clip grad norm to 1  *******************************
-            # torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            # Clip grad norm to 1 ** *****************************
+            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -151,6 +152,72 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     return OrderedDict({'loss': loss, 'log': logs})
 
 
+def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
+    # note -- model.eval() in validation step
+    cb.on_validation_start()
+
+    t_data = defaultdict(list)
+    loss_dic = defaultdict(int)
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
+            for key in batch.keys():
+                batch[key] = batch[key].to(config.device)
+
+            output = _validation_step(batch, batch_idx, model, epoch, config)
+
+            loss_dic['loss'] += output['loss'].item()
+            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
+            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
+
+            if config.self_supervised:
+                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
+                loss_dic['critic_loss_real'] += output['log']['critic_loss_real'].item()
+                loss_dic['critic_loss_fake'] += output['log']['critic_loss_fake'].item()
+
+            for key in output['data'].keys():
+                t_data[key].append(output['data'][key])
+
+            del output
+            gc.collect()
+
+    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
+
+    for key in t_data.keys():
+        t_data[key] = torch.cat(t_data[key], 0)
+
+    # performance
+    t_data['recon_3d_org'] = t_data['recon_3d'].detach()
+    if '3D' in model[1].name:
+        if normalize_pose and not config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'], t_data['target_3d'])
+
+        elif config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
+                scale=t_data['scale_3d'].to('cpu'),
+                self_supervised=True, procrustes_enabled=True)
+
+        # Speed up procrustes alignment with CPU!
+        t_data['recon_3d'].to('cuda')
+        t_data['target_3d'].to('cuda')
+
+        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
+        avg_pjpe = torch.mean((pjpe), dim=0)
+        avg_mpjpe = torch.mean(avg_pjpe).item()
+        pjpe = torch.mean(pjpe, dim=1)
+
+        config.logger.log({"pjpe": pjpe.cpu()})
+
+    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
+                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
+                         )
+
+    del loss_dic, t_data
+    return avg_loss
+
+
 def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
@@ -168,9 +235,9 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     if config.self_supervised:
         # Reprojection
         target_2d = inp.detach()
-        
+
         # enforce unit recon to avoid depth ambiguity
-        recon_3d = torch.clamp(recon_3d, min=-1, max=1)
+        recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -223,7 +290,6 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
 
-
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
                 "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
 
@@ -244,74 +310,3 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})
-
-
-def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
-    # note -- model.eval() in validation step
-    cb.on_validation_start()
-
-    t_data = defaultdict(list)
-    loss_dic = defaultdict(int)
-
-    with torch.no_grad():
-        for batch_idx, batch in enumerate(val_loader):
-            for key in batch.keys():
-                batch[key] = batch[key].to(config.device)
-
-            output = _validation_step(batch, batch_idx, model, epoch, config)
-
-            loss_dic['loss'] += output['loss'].item()
-            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
-            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
-
-            if config.self_supervised:
-                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
-                loss_dic['critic_loss_real'] += output['log']['critic_loss_real'].item()
-                loss_dic['critic_loss_fake'] += output['log']['critic_loss_fake'].item()
-
-            for key in output['data'].keys():
-                t_data[key].append(output['data'][key])
-
-            del output
-            gc.collect()
-
-    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
-
-    for key in t_data.keys():
-        t_data[key] = torch.cat(t_data[key], 0)
-
-    # performance
-    t_data['recon_3d_org'] = t_data['recon_3d'].detach()
-
-    if '3D' in model[1].name:
-        if normalize_pose and not config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'], t_data['target_3d'])
-        
-        elif config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
-                scale=t_data['scale_3d'].to('cpu'),
-                self_supervised=True, procrustes_enabled=True)
-
-        # Speed up procrustes alignment with CPU!
-        t_data['recon_3d'].to('cuda')
-        t_data['target_3d'].to('cuda')
-
-        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
-        avg_pjpe = torch.mean((pjpe), dim=0)
-        avg_mpjpe = torch.mean(avg_pjpe).item()
-        pjpe = torch.mean(pjpe, dim=1)
-
-        config.logger.log({"pjpe": pjpe.cpu()})
-
-    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
-                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
-                         )
-
-    del loss_dic, t_data
-    return avg_loss
-
-
-
-

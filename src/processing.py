@@ -151,6 +151,12 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
 
     else:
         recon = (recon.T*scale.T).T
+
+    if procrustes_enabled:
+        # recon should be the second matrix
+        recon = procrustes(target, recon, allow_scaling=False, allow_reflection=True)
+
+    if self_supervised:
         recon = torch.cat(
             (torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
                 recon.shape[0], 1, 1),
@@ -164,10 +170,6 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
                 target
              ), dim=1)
         # target += torch.tensor((0, 0, 10), device=recon.device, dtype=torch.float32)
-
-    if procrustes_enabled:
-        # recon should be the second matrix
-        recon = procrustes(target, recon, allow_scaling=False, allow_reflection=True)
 
     return recon, target
 
@@ -229,7 +231,8 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 
 
 def random_rotate(pose_3d,
-                  roll_range=(0,0),
+                  roll_range=(-math.pi / 9.0,
+                              math.pi / 9.0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi)
                   ):

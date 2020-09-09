@@ -104,7 +104,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z=10, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False, title=None):
+def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False, title=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -459,24 +459,28 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
     if recon_3d_org is not None:
         recon_3d_org = recon_3d_org.detach().cpu().numpy()
 
+    # Target 2d
     img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
     config.logger.log({name+"target_2d": config.logger.Image(img)}, commit=False)
-
+    # Recon 2d
     img = plot_2d(recon_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"recon_2d": config.logger.Image(img)}, commit=False)
-
+    # Novel 2D
     img = plot_2d(novel_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"novel_2d": config.logger.Image(img)}, commit=False)
 
+    # T -- Target 3D | V -- Recon 3D without procrustes alignment i.e 16 joints
     if name is "":  # Training
         img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
         config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
     else:  # Validation
-        img = plot_3d(recon_3d_org, color='blue', mode="image", show_ticks=True, labels=False)
+        img = plot_3d(recon_3d_org, color='blue', mode="image",
+                      show_ticks=True, labels=False, mean_root=True)
         config.logger.log({name+"recon_3d_org": config.logger.Image(img)}, commit=False)
 
+    # T -- Recon 3D | V - Target 3d + Recon 3D
     if name is "":  # Training
         img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
                       labels=False, mean_root=True, title=title)

@@ -92,21 +92,21 @@ def main():
                        MaxNorm()
                        ])
 
-    cb.setup(config = config, models = models, optimizers = optimizers,
-             train_loader = train_loader, val_loader = val_loader, variant = variant)
+    cb.setup(config=config, models=models, optimizers=optimizers,
+             train_loader=train_loader, val_loader=val_loader, variant=variant)
 
-    config.mpjpe_min=float('inf')
-    config.mpjpe_at_min_val=float('inf')
+    config.mpjpe_min = float('inf')
+    config.mpjpe_at_min_val = float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
         for n_pair, pair in enumerate(variant):
 
             # VAE specific players
-            vae_type="_2_".join(pair)
+            vae_type = "_2_".join(pair)
 
             # model -- encoder, decoder / critic
-            model=[models[f"Encoder{pair[0].upper()}"],
+            model = [models[f"Encoder{pair[0].upper()}"],
                      models[f"Decoder{pair[1].upper()}"]]
             optimizer = [optimizers[n_pair]]
             scheduler = [schedulers[n_pair]]
@@ -121,10 +121,10 @@ def main():
 
             # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
-                        optimizer, epoch, vae_type)
-                        
+                           optimizer, epoch, vae_type)
+
             val_loss = 0
-            if epoch%3==0 or epoch==1:
+            if epoch % 3 == 0 or epoch == 1:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
