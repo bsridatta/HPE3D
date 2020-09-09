@@ -47,6 +47,15 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     if config.self_supervised:
         # Reprojection
         target_2d = inp.detach()
+
+        if False:
+            min_z_target = recon_3d.detach()
+            min_z_target[Ellipsis, 2] = 0
+            min_z_loss = torch.nn.functional.mse_loss(recon_3d, min_z_target)
+            min_z_loss *= 1e-5
+        else:
+            min_z_loss = 0
+
         # # enforce unit recon to avoid depth ambiguity
         recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
@@ -70,6 +79,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer = optimizer[-1]
         critic_optimizer.zero_grad()
 
+        # confuse critic
+        if batch_idx % 7 == 0:
+            real_label = 0
+            fake_label = 1
+
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
@@ -80,18 +94,24 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
         critic_loss_real.backward()
-        # TODO trick save the computation graph
-        # TODO interchange real fake
+        D_x = output.mean().item()
+
         # train with fake samples
         labels.fill_(fake_label)
+        # label smoothing for real labels alone *** not TODO
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
+        labels = labels * label_noise
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
         critic_loss_fake.backward()
+        D_G_z1 = output.mean().item()
+
+        critic_loss = critic_loss_real+critic_loss_fake
 
         # update critic
         if batch_idx % 1 == 0:
-            # Clip grad norm to 1 ** *****************************
+            # Clip grad norm to 1 ********************************
             torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
@@ -100,6 +120,10 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
+
+        # required if the real and fake are flipped in critic training
+        real_label = 1
+        fake_label = 0
 
         vae_optimizer.zero_grad()
 
@@ -110,13 +134,15 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
-        critic_loss = binary_loss(output, labels)
-
+        gen_loss = binary_loss(output, labels)
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
+        loss = config.recon_weight*recon_loss + config.beta * \
+            kld_loss + config.critic_weight*gen_loss  # + min_z_loss
         loss.backward()  # Would include VAE and critic but critic not updated
+
+        D_G_z2 = output.mean().item()
 
         if True:
             # Clip grad norm to 1 *****************************************
@@ -129,12 +155,13 @@ def _training_step(batch, batch_idx, model, config, optimizer):
             torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
 
         # update VAE
-        vae_optimizer.step()
+        if batch_idx % 3 == 0:
+            vae_optimizer.step()
 
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
-                "recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
-                "target_2d": target_2d, "target_3d": target_3d,
-                "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "gen_loss": gen_loss,
+                "critic_loss": critic_loss, "recon_2d": recon_2d, "recon_3d": recon_3d,
+                "novel_2d": novel_2d, "target_2d": target_2d, "target_3d": target_3d,
+                "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
 
         # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
 
@@ -171,9 +198,11 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             loss_dic['kld_loss'] += output['log']['kld_loss'].item()
 
             if config.self_supervised:
+                loss_dic['gen_loss'] += output['log']['gen_loss'].item()
                 loss_dic['critic_loss'] += output['log']['critic_loss'].item()
-                loss_dic['critic_loss_real'] += output['log']['critic_loss_real'].item()
-                loss_dic['critic_loss_fake'] += output['log']['critic_loss_fake'].item()
+                loss_dic['D_x'] += output['log']['D_x']
+                loss_dic['D_G_z1'] += output['log']['D_G_z1']
+                loss_dic['D_G_z2'] += output['log']['D_G_z2']
 
             for key in output['data'].keys():
                 t_data[key].append(output['data'][key])
@@ -264,13 +293,19 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
+        D_x = output.mean().item()
 
         # train with fake samples
         labels.fill_(fake_label)
+        # label smoothing for real labels alone *** not TODO
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
+        labels = labels * label_noise
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
+        D_G_z1 = output.mean().item()
 
+        critic_loss = critic_loss_real+critic_loss_fake
         ################################################
         # Generator - maximize log(D(G(z)))
         ################################################
@@ -284,14 +319,17 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
-        critic_loss = binary_loss(output, labels)
+        gen_loss = binary_loss(output, labels)
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*critic_loss
+        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*gen_loss
 
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "critic_loss": critic_loss,
-                "critic_loss_real": critic_loss_real, "critic_loss_fake": critic_loss_fake}
+        D_G_z2 = output.mean().item()
+
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, 
+                "gen_loss": gen_loss, "critic_loss": critic_loss,
+                "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
 
         data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
                 "target_2d": target_2d, "target_3d": target_3d,

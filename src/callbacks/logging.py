@@ -31,16 +31,22 @@ class Logging(Callback):
 
         # critic
         if config.self_supervised:
-            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}'.format(
-                output['log']['critic_loss'], output['log']['critic_loss_real'],
-                output['log']['critic_loss_fake']), end='')
+            print('\tcritic_loss: {:.4f}\tgen_loss: {:.4f}\tD_x: {:.4f}\tD_G_z1: {:.4f}\tD_G_z2: {:.4f}'.format(
+                output['log']['critic_loss'],
+                output['log']['gen_loss'],
+                output['log']['D_x'],
+                output['log']['D_G_z1'],
+                output['log']['D_G_z2']
+            ), end='')
 
             config.logger.log({
                 f"{vae_type}": {
                     "train": {
-                        "critic_loss": output['log']['critic_loss'],
-                        "critic_loss_real": output['log']['critic_loss_real'],
-                        "critic_loss_fake": output['log']['critic_loss_fake']
+                        'critic_loss': output['log']['critic_loss'],
+                        'gen_loss': output['log']['gen_loss'],
+                        'D_x': output['log']['D_x'],
+                        'D_G_z1': output['log']['D_G_z1'],
+                        'D_G_z2': output['log']['D_G_z2']
                     }
                 }
             }, commit=True)
@@ -83,21 +89,30 @@ class Logging(Callback):
 
         # critic
         if config.self_supervised:
-            avg_output['log']['critic_loss'] = loss_dic['critic_loss']/len(val_loader)
-            avg_output['log']['critic_loss_real'] = loss_dic['critic_loss_real']/len(val_loader)
-            avg_output['log']['critic_loss_fake'] = loss_dic['critic_loss_fake']/len(val_loader)
 
-            print('\tCritic: {:.4f}\tCritic Real: {:.4f}\tCritic Fake: {:.4f}'.format(
-                avg_output['log']['critic_loss'], avg_output['log']['critic_loss_real'],
-                avg_output['log']['critic_loss_fake'], end=''))
+            avg_output['log']['critic_loss'] = loss_dic['critic_loss']/len(val_loader)
+            avg_output['log']['gen_loss'] = loss_dic['gen_loss']/len(val_loader)
+            avg_output['log']['D_x'] = loss_dic['D_x']/len(val_loader)
+            avg_output['log']['D_G_z1'] = loss_dic['D_G_z1']/len(val_loader)
+            avg_output['log']['D_G_z2'] = loss_dic['D_G_z2']/len(val_loader)
+
+            print('\tcritic_loss: {:.4f}\tgen_loss: {:.4f}\tD_x: {:.4f}\tD_G_z1: {:.4f}\tD_G_z2: {:.4f}'.format(
+                avg_output['log']['critic_loss'],
+                avg_output['log']['gen_loss'],
+                avg_output['log']['D_x'],
+                avg_output['log']['D_G_z1'],
+                avg_output['log']['D_G_z2'],
+                end=''))
 
             # log to wandb
             config.logger.log({
                 f"{vae_type}": {
                     "val": {
-                        "critic_loss": avg_output['log']['critic_loss'],
-                        "critic_loss_real": avg_output['log']['critic_loss_real'],
-                        "critic_loss_fake": avg_output['log']['critic_loss_fake']
+                        'critic_loss': avg_output['log']['critic_loss'],
+                        'gen_loss': avg_output['log']['gen_loss'],
+                        'D_x': avg_output['log']['D_x'],
+                        'D_G_z1': avg_output['log']['D_G_z1'],
+                        'D_G_z2': avg_output['log']['D_G_z2']
                     }
                 }
             }, commit=True)
@@ -105,7 +120,7 @@ class Logging(Callback):
             # log intermediate visualizations
             n_samples = 3
             for i in range(n_samples):
-                i+=round(len(t_data["recon_2d"])/4.2)
+                i += round(len(t_data["recon_2d"])/4.2)
                 plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
                               t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val', title=pjpe[i].item())
 
@@ -123,10 +138,10 @@ class Logging(Callback):
         # print and log MPJPE
         print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {avg_pjpe}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
-        config.mpjpe=mpjpe
+        config.mpjpe = mpjpe
 
         if mpjpe < config.mpjpe_min:
-            config.mpjpe_min=mpjpe
+            config.mpjpe_min = mpjpe
 
         # For Images
         # TODO can have this in eval instead and skip logging val

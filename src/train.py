@@ -33,7 +33,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'gan'
-    os.environ['WANDB_NOTES'] = 'prev+ 500 z + low lr+blocks1'
+    os.environ['WANDB_NOTES'] = 'directions'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -124,7 +124,7 @@ def main():
                            optimizer, epoch, vae_type)
 
             val_loss = 0
-            if epoch % 3 == 0 or epoch == 1:
+            if epoch % 5 == 0 or epoch == 1:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -168,9 +168,9 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=200, type=int,
+    parser.add_argument('--epochs', default=300, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=4096, type=int,
+    parser.add_argument('--batch_size', default=2560, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
@@ -181,7 +181,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=50, type=int,
+    parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--recon_weight', default=10, type=int,
                         help='recon weight used during self supervised procedure only')
@@ -200,8 +200,8 @@ def training_specific_args():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
-                        help='prefix of the annotation h5 file: h36m17 or debug_h36m17')
+    parser.add_argument('--annotation_file', default=f'h36m17_2', type=str,
+                        help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
     # image data

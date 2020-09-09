@@ -22,13 +22,14 @@ class LBAD(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, neurons=512, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
+    def __init__(self, neurons=1024, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons
         self.name = "critic"
         self.drop_out_p = drop_out_p
         self.n_joints = n_joints
+        self.blocks = 1
         self.__build_model()
 
     def __build_model(self):
@@ -42,8 +43,9 @@ class Critic(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        if self.blocks > 1:
+            self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
@@ -59,9 +61,10 @@ class Critic(nn.Module):
         residual = x
         x = self.LBAD_1(x)
         x = self.LBAD_2(x) + residual
-        residual = x
-        x = self.LBAD_3(x)
-        x = self.LBAD_4(x) + residual
+        if self.blocks >1:
+            residual = x
+            x = self.LBAD_3(x)
+            x = self.LBAD_4(x) + residual
 
         out = self.out_block(x)
         
