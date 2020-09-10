@@ -191,7 +191,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=4e-4, type=float,
+    parser.add_argument('--learning_rate', default=2e-3, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

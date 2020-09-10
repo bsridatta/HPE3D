@@ -57,7 +57,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
             min_z_loss = 0
 
         # # enforce unit recon to avoid depth ambiguity
-        recon_3d = torch.clamp(recon_3d, min=-2, max=2)
+        recon_3d = recon_3d*2
+        # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -99,8 +100,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # train with fake samples
         labels.fill_(fake_label)
         # label smoothing for real labels alone *** not TODO
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
+        # labels = labels * label_noise
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
@@ -112,7 +113,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # update critic
         if batch_idx % 1 == 0:
             # Clip grad norm to 1 ********************************
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            # torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -144,7 +145,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         D_G_z2 = output.mean().item()
 
-        if True:
+        if False:
             # Clip grad norm to 1 *****************************************
             torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
@@ -155,7 +156,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
             torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
 
         # update VAE
-        if batch_idx % 3 == 0:
+        if batch_idx % 2 == 0:
             vae_optimizer.step()
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "gen_loss": gen_loss,
@@ -266,7 +267,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         target_2d = inp.detach()
 
         # enforce unit recon to avoid depth ambiguity
-        recon_3d = torch.clamp(recon_3d, min=-2, max=2)
+        recon_3d = recon_3d*2
+        # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -298,8 +300,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # train with fake samples
         labels.fill_(fake_label)
         # label smoothing for real labels alone *** not TODO
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
+        # labels = labels * label_noise
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
