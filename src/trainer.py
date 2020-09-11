@@ -139,8 +139,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = config.recon_weight*recon_loss + config.beta * \
-            kld_loss + config.critic_weight*gen_loss  # + min_z_loss
+        loss = recon_loss + config.beta * kld_loss + \
+            config.critic_weight*gen_loss
+        loss *= 10
+        # + min_z_loss
+
         loss.backward()  # Would include VAE and critic but critic not updated
 
         D_G_z2 = output.mean().item()
@@ -156,7 +159,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
             torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
 
         # update VAE
-        if batch_idx % 2 == 0:
+        if batch_idx % 1 == 0:
             vae_optimizer.step()
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, "gen_loss": gen_loss,
@@ -325,11 +328,13 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = config.recon_weight*recon_loss + config.beta*kld_loss + config.critic_weight*gen_loss
-
+        loss = recon_loss + config.beta*kld_loss + \
+            config.critic_weight*gen_loss
+        loss *= 10
+        
         D_G_z2 = output.mean().item()
 
-        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss, 
+        logs = {"kld_loss": kld_loss, "recon_loss": recon_loss,
                 "gen_loss": gen_loss, "critic_loss": critic_loss,
                 "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
 

@@ -51,7 +51,7 @@ class Logging(Callback):
                 }
             }, commit=True)
 
-            if int(100*(batch_idx/n_batches)) % 50 == 0 and batch_len == config.batch_size:
+            if int(100*(batch_idx/n_batches)) % 100 == 0 and batch_len == config.batch_size:
                 i = 0
                 plot_all_proj(config, output["log"]["recon_2d"][i], output["log"]["novel_2d"][i], output["log"]["target_2d"][i],
                               output["log"]["recon_3d"][i], output["log"]["target_3d"][i])
