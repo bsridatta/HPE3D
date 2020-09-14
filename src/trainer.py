@@ -45,16 +45,18 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
+        criterion = torch.nn.MSELoss()
+
         # Reprojection
         target_2d = inp.detach()
 
-        if False:
-            min_z_target = recon_3d.detach()
-            min_z_target[Ellipsis, 2] = 0
-            min_z_loss = torch.nn.functional.mse_loss(recon_3d, min_z_target)
-            min_z_loss *= 1e-5
-        else:
-            min_z_loss = 0
+        # if False:
+        #     min_z_target = recon_3d.detach()
+        #     min_z_target[Ellipsis, 2] = 0
+        #     min_z_loss = torch.nn.functional.mse_loss(recon_3d, min_z_target)
+        #     min_z_loss *= 1e-5
+        # else:
+        #     min_z_loss = 0
 
         # # enforce unit recon to avoid depth ambiguity
         recon_3d = recon_3d*2
@@ -69,6 +71,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         novel_2d = project_3d_to_2d(novel_3d+T)
         novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
+        
+        # Use the same fake for training critic and the generator
+        novel_2d_detach = novel_2d.detach()
 
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
@@ -81,9 +86,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer.zero_grad()
 
         # confuse critic
-        if batch_idx % 7 == 0:
-            real_label = 0
-            fake_label = 1
+        # if batch_idx % 7 == 0:
+        #     real_label = 0
+        #     fake_label = 1
 
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
@@ -166,8 +171,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
                 "critic_loss": critic_loss, "recon_2d": recon_2d, "recon_3d": recon_3d,
                 "novel_2d": novel_2d, "target_2d": target_2d, "target_3d": target_3d,
                 "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
-
-        # plot_proj(target[0].detach().cpu(), recon_3d[0].detach().cpu(), recon[0].detach().cpu())
 
     else:
         vae_optimizer.zero_grad()
@@ -266,6 +269,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
+        criterion = torch.nn.MSELoss()
+
         # Reprojection
         target_2d = inp.detach()
 
@@ -282,6 +287,10 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         novel_2d = project_3d_to_2d(novel_3d+T)
         novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
+
+        # Use the same fake for training critic and the generator
+        novel_2d_detach = novel_2d.detach()
+        
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
         ################################################

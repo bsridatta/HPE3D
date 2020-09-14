@@ -110,8 +110,10 @@ def get_inp_target_criterion(encoder, decoder, batch):
     elif '2D' in decoder.__class__.__name__:
         target = batch['pose2d'].float()
         criterion = torch.nn.L1Loss()
+        # criterion = torch.nn.MSELoss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
+         # different if self-supervised
         criterion = torch.nn.L1Loss()
         # criterion = PJPE
         # criterion = torch.nn.MSELoss()

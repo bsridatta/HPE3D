@@ -123,7 +123,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
-    fig = plt.figure(1) # , figsize=(19.20, 10.80))
+    fig = plt.figure(1, figsize=(19.20, 10.80))
     ax = fig.gca(projection='3d')
     ax._axis3don = axis3don
 
