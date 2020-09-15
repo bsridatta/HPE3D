@@ -33,7 +33,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'D_G'
-    os.environ['WANDB_NOTES'] = 'fresh gan'
+    os.environ['WANDB_NOTES'] = 'notes'
 
     # ignore when debugging on cpu
     if not use_cuda:

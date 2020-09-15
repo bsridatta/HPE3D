@@ -116,7 +116,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_loss = critic_loss_real+critic_loss_fake
 
         # update critic
-        if batch_idx % 1 == 0:
+        if batch_idx % 4 == 0:
             # Clip grad norm to 1 ********************************
             # torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()

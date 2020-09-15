@@ -52,7 +52,7 @@ def get_optims(variant, models, config):
 
     if config.self_supervised:
         params = list(models['Critic'].parameters())
-        optimizer = torch.optim.SGD(params, lr=config.learning_rate)
+        optimizer = torch.optim.Adam(params, lr=config.learning_rate) # using SGD worsens Dx
         optims.append(optimizer)
     return optims
 

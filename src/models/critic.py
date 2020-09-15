@@ -29,7 +29,7 @@ class Critic(nn.Module):
         self.name = "critic"
         self.drop_out_p = drop_out_p
         self.n_joints = n_joints
-        self.blocks = 2
+        self.blocks = 1
         self.__build_model()
 
     def __build_model(self):
