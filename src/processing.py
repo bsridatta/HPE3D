@@ -151,6 +151,7 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
 
     else:
         recon = (recon.T*scale.T).T
+    
 
     if procrustes_enabled:
         # recon should be the second matrix
