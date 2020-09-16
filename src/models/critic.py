@@ -42,8 +42,8 @@ class Critic(nn.Module):
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
         self.LBAD_2 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
-        self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        # self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
 
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
