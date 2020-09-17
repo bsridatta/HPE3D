@@ -71,7 +71,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         novel_2d = project_3d_to_2d(novel_3d+T)
         novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
-        
+
         # Use the same fake for training critic and the generator
         novel_2d_detach = novel_2d.detach()
 
@@ -116,9 +116,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_loss = critic_loss_real+critic_loss_fake
 
         # update critic
-        if batch_idx % 10 == 0:
+        if batch_idx % 3 == 0:
             # Clip grad norm to 1 ********************************
-            # torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            torch.nn.utils.clip_grad_norm_(critic.parameters(), 10)
             critic_optimizer.step()
 
         ################################################
@@ -144,7 +144,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + config.beta * kld_loss + \
+        loss = recon_loss + 0.1*config.beta * kld_loss + \
             config.critic_weight*gen_loss
         loss *= 10
         # + min_z_loss
@@ -290,7 +290,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         # Use the same fake for training critic and the generator
         novel_2d_detach = novel_2d.detach()
-        
+
         ################################################
         # Critic - maximize log(D(x)) + log(1 - D(G(z)))
         ################################################
@@ -337,10 +337,10 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + config.beta*kld_loss + \
+        loss = recon_loss + 0.1*config.beta*kld_loss + \
             config.critic_weight*gen_loss
         loss *= 10
-        
+
         D_G_z2 = output.mean().item()
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss,

@@ -14,15 +14,15 @@ class LBAD(nn.Module):
 
     def forward(self, x):
         x = self.w1(x)
-        x = self.bn1(x)
+        # x = self.bn1(x)
         x = self.activ(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
 
         return x
 
 
 class Critic(nn.Module):
-    def __init__(self, neurons=1024, n_joints=16, activation=nn.LeakyReLU, drop_out_p=0.5):
+    def __init__(self, neurons=1024, n_joints=16, activation=nn.ReLU, drop_out_p=0.2):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons
@@ -36,9 +36,9 @@ class Critic(nn.Module):
 
         self.inp_block = nn.Sequential(
             nn.Linear(2*self.n_joints, self.neurons), 
-            nn.BatchNorm1d(self.neurons),
+            # nn.BatchNorm1d(self.neurons),
             self.activation(),
-            nn.Dropout(p=self.drop_out_p)
+            # nn.Dropout(p=self.drop_out_p)
         )
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)

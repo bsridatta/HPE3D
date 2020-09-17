@@ -134,7 +134,7 @@ def main():
                     break
 
                 # # TODO have different learning rates for all variants
-                scheduler[0].step(val_loss)
+                # scheduler[0].step(val_loss)
 
                 # only model ckpt as of now
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
@@ -169,7 +169,7 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=300, type=int,
+    parser.add_argument('--epochs', default=350, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=2560, type=int,
                         help='number of samples per step, have more than one for batch norm')
@@ -184,7 +184,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--critic_weight', default=1e-4, type=float,
+    parser.add_argument('--critic_weight', default=4e-4, type=float,
                         help='critic weight for self supervised procedure')
     parser.add_argument('--critic_annealing_epochs', default=10, type=int,
                         help='critic weight annealing time')
@@ -192,7 +192,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=1e-4, type=float,
+    parser.add_argument('--learning_rate', default=4e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')
