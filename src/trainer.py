@@ -45,7 +45,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
-        criterion = torch.nn.MSELoss()
+        # criterion = torch.nn.MSELoss()
 
         # Reprojection
         target_2d = inp.detach()
@@ -94,8 +94,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
         # label smoothing for real labels alone
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        # labels = labels * label_noise
 
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
@@ -118,7 +118,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # update critic
         if batch_idx % 3 == 0:
             # Clip grad norm to 1 ********************************
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 10)
+            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -134,8 +134,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         vae_optimizer.zero_grad()
 
         labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        # labels = labels * label_noise
 
         output = critic(novel_2d)
 
@@ -153,7 +153,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         D_G_z2 = output.mean().item()
 
-        if False:
+        if True:
             # Clip grad norm to 1 *****************************************
             torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
@@ -269,7 +269,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
-        criterion = torch.nn.MSELoss()
+        # criterion = torch.nn.MSELoss()
 
         # Reprojection
         target_2d = inp.detach()
@@ -302,8 +302,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=recon_3d.device, dtype=target_2d.dtype)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        # labels = labels * label_noise
 
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
@@ -327,8 +327,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # -trained discriminator predicts all fake as real
 
         labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        # labels = labels * label_noise
 
         output = critic(novel_2d)
 
