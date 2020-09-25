@@ -22,13 +22,19 @@ annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
 subject_list = [9, 11]
+skip_frame = 64
+
 # subject_list = [1, 5, 6, 7, 8]
+# skip_frame = 5
+
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_2_' + subj_str
 inds = range(17)
-action_list = np.arange(2, 3)
+action_list = np.arange(2, 3) # 17
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
+
+
 
 # Get smaller subset of the data for fast dev?
 debug = False
@@ -85,7 +91,7 @@ for subject_ in subject_list:
                 cam_k_ = get_camera_data(camera_, subject_, 'k')
                 num_images = pose2d_.shape[2]
                 for i in range(num_images):
-                    if i % 5 != 0:
+                    if i % skip_frame != 0:
                         continue
                     idx.append(i+1)
                     pose2d.append(pose2d_[inds, :, i])

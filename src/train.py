@@ -33,7 +33,7 @@ def main():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'D_G'
-    os.environ['WANDB_NOTES'] = 'notes'
+    os.environ['WANDB_NOTES'] = 'one action'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -169,13 +169,13 @@ def training_specific_args():
     # training specific
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
-    parser.add_argument('--epochs', default=400, type=int,
+    parser.add_argument('--epochs', default=800, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=2560, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="None", type=str,
+    parser.add_argument('--resume_run', default="rare-wildflower-2723", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
@@ -184,7 +184,7 @@ def training_specific_args():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=512, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--critic_weight', default=4e-4, type=float,
+    parser.add_argument('--critic_weight', default=1e-4, type=float,
                         help='critic weight for self supervised procedure')
     parser.add_argument('--critic_annealing_epochs', default=10, type=int,
                         help='critic weight annealing time')
@@ -192,7 +192,9 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--learning_rate', default=4e-4, type=float,
+    parser.add_argument('--beta_max', default=0.01, type=float, # 0.01
+                        help='maximum value of beta during annealing or cycling')                      
+    parser.add_argument('--learning_rate', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='use pretrained weights for RGB encoder')

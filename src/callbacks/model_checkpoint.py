@@ -30,8 +30,14 @@ class ModelCheckpoint(Callback):
     
     def on_epoch_end(self, config, val_loss, model, optimizers, epoch, n_pair, **kwargs):
                 
-        if val_loss < self.val_loss_min and config.device != 'cpu':
-            self.val_loss_min = val_loss
+        # if val_loss < self.val_loss_min and config.device != 'cpu':
+        #     self.val_loss_min = val_loss
+        
+        if config.mpjpe < config.mpjpe_min and config.device != 'cpu':
+            config.mpjpe_min = config.mpjpe
+
+            if val_loss < self.val_loss_min and config.device != 'cpu':
+                self.val_loss_min = val_loss
 
             # Models
             for model_ in model:

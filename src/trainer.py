@@ -86,7 +86,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer.zero_grad()
 
         # confuse critic
-        # if batch_idx % 7 == 0:
+        # if batch_idx % 20 == 0:
         #     real_label = 0
         #     fake_label = 1
 
@@ -94,8 +94,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
         # label smoothing for real labels alone
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        # labels = labels * label_noise
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
 
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
@@ -116,7 +116,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_loss = critic_loss_real+critic_loss_fake
 
         # update critic
-        if batch_idx % 3 == 0:
+        if batch_idx % 1 == 0:
             # Clip grad norm to 1 ********************************
             torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
@@ -134,8 +134,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         vae_optimizer.zero_grad()
 
         labels.fill_(real_label)
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        # labels = labels * label_noise
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
 
         output = critic(novel_2d)
 
@@ -239,14 +239,20 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         t_data['recon_3d'].to('cuda')
         t_data['target_3d'].to('cuda')
 
-        pjpe = PJPE(t_data['recon_3d'], t_data['target_3d'])
-        avg_pjpe = torch.mean((pjpe), dim=0)
-        avg_mpjpe = torch.mean(avg_pjpe).item()
-        pjpe = torch.mean(pjpe, dim=1)
+        pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d']) # per sample per joint [n,j]
+        avg_pjpe = torch.mean((pjpe_), dim=0) # across all samples per joint [j]
+        avg_mpjpe = torch.mean(avg_pjpe).item() # across all samples all joint [1] 
+        pjpe = torch.mean(pjpe_, dim=1) # per sample all joints [n]
+        
+        actions = t_data['action']
+        mpjpe_pa = {} # per action
+        for i in torch.unique(actions):
+            res = torch.mean(pjpe[actions==i])
+            mpjpe_pa[i.item()] = res.item()
 
         config.logger.log({"pjpe": pjpe.cpu()})
 
-    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic,
+    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic, mpjpe_pa=mpjpe_pa,
                          val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
                          )
 
@@ -302,8 +308,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=recon_3d.device, dtype=target_2d.dtype)
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        # labels = labels * label_noise
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
 
         output = critic(target_2d)
         critic_loss_real = binary_loss(output, labels)
@@ -327,8 +333,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # -trained discriminator predicts all fake as real
 
         labels.fill_(real_label)
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        # labels = labels * label_noise
+        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        labels = labels * label_noise
 
         output = critic(novel_2d)
 
@@ -349,7 +355,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
                 "target_2d": target_2d, "target_3d": target_3d,
-                "z": z, "z_attr": batch['action'], "scale_3d": batch['scale_3d']}
+                "z": z, "action": batch['action'], "scale_3d": batch['scale_3d']}
 
     else:
         recon_loss = criterion(recon_3d, target_3d)
@@ -360,7 +366,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss}
 
         data = {"recon_3d": recon_3d, "target_3d": target_3d,
-                "z": z, "z_attr": batch['action']}
+                "z": z, "action": batch['action']}
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})

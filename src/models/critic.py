@@ -22,7 +22,7 @@ class LBAD(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, neurons=1024, n_joints=16, activation=nn.ReLU, drop_out_p=0.2):
+    def __init__(self, neurons=1024, n_joints=16, activation=nn.ReLU, drop_out_p=0.5):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons
@@ -36,9 +36,8 @@ class Critic(nn.Module):
 
         self.inp_block = nn.Sequential(
             nn.Linear(2*self.n_joints, self.neurons), 
-            # nn.BatchNorm1d(self.neurons),
             self.activation(),
-            # nn.Dropout(p=self.drop_out_p)
+            # Shouldnt use BN for Critic input
         )
 
         self.LBAD_1 = LBAD(self.neurons, self.activation, self.drop_out_p)
@@ -46,7 +45,9 @@ class Critic(nn.Module):
         if self.blocks > 1:
             self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
             self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
-
+            # self.LBAD_5 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            # self.LBAD_6 = LBAD(self.neurons, self.activation, self.drop_out_p)
+        
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
             nn.Sigmoid()
@@ -65,6 +66,9 @@ class Critic(nn.Module):
             residual = x
             x = self.LBAD_3(x)
             x = self.LBAD_4(x) + residual
+            # residual = x
+            # x = self.LBAD_5(x)
+            # x = self.LBAD_6(x) + residual
 
         out = self.out_block(x)
         
