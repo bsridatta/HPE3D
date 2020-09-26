@@ -5,7 +5,7 @@ import torch
 from src.callbacks.base import Callback
 from src.models import PJPE
 from src.viz.mpl_plots import plot_all_proj, plot_3d
-from src.viz.mayavi_plots import plot_3D_models
+# from src.viz.mayavi_plots import plot_3D_models
 
 
 class Logging(Callback):
