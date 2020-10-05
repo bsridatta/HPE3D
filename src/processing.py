@@ -240,8 +240,12 @@ def random_rotate(pose_3d,
     """roll_range is elevation as x and y arent swapped"""
     azimuths = torch.rand(pose_3d.shape[:-2]) * \
         (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
-    elevations = torch.rand(pose_3d.shape[:-2]) * \
-        (elevation_range[0]-elevation_range[1]) + elevation_range[1]
+
+    elevations = torch.ones(pose_3d.shape[:-2]) * math.pi/2 * (2*(torch.randint(-1,1, pose_3d.shape[:-2])+0.5))
+
+    # elevations = torch.rand(pose_3d.shape[:-2]) * \
+    #     (elevation_range[0]-elevation_range[1]) + elevation_range[1]
+
     rolls = torch.rand(pose_3d.shape[:-2]) * \
         (roll_range[0]-roll_range[1]) + roll_range[1]
 
