@@ -325,7 +325,7 @@ def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
     rows = cols = grid
 
     i = 1
-    for pose, target in zip(poses[:grid], targets[:grid]):
+    for pose, target in zip(poses[:grid*grid], targets[:grid*grid]):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
         plot_3d(pose, mode="axis", color='b', floor=False, axis3don=True, labels=labels)
         plot_3d(target, mode="axis", color='grey', floor=False, axis3don=True, labels=labels)

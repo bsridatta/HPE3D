@@ -72,7 +72,7 @@ class Logging(Callback):
     def on_validation_start(self):
         print("Start validation epoch")
 
-    def on_validation_end(self, config, vae_type, epoch, loss_dic, val_loader, mpjpe, avg_pjpe, pjpe, t_data, **kwargs):
+    def on_validation_end(self, config, vae_type, epoch, loss_dic, val_loader, mpjpe, avg_pjpe, pjpe, t_data, mpjpe_pa, **kwargs):
         # average epochs output
         avg_output = {}
         avg_output['log'] = {}
@@ -118,11 +118,12 @@ class Logging(Callback):
             }, commit=True)
 
             # log intermediate visualizations
-            n_samples = 3
-            for i in range(n_samples):
-                i += round(len(t_data["recon_2d"])/4.2)
-                plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
-                              t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val', title=pjpe[i].item())
+            n_samples = 2
+            if epoch % 20 == 0:    
+                for i in range(n_samples):
+                    i += round(len(t_data["recon_2d"])/4.2)
+                    plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
+                                t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val', title=pjpe[i].item())
 
         # log main metrics to wandb
         config.logger.log({
@@ -136,12 +137,9 @@ class Logging(Callback):
         }, commit=True)
 
         # print and log MPJPE
-        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n {avg_pjpe}')
+        print(f'{vae_type} - * MPJPE * : {round(mpjpe,4)} \n per joint \n {avg_pjpe} \n per action \n {list(mpjpe_pa.values())}')
         config.logger.log({f'{vae_type}_mpjpe': mpjpe})
         config.mpjpe = mpjpe
-
-        if mpjpe < config.mpjpe_min:
-            config.mpjpe_min = mpjpe
 
         # For Images
         # TODO can have this in eval instead and skip logging val

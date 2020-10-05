@@ -31,7 +31,7 @@ class Encoder2D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 1024
         self.name = "Encoder2D"
-        self.drop_out_p = 0.0
+        self.drop_out_p = 0.2
         self.blocks = 1
 
         self.__build_model()
@@ -92,7 +92,7 @@ class Decoder3D(nn.Module):
         self.n_joints = n_joints
         self.neurons = 1024
         self.name = "Decoder3D"
-        self.drop_out_p = 0.0
+        self.drop_out_p = 0.2
         self.blocks = 1
 
         self.__build_model()
@@ -115,9 +115,7 @@ class Decoder3D(nn.Module):
         self.dec_out_block = nn.Sequential(
             nn.Linear(self.neurons, 3*self.n_joints),
             nn.Tanh()
-            # nn.BatchNorm1d(3*self.n_joints),
-            # self.activation(),
-            # nn.Dropout(p=self.drop_out_p)
+            # Shouldnt use BN for Generator output
         )
 
     def forward(self, x):

@@ -32,7 +32,7 @@ class WeightScheduler(Callback):
         """
         if epoch > config.beta_warmup_epochs:
             if epoch <= config.beta_warmup_epochs + config.beta_annealing_epochs:
-                config.beta += 0.01/config.beta_annealing_epochs
+                config.beta += config.beta_max/config.beta_annealing_epochs # 0.01
                 print(f"[INFO] Beta increased to: {config.beta}")
             else:
                 print(f"[INFO] Beta constant at: {config.beta}")
@@ -52,7 +52,7 @@ class WeightScheduler(Callback):
             config.beta = 0
             print(f"[INFO] Beta reset to: {config.beta}")
         elif epoch % config.beta_annealing_epochs < config.beta_annealing_epochs/2:
-            config.beta += 0.01/config.beta_annealing_epochs*0.5
+            config.beta += config.beta_max/config.beta_annealing_epochs*0.5
             print(f"[INFO] Beta increased to: {config.beta}")
         else:
             print(f"[INFO] Beta constant: {config.beta}")
