@@ -14,19 +14,6 @@ from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 # torch.autograd.set_detect_anomaly(True)
 
 
-def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
-    # note -- model.train() in training step
-    for batch_idx, batch in enumerate(train_loader):
-        for key in batch.keys():
-            batch[key] = batch[key].to(config.device).float()
-
-        output = _training_step(batch, batch_idx, model, config, optimizer)
-
-        cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
-                              batch=batch, dataloader=train_loader, output=output, models=model)
-    cb.on_train_end(config=config, epoch=epoch)
-
-
 def _training_step(batch, batch_idx, model, config, optimizer):
     encoder = model[0].train()
     decoder = model[1].train()
@@ -186,80 +173,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     return OrderedDict({'loss': loss, 'log': logs})
 
 
-def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
-    # note -- model.eval() in validation step
-    cb.on_validation_start()
-
-    t_data = defaultdict(list)
-    loss_dic = defaultdict(int)
-
-    with torch.no_grad():
-        for batch_idx, batch in enumerate(val_loader):
-            for key in batch.keys():
-                batch[key] = batch[key].to(config.device)
-
-            output = _validation_step(batch, batch_idx, model, epoch, config)
-
-            loss_dic['loss'] += output['loss'].item()
-            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
-            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
-
-            if config.self_supervised:
-                loss_dic['gen_loss'] += output['log']['gen_loss'].item()
-                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
-                loss_dic['D_x'] += output['log']['D_x']
-                loss_dic['D_G_z1'] += output['log']['D_G_z1']
-                loss_dic['D_G_z2'] += output['log']['D_G_z2']
-
-            for key in output['data'].keys():
-                t_data[key].append(output['data'][key])
-
-            del output
-            gc.collect()
-
-    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
-
-    for key in t_data.keys():
-        t_data[key] = torch.cat(t_data[key], 0)
-
-    # performance
-    t_data['recon_3d_org'] = t_data['recon_3d'].detach()
-    if '3D' in model[1].name:
-        if normalize_pose and not config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'], t_data['target_3d'])
-
-        elif config.self_supervised:
-            t_data['recon_3d'], t_data['target_3d'] = post_process(
-                t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
-                scale=t_data['scale_3d'].to('cpu'),
-                self_supervised=True, procrustes_enabled=True)
-
-        # Speed up procrustes alignment with CPU!
-        t_data['recon_3d'].to('cuda')
-        t_data['target_3d'].to('cuda')
-
-        pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d']) # per sample per joint [n,j]
-        avg_pjpe = torch.mean((pjpe_), dim=0) # across all samples per joint [j]
-        avg_mpjpe = torch.mean(avg_pjpe).item() # across all samples all joint [1] 
-        pjpe = torch.mean(pjpe_, dim=1) # per sample all joints [n]
-        
-        actions = t_data['action']
-        mpjpe_pa = {} # per action
-        for i in torch.unique(actions):
-            res = torch.mean(pjpe[actions==i])
-            mpjpe_pa[i.item()] = res.item()
-
-        config.logger.log({"pjpe": pjpe.cpu()})
-
-    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic, mpjpe_pa=mpjpe_pa,
-                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
-                         )
-
-    del loss_dic, t_data
-    return avg_loss
-
-
 def _validation_step(batch, batch_idx, model, epoch, config):
     encoder = model[0].eval()
     decoder = model[1].eval()
@@ -370,3 +283,90 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
     return OrderedDict({'loss': loss, "log": logs,
                         'data': data, "epoch": epoch})
+
+
+def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
+    # note -- model.train() in training step
+    for batch_idx, batch in enumerate(train_loader):
+        for key in batch.keys():
+            batch[key] = batch[key].to(config.device).float()
+
+        output = _training_step(batch, batch_idx, model, config, optimizer)
+
+        cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
+                              batch=batch, dataloader=train_loader, output=output, models=model)
+    cb.on_train_end(config=config, epoch=epoch)
+
+
+def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_pose=True):
+    # note -- model.eval() in validation step
+    cb.on_validation_start()
+
+    t_data = defaultdict(list)
+    loss_dic = defaultdict(int)
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(val_loader):
+            for key in batch.keys():
+                batch[key] = batch[key].to(config.device)
+
+            output = _validation_step(batch, batch_idx, model, epoch, config)
+
+            loss_dic['loss'] += output['loss'].item()
+            loss_dic['recon_loss'] += output['log']['recon_loss'].item()
+            loss_dic['kld_loss'] += output['log']['kld_loss'].item()
+
+            if config.self_supervised:
+                loss_dic['gen_loss'] += output['log']['gen_loss'].item()
+                loss_dic['critic_loss'] += output['log']['critic_loss'].item()
+                loss_dic['D_x'] += output['log']['D_x']
+                loss_dic['D_G_z1'] += output['log']['D_G_z1']
+                loss_dic['D_G_z2'] += output['log']['D_G_z2']
+
+            for key in output['data'].keys():
+                t_data[key].append(output['data'][key])
+
+            del output
+            gc.collect()
+
+    avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
+
+    for key in t_data.keys():
+        t_data[key] = torch.cat(t_data[key], 0)
+
+    # performance
+    t_data['recon_3d_org'] = t_data['recon_3d'].detach()
+    if '3D' in model[1].name:
+        if normalize_pose and not config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'], t_data['target_3d'])
+
+        elif config.self_supervised:
+            t_data['recon_3d'], t_data['target_3d'] = post_process(
+                t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
+                scale=t_data['scale_3d'].to('cpu'),
+                self_supervised=True, procrustes_enabled=True)
+
+        # Speed up procrustes alignment with CPU!
+        t_data['recon_3d'].to('cuda')
+        t_data['target_3d'].to('cuda')
+
+        pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])  # per sample per joint [n,j]
+        avg_pjpe = torch.mean((pjpe_), dim=0)  # across all samples per joint [j]
+        avg_mpjpe = torch.mean(avg_pjpe).item()  # across all samples all joint [1]
+        pjpe = torch.mean(pjpe_, dim=1)  # per sample all joints [n]
+
+        actions = t_data['action']
+        mpjpe_pa = {}  # per action
+        for i in torch.unique(actions):
+            res = torch.mean(pjpe[actions == i])
+            mpjpe_pa[i.item()] = res.item()
+
+        config.logger.log({"pjpe": pjpe.cpu()})
+
+    cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic, mpjpe_pa=mpjpe_pa,
+                         val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
+                         )
+
+    del loss_dic, t_data
+    return avg_loss

@@ -16,7 +16,7 @@ import scipy.io as sio
 from src.data_preparation.camera_parameters import get_camera_data
 ###############################################################
 # Set Paths
-img_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
+img_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
 save_path = f'{os.getenv("HOME")}/lab/HPE3D/src/data/'
 annot_name = 'matlab_meta_new.mat'
 
@@ -33,8 +33,6 @@ inds = range(17)
 action_list = np.arange(2, 3) # 17
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
-
-
 
 # Get smaller subset of the data for fast dev?
 debug = False
@@ -110,13 +108,15 @@ for subject_ in subject_list:
                     camera.append(camera_)
                     num_samples += 1
 
-                    print(subject_, action_, pose3d_.shape)
-
+                    
                     #############################################################
                     # Comment or uncomment these debug conditions to change the debug dataset distribution
 
                     if debug:
                         break
+
+                print(subject_, action_, pose3d_.shape)
+
                 if debug:
                     break
             if debug:
@@ -126,8 +126,8 @@ for subject_ in subject_list:
     # if debug:
     #     break
 
-print(f'{dir_name}  number of samples = %d' % num_samples)
-
+print(f'number of samples = %d' % num_samples)
+exit()
 if mean_std:
     # Not going to use this anymore
     sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
