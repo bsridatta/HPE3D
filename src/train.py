@@ -121,8 +121,8 @@ def main():
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
             # TODO init criterion once with .to(cuda)
-            training_epoch(config, cb, model, train_loader,
-                           optimizer, epoch, vae_type)
+            # training_epoch(config, cb, model, train_loader,
+            #                optimizer, epoch, vae_type)
 
             val_loss = 0
             if epoch % 5 == 0 or epoch == 1:
@@ -203,7 +203,7 @@ def training_specific_args():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17_2', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

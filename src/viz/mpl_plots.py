@@ -17,8 +17,10 @@ SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
 LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
           'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
+plt.locator_params(nbins=4)
+plt.rcParams["figure.figsize"]=(19.20, 10.80)
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, save_path=None):
     """Base function for 2D pose plotting
 
     Args:
@@ -36,10 +38,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
-
-    fig = plt.figure(1, figsize=(19.20, 10.80))
+    fig = plt.figure(1)
     ax = fig.gca()
-    plt.tight_layout()
     ax.set_aspect('equal')
     # plt.cla()
 
@@ -73,13 +73,18 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         for i, j, l in zip(x, y, LABELS):
             ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
 
-    if show_ticks:
-        ax.set_xlabel('X axis')
-        ax.set_ylabel('Y axis')
-
+    # if show_ticks:
+    #     ax.set_xlabel('X axis')
+    #     ax.set_ylabel('Y axis')
+    ax.tick_params(direction='out', width=0)
+    
     if not show_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
+
+    ax.tick_params(labelsize='small', width=0)
+
+    plt.tight_layout()
 
     if mode == 'axis':
         return ax
@@ -90,12 +95,18 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
-        fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
+        if save_path is None: 
+            fig.savefig(f"{os.getcwd()}/image2D.png", bbox_inches='tight')
+        else:
+            fig.savefig(save_path, bbox_inches='tight')
         fig.clf()
-        image = Image.open(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
-        image = image.convert('RGB')
-        image = transforms.ToTensor()(image).unsqueeze_(0)
-        return image
+    
+    elif mode == "pil":
+        canvas = plt.get_current_fig_manager().canvas
+        canvas.draw()
+        pil = Image.frombytes('RGB', canvas.get_width_height(), canvas.tostring_rgb())
+        fig.clf()
+        return pil
 
     elif mode == "plt":
         return plt
@@ -104,7 +115,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True, labels=False, show_ticks=False, mean_root=False, title=None):
+def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True, 
+            labels=False, show_ticks=False, mean_root=False, title=None, save_path=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -123,7 +135,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
-    fig = plt.figure(1, figsize=(19.20, 10.80))
+    fig = plt.figure(1)
     ax = fig.gca(projection='3d')
     ax._axis3don = axis3don
 
@@ -164,7 +176,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
                     size=7, zorder=1, color='k')
 
     if title:
-        plt.title(title)
+        plt.title(title, y = -0.01, fontsize=8)
 
     # Plot floor
     if floor:
@@ -174,10 +186,11 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         ax.plot_surface(xx, yy, zz, cmap='gray',
                         linewidth=0, alpha=0.2)
 
-    if show_ticks:
-        ax.set_xlabel('X axis')
-        ax.set_ylabel('Y axis')
-        ax.set_zlabel('Z axis')
+    # if show_ticks:
+    #     ax.set_xlabel('X axis')
+    #     ax.set_ylabel('Y axis')
+    #     ax.set_zlabel('Z axis')
+    ax.tick_params(direction='out', width=0)
 
     if not show_ticks:
         ax.set_xticks([])
@@ -198,12 +211,18 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
-        fig.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
+        if save_path is None: 
+            fig.savefig(f"{os.getcwd()}/image3D.png", bbox_inches='tight')
+        else:
+            fig.savefig(save_path, bbox_inches='tight')
         fig.clf()
-        image = Image.open(f"{os.getenv('HOME')}/lab/HPE3D/src/results/x.png")
-        image = image.convert('RGB')
-        image = transforms.ToTensor()(image).unsqueeze_(0)
-        return image
+
+    elif mode == "pil":
+        canvas = plt.get_current_fig_manager().canvas
+        canvas.draw()
+        pil = Image.frombytes('RGB', canvas.get_width_height(), canvas.tostring_rgb())
+        fig.clf()
+        return pil
 
     elif mode == "plt":
         return plt
@@ -460,34 +479,34 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
         recon_3d_org = recon_3d_org.detach().cpu().numpy()
 
     # Target 2d
-    img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
+    img = plot_2d(target_2d, color='pink', mode='pil', show_ticks=True, labels=False)
     config.logger.log({name+"target_2d": config.logger.Image(img)}, commit=False)
     # Recon 2d
-    img = plot_2d(recon_2d, color='blue', mode='image',
+    img = plot_2d(recon_2d, color='blue', mode='pil',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"recon_2d": config.logger.Image(img)}, commit=False)
     # Novel 2D
-    img = plot_2d(novel_2d, color='blue', mode='image',
+    img = plot_2d(novel_2d, color='blue', mode='pil',
                   show_ticks=True, labels=False, mean_root=True)
     config.logger.log({name+"novel_2d": config.logger.Image(img)}, commit=False)
 
     # T -- Target 3D | V -- Recon 3D without procrustes alignment i.e 16 joints
     if name is "":  # Training
-        img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
+        img = plot_3d(target_3d, color='pink', mode="pil", show_ticks=True, labels=False)
         config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
     else:  # Validation
-        img = plot_3d(recon_3d_org, color='blue', mode="image",
+        img = plot_3d(recon_3d_org, color='blue', mode="pil",
                       show_ticks=True, labels=False, mean_root=True)
         config.logger.log({name+"recon_3d_org": config.logger.Image(img)}, commit=False)
 
     # T -- Recon 3D | V - Target 3d + Recon 3D
     if name is "":  # Training
-        img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
+        img = plot_3d(recon_3d, color='blue', mode="pil", show_ticks=True,
                       labels=False, mean_root=True, title=title)
         config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
     else:
         # Move target 3d to post processed 3d plot
         img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
-        img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
+        img = plot_3d(recon_3d, color='blue', mode="pil", show_ticks=True,
                       labels=False, mean_root=True, title=title)
         config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)

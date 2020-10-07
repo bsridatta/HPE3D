@@ -119,11 +119,12 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if epoch % 20 == 0:    
+            if epoch-1 % 20 == 0:    
                 for i in range(n_samples):
                     i += round(len(t_data["recon_2d"])/4.2)
                     plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
-                                t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val', title=pjpe[i].item())
+                                t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val',
+                                title=f'MPJPE: {pjpe[i].round().item()}mm Scale: {t_data["scale_3d"][i].round().item()}')
 
         # log main metrics to wandb
         config.logger.log({

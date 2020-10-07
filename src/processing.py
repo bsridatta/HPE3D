@@ -96,23 +96,40 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     pose3d = annotations['pose3d']
 
     if projection:
-        # Scale 2D to 1/c units and save scale
+
+        js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
+                    'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+        
+
+        #### 2D - 17J ####
+        # calculate scale required to make 2D to 1/c unit
         c = 10
-        #### 2D ####
-        head = pose2d[:, 10, :]  # Note head @ 9 if root joint is removed
-        # root = np.zeros_like(head)
-        root = pose2d[:, 0, :]
-        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
+
+        # calculate the total distance between the head and the root ignore the nose
+        head2neck = np.linalg.norm(
+            pose2d[:,js.index('Head'),:] - pose2d[:,js.index('Neck'),:], axis=1, keepdims=True)
+        neck2torso = np.linalg.norm(
+            pose2d[:,js.index('Neck'),:] - pose2d[:,js.index('Torso'),:], axis=1, keepdims=True)
+        torso2root = np.linalg.norm(
+            pose2d[:,js.index('Torso'),:] - pose2d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
+        
+        dist = head2neck+neck2torso+torso2root        
         scale_2d = c*dist  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
         annotations['scale_2d'] = scale_2d
 
-        #### 3D ####
+        #### 3D - 17J ####
         # calculate scale required to make 3D to 1 unit
-        head = pose3d[:, 10, :]  # Note heat @ 9 if root joint is removed
-        # root = np.zeros_like(head)
-        root = pose3d[:, 0, :]
-        dist = np.linalg.norm(head-root, axis=1, keepdims=True)
+
+        # calculate the total distance between the head and the root ignore the nose
+        head2neck = np.linalg.norm(
+            pose3d[:,js.index('Head'),:] - pose3d[:,js.index('Neck'),:], axis=1, keepdims=True)
+        neck2torso = np.linalg.norm(
+            pose3d[:,js.index('Neck'),:] - pose3d[:,js.index('Torso'),:], axis=1, keepdims=True)
+        torso2root = np.linalg.norm(
+            pose3d[:,js.index('Torso'),:] - pose3d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
+        
+        dist = head2neck+neck2torso+torso2root
         scale_3d = dist  # 1 unit
         annotations['scale_3d'] = scale_3d
 
