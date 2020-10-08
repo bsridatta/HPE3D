@@ -175,7 +175,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="rare-wildflower-2723", type=str,
+    parser.add_argument('--resume_run', default="curious-fog-2840", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
