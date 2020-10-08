@@ -36,7 +36,7 @@ from src.processing import preprocess
 
 
 def get_raw_sample(idx=1):
-    image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
+    image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
 
     f = h5py.File(h5name, 'r')
@@ -59,7 +59,7 @@ def get_raw_sample(idx=1):
 def get_processed_sample(idx=1):
 
     annotation_file = f'h36m17'
-    image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
+    image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
 
     dataset = H36M([9, 11],
                    annotation_file, image_path, train=True, no_images=False, projection=True)
@@ -82,9 +82,9 @@ if __name__ == "__main__":
     processed = True
 
     if processed:
-        sample = get_processed_sample(1)
+        sample = get_processed_sample(0)
     else:
-        sample = get_raw_sample(200)
+        sample = get_raw_sample(1)
 
     image = sample['image']
     pose2d = sample['pose2d']

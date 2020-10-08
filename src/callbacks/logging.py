@@ -119,9 +119,11 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if epoch-1 % 20 == 0:    
-                for i in range(n_samples):
-                    i += round(len(t_data["recon_2d"])/4.2)
+            if (epoch-1) % 30 == 0:    
+                # plot_list = range(2)
+                plot_list = torch.topk(pjpe, k=n_samples, dim=0).indices
+                for i in plot_list:
+                    i = i.item()
                     plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
                                 t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val',
                                 title=f'MPJPE: {pjpe[i].round().item()}mm Scale: {t_data["scale_3d"][i].round().item()}')

@@ -120,12 +120,12 @@ def main():
             config.logger.log(
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
-            # TODO init criterion once with .to(cuda)
-            # training_epoch(config, cb, model, train_loader,
-            #                optimizer, epoch, vae_type)
+            # # TODO init criterion once with .to(cuda)
+            training_epoch(config, cb, model, train_loader,
+                           optimizer, epoch, vae_type)
 
             val_loss = 0
-            if epoch % 5 == 0 or epoch == 1:
+            if (epoch-1) % 5 == 0:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -175,7 +175,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="None", type=str,
+    parser.add_argument('--resume_run', default="rare-wildflower-2723", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
@@ -203,7 +203,7 @@ def training_specific_args():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17_2', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
