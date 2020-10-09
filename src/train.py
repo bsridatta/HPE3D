@@ -182,7 +182,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=512, type=int,
+    parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--critic_weight', default=1e-4, type=float,
                         help='critic weight for self supervised procedure')
