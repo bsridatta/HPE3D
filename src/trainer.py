@@ -194,7 +194,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         target_2d = inp.detach()
 
         # enforce unit recon to avoid depth ambiguity
-        recon_3d = recon_3d*2
+        # recon_3d = recon_3d*2
         # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)

@@ -8,6 +8,7 @@ import math
 import h5py
 import numpy as np
 import torch
+from scipy.spatial import procrustes as proc
 
 path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
 if os.path.exists(path):
@@ -106,14 +107,15 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         c = 10
 
         # calculate the total distance between the head and the root ignore the nose
+        
         head2neck = np.linalg.norm(
             pose2d[:,js.index('Head'),:] - pose2d[:,js.index('Neck'),:], axis=1, keepdims=True)
         neck2torso = np.linalg.norm(
             pose2d[:,js.index('Neck'),:] - pose2d[:,js.index('Torso'),:], axis=1, keepdims=True)
         torso2root = np.linalg.norm(
             pose2d[:,js.index('Torso'),:] - pose2d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
-        
-        dist = head2neck+neck2torso+torso2root        
+        dist = head2neck+neck2torso +torso2root        
+
         scale_2d = c*dist  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
         annotations['scale_2d'] = scale_2d
@@ -122,14 +124,16 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         # calculate scale required to make 3D to 1 unit
 
         # calculate the total distance between the head and the root ignore the nose
+        
         head2neck = np.linalg.norm(
             pose3d[:,js.index('Head'),:] - pose3d[:,js.index('Neck'),:], axis=1, keepdims=True)
         neck2torso = np.linalg.norm(
             pose3d[:,js.index('Neck'),:] - pose3d[:,js.index('Torso'),:], axis=1, keepdims=True)
         torso2root = np.linalg.norm(
             pose3d[:,js.index('Torso'),:] - pose3d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
-        
-        dist = head2neck+neck2torso+torso2root
+        dist = head2neck+neck2torso +torso2root
+
+
         scale_3d = dist  # 1 unit
         annotations['scale_3d'] = scale_3d
 
@@ -166,12 +170,25 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
         target = torch.cat(
             (torch.zeros(target.shape[0], 1, recon.shape[2], device=recon.device), target), dim=1)
 
-    else:
-        recon = (recon.T*scale.T).T
+    # else:
+    #     recon = (recon.T*scale.T).T
 
     if procrustes_enabled:
         # recon should be the second matrix
-        recon = procrustes(target, recon, allow_scaling=False, allow_reflection=True)
+        # recon = procrustes(target, recon, allow_scaling=True, allow_reflection=True)
+        
+        # https://github.com/anibali/margipose/blob/c149ee346b0d97f5124ac08406ca381648c7801e/src/margipose/data/skeleton.py
+        
+        t , r = target.cpu().numpy(), recon.cpu().numpy()
+        
+        aligned = []
+        for t_, r_ in zip(t,r):
+            _,mtx, _ = proc(t_,r_)
+            mean = np.mean(t_,0)
+            std = np.linalg.norm(t_ - mean)
+            r_ = (mtx*std) + mean
+            aligned.append(r_)
+        recon = torch.from_numpy(np.array(aligned)).float()
 
     if self_supervised:
         recon = torch.cat(
@@ -319,6 +336,7 @@ def procrustes(X, Y, allow_scaling=False, allow_reflection=False):
 
     if allow_scaling:
         output_scale = normX * torch.sum(s)
+        print(output_scale)
     else:
         output_scale = normY
 
