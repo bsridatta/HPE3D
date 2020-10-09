@@ -32,8 +32,8 @@ def main():
     config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
-    os.environ['WANDB_TAGS'] = 'D_G'
-    os.environ['WANDB_NOTES'] = 'one action'
+    os.environ['WANDB_TAGS'] = 'New_Scaling'
+    os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
     if not use_cuda:
@@ -120,7 +120,7 @@ def main():
             config.logger.log(
                 {f"{vae_type}_LR": optimizer[0].param_groups[0]['lr']})
 
-            # # TODO init criterion once with .to(cuda)
+            # TODO init criterion once with .to(cuda)
             training_epoch(config, cb, model, train_loader,
                            optimizer, epoch, vae_type)
 
@@ -175,7 +175,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="curious-fog-2840", type=str,
+    parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
