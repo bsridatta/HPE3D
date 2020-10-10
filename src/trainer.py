@@ -46,7 +46,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         #     min_z_loss = 0
 
         # # enforce unit recon to avoid depth ambiguity
-        recon_3d = recon_3d*2
+        # recon_3d = recon_3d*2
         # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
@@ -244,6 +244,10 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         ################################################
         # real lables so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
+
+        # required if the real and fake are flipped in critic training
+        real_label = 1
+        fake_label = 0
 
         labels.fill_(real_label)
         label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
