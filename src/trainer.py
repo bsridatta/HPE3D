@@ -73,7 +73,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer.zero_grad()
 
         # confuse critic
-        if batch_idx % 20 == 0:
+        if batch_idx % 7 == 0:
             real_label = 0
             fake_label = 1
 
