@@ -14,9 +14,9 @@ class LBAD(nn.Module):
 
     def forward(self, x):
         x = self.w1(x)
-        x = self.bn1(x)
+        # x = self.bn1(x)
         x = self.activ(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
 
         return x
 
