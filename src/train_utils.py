@@ -52,7 +52,9 @@ def get_optims(variant, models, config):
 
     if config.self_supervised:
         params = list(models['Critic'].parameters())
-        optimizer = torch.optim.Adam(params, lr=config.learning_rate, betas=[0.9, 0.999]) # using SGD worsens Dx
+        # optimizer = torch.optim.Adam(params, lr=config.learning_rate, betas=[0.9, 0.999]) # using SGD worsens Dx
+        optimizer = torch.optim.SGD(params, lr=config.learning_rate) # using SGD worsens Dx
+        
         optims.append(optimizer)
     return optims
 
@@ -110,12 +112,10 @@ def get_inp_target_criterion(encoder, decoder, batch):
     elif '2D' in decoder.__class__.__name__:
         target = batch['pose2d'].float()
         criterion = torch.nn.L1Loss()
-        # criterion = torch.nn.MSELoss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
          # different if self-supervised
         criterion = torch.nn.L1Loss()
-        # criterion = PJPE
         # criterion = torch.nn.MSELoss()
     else:
         print("MODEL NOT DEFINED")
