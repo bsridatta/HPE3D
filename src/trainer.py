@@ -46,7 +46,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         #     min_z_loss = 0
 
         # # enforce unit recon to avoid depth ambiguity
-        # recon_3d = recon_3d*2
+        recon_3d = recon_3d*2
         # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
@@ -73,9 +73,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer.zero_grad()
 
         # confuse critic
-        if batch_idx % 7 == 0:
-            real_label = 0
-            fake_label = 1
+        # if batch_idx % 7 == 0:
+        #     real_label = 0
+        #     fake_label = 1
 
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
@@ -194,7 +194,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         target_2d = inp.detach()
 
         # enforce unit recon to avoid depth ambiguity
-        # recon_3d = recon_3d*2
+        recon_3d = recon_3d*2
         # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
