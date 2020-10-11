@@ -36,7 +36,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Reprojection
         target_2d = inp.detach()
         # enforce unit recon if above root is scaled to 1
-        recon_3d = recon_3d*2
+        recon_3d = recon_3d*1.3
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -183,7 +183,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         target_2d = inp.detach()
 
         # enforce unit recon if above root is scaled to 1
-        recon_3d = recon_3d*2
+        recon_3d = recon_3d*1.3
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -221,7 +221,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # label smoothing for real labels alone *** not TODO
         # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
         # labels = labels * label_noise
-        
+
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
