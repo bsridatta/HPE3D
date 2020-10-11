@@ -126,7 +126,7 @@ class Logging(Callback):
                     i = i.item()
                     plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
                                 t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val',
-                                title=f'MPJPE: {pjpe[i].round().item()}mm Scale: {t_data["scale_3d"][i].round().item()}')
+                                title=f'MPJPE: {pjpe[i].round().item()}mm')
 
         # log main metrics to wandb
         config.logger.log({

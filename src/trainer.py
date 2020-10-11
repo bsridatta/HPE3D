@@ -261,7 +261,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         data = {"recon_2d": recon_2d, "recon_3d": recon_3d, "novel_2d": novel_2d,
                 "target_2d": target_2d, "target_3d": target_3d,
-                "z": z, "action": batch['action'], "scale_3d": batch['scale_3d']}
+                "z": z, "action": batch['action']}
 
     else:
         recon_loss = criterion(recon_3d, target_3d)
