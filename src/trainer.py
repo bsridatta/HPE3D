@@ -32,22 +32,11 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
-        # criterion = torch.nn.MSELoss()
 
         # Reprojection
         target_2d = inp.detach()
-
-        # if False:
-        #     min_z_target = recon_3d.detach()
-        #     min_z_target[Ellipsis, 2] = 0
-        #     min_z_loss = torch.nn.functional.mse_loss(recon_3d, min_z_target)
-        #     min_z_loss *= 1e-5
-        # else:
-        #     min_z_loss = 0
-
-        # # enforce unit recon to avoid depth ambiguity
+        # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*2
-        # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -94,6 +83,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # label smoothing for real labels alone *** not TODO
         # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
         # labels = labels * label_noise
+
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)
@@ -134,7 +124,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         loss = recon_loss + 0.1*config.beta * kld_loss + \
             config.critic_weight*gen_loss
         loss *= 10
-        # + min_z_loss
 
         loss.backward()  # Would include VAE and critic but critic not updated
 
@@ -193,9 +182,8 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # Reprojection
         target_2d = inp.detach()
 
-        # enforce unit recon to avoid depth ambiguity
+        # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*2
-        # recon_3d = torch.clamp(recon_3d, min=-2, max=2)
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
@@ -233,6 +221,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         # label smoothing for real labels alone *** not TODO
         # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
         # labels = labels * label_noise
+        
         # detach to avoid gradient prop to VAE
         output = critic(novel_2d_detach)
         critic_loss_fake = binary_loss(output, labels)

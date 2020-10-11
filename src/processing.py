@@ -100,7 +100,6 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
         js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
                     'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-        
 
         #### 2D - 17J ####
         # calculate scale required to make 2D to 1/c unit
@@ -108,13 +107,19 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
         # calculate the total distance between the head and the root ignore the nose
         
+        # head2neck = np.linalg.norm(
+        #     pose2d[:,js.index('Head'),:] - pose2d[:,js.index('Neck'),:], axis=1, keepdims=True)
+        # neck2torso = np.linalg.norm(
+        #     pose2d[:,js.index('Neck'),:] - pose2d[:,js.index('Torso'),:], axis=1, keepdims=True)
+        # torso2root = np.linalg.norm(
+        #     pose2d[:,js.index('Torso'),:] - pose2d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
+        # dist = head2neck+neck2torso +torso2root        
+
         head2neck = np.linalg.norm(
-            pose2d[:,js.index('Head'),:] - pose2d[:,js.index('Neck'),:], axis=1, keepdims=True)
+            pose2d[:,js.index('R_Hip'),:] - pose2d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         neck2torso = np.linalg.norm(
-            pose2d[:,js.index('Neck'),:] - pose2d[:,js.index('Torso'),:], axis=1, keepdims=True)
-        torso2root = np.linalg.norm(
-            pose2d[:,js.index('Torso'),:] - pose2d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
-        dist = head2neck+neck2torso +torso2root        
+            pose2d[:,js.index('R_Knee'),:] - pose2d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
+        dist = head2neck+neck2torso      
 
         scale_2d = c*dist  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
@@ -125,14 +130,19 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
         # calculate the total distance between the head and the root ignore the nose
         
-        head2neck = np.linalg.norm(
-            pose3d[:,js.index('Head'),:] - pose3d[:,js.index('Neck'),:], axis=1, keepdims=True)
-        neck2torso = np.linalg.norm(
-            pose3d[:,js.index('Neck'),:] - pose3d[:,js.index('Torso'),:], axis=1, keepdims=True)
-        torso2root = np.linalg.norm(
-            pose3d[:,js.index('Torso'),:] - pose3d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
-        dist = head2neck+neck2torso +torso2root
+        # head2neck = np.linalg.norm(
+        #     pose3d[:,js.index('Head'),:] - pose3d[:,js.index('Neck'),:], axis=1, keepdims=True)
+        # neck2torso = np.linalg.norm(
+        #     pose3d[:,js.index('Neck'),:] - pose3d[:,js.index('Torso'),:], axis=1, keepdims=True)
+        # torso2root = np.linalg.norm(
+        #     pose3d[:,js.index('Torso'),:] - pose3d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
+        # dist = head2neck+neck2torso +torso2root
 
+        head2neck = np.linalg.norm(
+            pose3d[:,js.index('R_Hip'),:] - pose3d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
+        neck2torso = np.linalg.norm(
+            pose3d[:,js.index('R_Knee'),:] - pose3d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
+        dist = head2neck+neck2torso      
 
         scale_3d = dist  # 1 unit
         annotations['scale_3d'] = scale_3d
