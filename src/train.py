@@ -90,7 +90,7 @@ def main():
                        Logging(),
                        WeightScheduler(config, strategy="beta_cycling"),
                     #    WeightScheduler(config, strategy="critic_cycling"),
-                       MaxNorm()
+                    #    MaxNorm()
                        ])
 
     cb.setup(config=config, models=models, optimizers=optimizers,

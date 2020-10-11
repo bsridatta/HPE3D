@@ -337,7 +337,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         elif config.self_supervised:
             t_data['recon_3d'], t_data['target_3d'] = post_process(
                 t_data['recon_3d'].to('cpu'), t_data['target_3d'].to('cpu'),
-                scale=t_data['scale_3d'].to('cpu'),
+                # scale=t_data['scale_3d'].to('cpu'),
                 self_supervised=True, procrustes_enabled=True)
 
         # Speed up procrustes alignment with CPU!

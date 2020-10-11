@@ -138,7 +138,7 @@ def test_h36m():
     Can be used to get norm stats for all subjects
     '''
 
-    annotation_file = f'h36m17'
+    annotation_file = f'h36m17_2'
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
 
     dataset = H36M([1, 5, 6, 7, 8],
