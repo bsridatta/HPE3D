@@ -5,6 +5,8 @@ from collections import OrderedDict, defaultdict
 import h5py
 import torch
 import torch.nn.functional as F
+import torch.autograd as autograd
+import numpy as np
 
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, random_rotate, project_3d_to_2d
@@ -188,11 +190,11 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         # gp
         lambd_gp = 10
-        gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
+        # gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
         
         # critic loss
-        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) +\
-            lambd_gp * gradient_penalty
+        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) #+\
+            # lambd_gp * gradient_penalty
 
         ################################################
         # Generator
@@ -324,12 +326,13 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 def compute_gradient_penalty(D, real_samples, fake_samples):
     """Calculates the gradient penalty loss for WGAN GP
     Source: https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
+    Tensor = torch.cuda.FloatTensor if real_samples.device.type=="cuda" else torch.FloatTensor 
     # Random weight term for interpolation between real and fake samples
     alpha = Tensor(np.random.random((real_samples.size(0), 1, 1)))
     # Get random interpolation between real and fake samples
     interpolates = (alpha * real_samples + ((1 - alpha) * fake_samples)).requires_grad_(True)
     d_interpolates = D(interpolates)
-    fake = Variable(Tensor(real_samples.shape[0], 1).fill_(1.0), requires_grad=False)
+    fake = autograd.Variable(Tensor(real_samples.shape[0], 1).fill_(1.0), requires_grad=False)
     # Get gradient w.r.t. interpolates
     gradients = autograd.grad(
         outputs=d_interpolates,
@@ -341,5 +344,5 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
     )[0]
     gradients = gradients.view(gradients.size(0), -1)
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
-    
+
     return gradient_penalty

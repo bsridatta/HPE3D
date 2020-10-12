@@ -16,7 +16,7 @@ class Logging(Callback):
             f'[INFO]: Start training procedure using device: {config.device}')
 
         for model in models.values():
-            print(f'[INFO]: Monitoring: {model}')
+            print(f'[INFO]: Monitoring: {model.name}')
             
             config.logger.watch(model, log='all')
 
