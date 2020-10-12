@@ -263,7 +263,8 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 def random_rotate(pose_3d,
                   roll_range=(0, 0),
                   azimuth_range=(0, 0),
-                  elevation_range=(-math.pi, math.pi)
+                  elevation_range=(-math.pi, math.pi),
+                  perpendicular_view=False
                   ):
     #   roll_range=(-math.pi / 9.0,
     #               math.pi / 9.0),
@@ -271,8 +272,7 @@ def random_rotate(pose_3d,
     azimuths = torch.rand(pose_3d.shape[:-2]) * \
         (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
 
-    perpendicular_novel_view = False
-    if perpendicular_novel_view:
+    if perpendicular_view:
         elevations = torch.ones(pose_3d.shape[:-2]) * math.pi/2 * (2*(torch.randint(-1,1, pose_3d.shape[:-2])+0.5))
     else:
         elevations = torch.rand(pose_3d.shape[:-2]) * \

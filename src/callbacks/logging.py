@@ -16,6 +16,8 @@ class Logging(Callback):
             f'[INFO]: Start training procedure using device: {config.device}')
 
         for model in models.values():
+            print(f'[INFO]: Monitoring: {model}')
+            
             config.logger.watch(model, log='all')
 
     def on_train_batch_end(self, config, vae_type, epoch, batch_idx, batch, dataloader, output, **kwargs):
