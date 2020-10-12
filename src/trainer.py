@@ -38,7 +38,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # Get novel training data from reprojection
         ################################################
         target_2d = inp.detach()
-        
+
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
@@ -74,7 +74,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # gp
         lambd_gp = 10
         gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
-        
+
         # critic loss
         critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) +\
             lambd_gp * gradient_penalty
@@ -104,7 +104,6 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         loss *= 10  # standardize for comparision with other loss variants
 
         loss.backward()  # Would include VAE and critic but critic not updated
-
 
         if False:
             # Clip grad norm to 1 *****************************************
@@ -156,7 +155,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     if config.self_supervised:
         ################################################
         # Get novel training data from reprojection
-        ################################################        
+        ################################################
         target_2d = inp.detach()
 
         # enforce unit recon if above root is scaled to 1
@@ -184,17 +183,16 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         D_x = output_real.mean().item()
 
         # train on fake samples
-        output_fake = critic(novel_2d_detach) # detach to avoid gradient prop to VAE
+        output_fake = critic(novel_2d_detach)  # detach to avoid gradient prop to VAE
         D_G_z1 = output_fake.mean().item()
-
 
         # gp
         lambd_gp = 10
         # gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
-        
+
         # critic loss
-        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) #+\
-            # lambd_gp * gradient_penalty
+        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake)  # +\
+        # lambd_gp * gradient_penalty
 
         ################################################
         # Generator
@@ -326,7 +324,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 def compute_gradient_penalty(D, real_samples, fake_samples):
     """Calculates the gradient penalty loss for WGAN GP
     Source: https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
-    Tensor = torch.cuda.FloatTensor if real_samples.device.type=="cuda" else torch.FloatTensor 
+    Tensor = torch.cuda.FloatTensor if real_samples.device.type == "cuda" else torch.FloatTensor
     # Random weight term for interpolation between real and fake samples
     alpha = Tensor(np.random.random((real_samples.size(0), 1, 1)))
     # Get random interpolation between real and fake samples
@@ -346,3 +344,8 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
 
     return gradient_penalty
+
+
+def add_noise(pose, noise_level):
+    noise = torch.randn(pose.shape) * (pose*noise_level)
+    pose += noise

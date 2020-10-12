@@ -264,7 +264,7 @@ def random_rotate(pose_3d,
                   roll_range=(0, 0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi),
-                  perpendicular_view=False
+                  perpendicular_view=True
                   ):
     #   roll_range=(-math.pi / 9.0,
     #               math.pi / 9.0),
