@@ -3,9 +3,16 @@ import torch
 
 
 def weight_init(m):
-    if isinstance(m, torch.nn.Linear):
-        torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
-
+    classname = m.__class__.__name__
+    # if m.name == 'Critic':    
+    if classname.find('Linear') != -1:
+        m.weight.data.normal_(0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+    # else:
+    #     if isinstance(m, torch.nn.Linear):
+    #         torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+    
 def reparameterize(mean, logvar, eval=False):
     # TODO not sure why few repos do that
     if eval:

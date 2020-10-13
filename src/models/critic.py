@@ -29,7 +29,7 @@ class Critic(nn.Module):
         self.name = "critic"
         self.drop_out_p = drop_out_p
         self.n_joints = n_joints
-        self.blocks = 1
+        self.blocks = 2
         self.__build_model()
 
     def __build_model(self):
@@ -64,9 +64,6 @@ class Critic(nn.Module):
             residual = x
             x = self.LBAD_3(x)
             x = self.LBAD_4(x) + residual
-            # residual = x
-            # x = self.LBAD_5(x)
-            # x = self.LBAD_6(x) + residual
 
         out = self.out_block(x)
         

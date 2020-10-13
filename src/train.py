@@ -85,7 +85,7 @@ def main():
     # To CPU or GPU or TODO TPU
     for key in models.keys():
         models[key] = models[key].to(device)
-        # models[key].apply(weight_init)
+        models[key].apply(weight_init)
 
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),
@@ -184,7 +184,7 @@ def training_specific_args():
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
-    parser.add_argument('--latent_dim', default=512, type=int,
+    parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--critic_weight', default=1e-1, type=float,
                         help='critic weight for self supervised procedure')
@@ -194,7 +194,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--beta_max', default=0, type=float, # 0.01
+    parser.add_argument('--beta_max', default=0.001, type=float, # 0.01
                         help='maximum value of beta during annealing or cycling')                      
     parser.add_argument('--learning_rate', default=2e-4, type=float,
                         help='learning rate for all optimizers')
