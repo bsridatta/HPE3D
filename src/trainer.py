@@ -61,27 +61,43 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer = optimizer[-1]
         critic_optimizer.zero_grad()
 
+        one = torch.tensor(1, dtype=torch.float).to(config.device)
+        mone = one * -1
         # confuse critic ??#############################
 
         # train on real samples
         output_real = critic(target_2d)
         D_x = output_real.mean().item()
+        # bprop
+        output_real = output_real.mean()
+        output_real.backward(mone)
 
         # train on fake samples
         output_fake = critic(novel_2d_detach)  # detach to avoid gradient prop to VAE
         D_G_z1 = output_fake.mean().item()
+        # bprop
+        output_fake = output_fake.mean()
+        output_fake.backward(one)
 
         # gp
-        lambd_gp = 10
+        lambd_gp = 1
         gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
+        gradient_penalty *= lambd_gp
+        # bprop
+        gradient_penalty.backward()
 
         # critic loss
-        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) +\
-            lambd_gp * gradient_penalty
+        # critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) +\
+        #     lambd_gp * gradient_penalty
+        
+        # bprop done already
+        critic_loss = -1*output_real + output_fake + gradient_penalty
+        D_w = output_real - output_fake
 
         # update critic
         if batch_idx % 1 == 0:
-            critic_loss.backward()
+            # bprop done already
+            # critic_loss.backward()
             critic_optimizer.step()
 
         ################################################
@@ -89,21 +105,32 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         vae_optimizer.zero_grad()
 
+        lambd_recon = 1
+        lambd_critic = config.critic_weight
+
         output_gen = critic(novel_2d)
         D_G_z2 = output_gen.mean().item()
+        # bprop
+        output_gen = output_gen.mean()
+        output_gen *= lambd_critic
+        output_gen.backward(one)
 
-        gen_loss = -1*torch.mean(output_gen)
+        # gen_loss = -1*torch.mean(output_gen)
+        gen_loss = -1*output_gen
 
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        lambd_recon = 1
-        lambd_critic = config.critic_weight
+        # bprop already done for critic
+        # loss = lambd_recon * recon_loss + config.beta * kld_loss + lambd_critic * gen_loss
+        loss = lambd_recon * recon_loss + config.beta * kld_loss
+        loss.backward()
 
-        loss = lambd_recon * recon_loss + config.beta * kld_loss + lambd_critic * gen_loss
+        loss += gen_loss
         loss *= 10  # standardize for comparision with other loss variants
 
-        loss.backward()  # Would include VAE and critic but critic not updated
+        # bprop already done
+        # loss.backward()  # Would include VAE and critic but critic not updated
 
         if False:
             # Clip grad norm to 1 *****************************************
