@@ -23,14 +23,6 @@ class WeightScheduler(Callback):
     def on_train_end(self, config, epoch, **kwargs):
         getattr(WeightScheduler, f'{self.strategy}')(self, config, epoch)
 
-    def noise_annealing(self, config, epoch):
-        config.noise_level += config.noise_level_max/(config.epochs-10) # 0.01
-        print(f"[INFO] Noise Level decreased to: {config.noise_level}")
-        
-        # config.logger.log({"beta": config.beta}, commit=False)
-
-
-
     def beta_annealing(self, config, epoch):
         """anneal beta from 0 to 1 during annealing_epochs after waiting for warmup_epochs
 
