@@ -366,8 +366,11 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
     del loss_dic, t_data
     return avg_loss
 
+
 def add_noise(pose, noise_level):
     noise = torch.randn(pose.shape).to(pose.device) * (pose*noise_level)
     pose = pose+noise
 
     return pose
+
+

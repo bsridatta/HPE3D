@@ -89,7 +89,7 @@ def main():
     cb = CallbackList([ModelCheckpoint(),
                        Logging(),
                        WeightScheduler(config, strategy="beta_cycling"),
-                       WeightScheduler(config, strategy="noise_annealing"),                       
+                    #    WeightScheduler(config, strategy="noise_annealing"),                       
                     #    WeightScheduler(config, strategy="critic_cycling"),
                     #    MaxNorm()
                        ])
@@ -193,7 +193,7 @@ def training_specific_args():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--noise_level_max', default=0.2, type=float, # 0.01
+    parser.add_argument('--noise_level', default=0.0, type=float, # 0.01
                         help='percentage of noise to inject for critic training')
     parser.add_argument('--beta_max', default=0.01, type=float, # 0.01
                         help='maximum value of beta during annealing or cycling')                      
@@ -206,7 +206,7 @@ def training_specific_args():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17_2', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

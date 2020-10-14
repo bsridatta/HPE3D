@@ -19,7 +19,9 @@ class WeightScheduler(Callback):
             config.critic_weight = 0
 
         if "noise" in strategy:
-            config.noise_level = config.noise_level_max
+            self.cool_down = 20
+            self.epochs_per_step = 5
+            self.noise_level_max = config.noise_level
 
         self.strategy = strategy
 
@@ -27,8 +29,8 @@ class WeightScheduler(Callback):
         getattr(WeightScheduler, f'{self.strategy}')(self, config, epoch)
 
     def noise_annealing(self, config, epoch):
-        if (epoch-1) % 10 == 0:
-            config.noise_level -= 10*config.noise_level_max/(config.epochs-10)  # 0.01
+        if (epoch-1) % self.epochs_per_step == 0:
+            config.noise_level -= self.epochs_per_step*self.noise_level_max/(config.epochs-self.cool_down)  # 0.01
             print(f"[INFO] Noise Level decreased to: {config.noise_level}")
 
         config.logger.log({"noise": config.noise_level}, commit=False)
