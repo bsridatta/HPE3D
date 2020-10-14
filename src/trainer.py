@@ -35,6 +35,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # Reprojection
         target_2d = inp.detach()
+        noised_real = add_noise(inp.detach(), config.noise_level)
+
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
 
@@ -73,7 +75,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
-        output = critic(target_2d)
+        output = critic(noised_real)
         critic_loss_real = binary_loss(output, labels)
         critic_loss_real.backward()
         D_x = output.mean().item()
@@ -181,7 +183,7 @@ def _validation_step(batch, batch_idx, model, epoch, config):
 
         # Reprojection
         target_2d = inp.detach()
-
+        noised_real = add_noise(inp.detach(), config.noise_level)
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
 
@@ -206,17 +208,17 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         fake_label = 0
         binary_loss = torch.nn.BCELoss()
 
-        # train with real samples
+        # validate on real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=recon_3d.device, dtype=target_2d.dtype)
         label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
-        output = critic(target_2d)
+        output = critic(noised_real)
         critic_loss_real = binary_loss(output, labels)
         D_x = output.mean().item()
 
-        # train with fake samples
+        # validate on fake samples
         labels.fill_(fake_label)
         # label smoothing for real labels alone *** not TODO
         # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
@@ -363,3 +365,9 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
     del loss_dic, t_data
     return avg_loss
+
+def add_noise(pose, noise_level):
+    noise = torch.randn(pose.shape).to(pose.device) * (pose*noise_level)
+    pose = pose+noise
+
+    return pose

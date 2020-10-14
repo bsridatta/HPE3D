@@ -3,7 +3,7 @@ from src.callbacks import Callback
 
 class WeightScheduler(Callback):
 
-    def __init__(self, config, strategy='cyclic'):
+    def __init__(self, config, strategy):
         """Schedules weight values based on the given strategy
 
         Args:
@@ -18,18 +18,20 @@ class WeightScheduler(Callback):
             self.annealing_ratio = 0.5
             config.critic_weight = 0
 
+        if "noise" in strategy:
+            config.noise_level = config.noise_level_max
+
         self.strategy = strategy
 
     def on_train_end(self, config, epoch, **kwargs):
         getattr(WeightScheduler, f'{self.strategy}')(self, config, epoch)
 
     def noise_annealing(self, config, epoch):
-        config.noise_level += config.noise_level_max/(config.epochs-10) # 0.01
-        print(f"[INFO] Noise Level decreased to: {config.noise_level}")
-        
-        # config.logger.log({"beta": config.beta}, commit=False)
+        if (epoch-1) % 10 == 0:
+            config.noise_level -= 10*config.noise_level_max/(config.epochs-10)  # 0.01
+            print(f"[INFO] Noise Level decreased to: {config.noise_level}")
 
-
+        config.logger.log({"noise": config.noise_level}, commit=False)
 
     def beta_annealing(self, config, epoch):
         """anneal beta from 0 to 1 during annealing_epochs after waiting for warmup_epochs
@@ -40,7 +42,7 @@ class WeightScheduler(Callback):
         """
         if epoch > config.beta_warmup_epochs:
             if epoch <= config.beta_warmup_epochs + config.beta_annealing_epochs:
-                config.beta += config.beta_max/config.beta_annealing_epochs # 0.01
+                config.beta += config.beta_max/config.beta_annealing_epochs  # 0.01
                 print(f"[INFO] Beta increased to: {config.beta}")
             else:
                 print(f"[INFO] Beta constant at: {config.beta}")

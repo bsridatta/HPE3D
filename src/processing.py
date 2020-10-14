@@ -238,11 +238,12 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 
 
 def random_rotate(pose_3d,
-                  roll_range=(-math.pi / 9.0,
-                              math.pi / 9.0),
+                  roll_range=(0, 0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi)
                   ):
+    #   roll_range=(-math.pi / 9.0,
+    #               math.pi / 9.0),
     """roll_range is elevation as x and y arent swapped"""
     azimuths = torch.rand(pose_3d.shape[:-2]) * \
         (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]

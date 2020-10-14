@@ -28,9 +28,9 @@ skip_frame = 64
 # skip_frame = 5
 
 subj_str = "".join(str(x) for x in subject_list)
-h5name = 'h36m17_2_' + subj_str
+h5name = 'h36m17_' + subj_str
 inds = range(17)
-action_list = np.arange(2, 3) # 17
+action_list = np.arange(2, 3)#17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 
@@ -127,7 +127,9 @@ for subject_ in subject_list:
     #     break
 
 print(f'number of samples = %d' % num_samples)
+##### REMOVE to save#######
 exit()
+
 if mean_std:
     # Not going to use this anymore
     sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
