@@ -88,27 +88,27 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
     if projection:
 
         js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
-                    'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+              'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 
         #### 2D - 17J ####
         # calculate scale required to make 2D to 1/c unit
         c = 10
 
         # calculate the total distance between the head and the root ignore the nose
-        
+
         head2neck = np.linalg.norm(
-            pose2d[:,js.index('Head'),:] - pose2d[:,js.index('Neck'),:], axis=1, keepdims=True)
+            pose2d[:, js.index('Head'), :] - pose2d[:, js.index('Neck'), :], axis=1, keepdims=True)
         neck2torso = np.linalg.norm(
-            pose2d[:,js.index('Neck'),:] - pose2d[:,js.index('Torso'),:], axis=1, keepdims=True)
+            pose2d[:, js.index('Neck'), :] - pose2d[:, js.index('Torso'), :], axis=1, keepdims=True)
         torso2root = np.linalg.norm(
-            pose2d[:,js.index('Torso'),:] - pose2d[:,js.index('Pelvis'),:], axis=1, keepdims=True)
-        dist = head2neck+neck2torso +torso2root        
+            pose2d[:, js.index('Torso'), :] - pose2d[:, js.index('Pelvis'), :], axis=1, keepdims=True)
+        dist = head2neck+neck2torso + torso2root
 
         # head2neck = np.linalg.norm(
         #     pose2d[:,js.index('R_Hip'),:] - pose2d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
         #     pose2d[:,js.index('R_Knee'),:] - pose2d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
-        # dist = head2neck+neck2torso      
+        # dist = head2neck+neck2torso
 
         scale_2d = c*dist.mean()  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
@@ -118,7 +118,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         # calculate scale required to make 3D to 1 unit
 
         # calculate the total distance between the head and the root ignore the nose
-        
+
         # head2neck = np.linalg.norm(
         #     pose3d[:,js.index('Head'),:] - pose3d[:,js.index('Neck'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
@@ -131,7 +131,7 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
         #     pose3d[:,js.index('R_Hip'),:] - pose3d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
         #     pose3d[:,js.index('R_Knee'),:] - pose3d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
-        # dist = head2neck+neck2torso      
+        # dist = head2neck+neck2torso
 
         # scale_3d = dist  # 1 unit
         # annotations['scale_3d'] = np.zeros((pose2d.shape[0],1))
@@ -172,15 +172,15 @@ def post_process(recon, target, scale=None, self_supervised=False, procrustes_en
     if procrustes_enabled:
         # recon should be the second matrix
         # recon = procrustes(target, recon, allow_scaling=True, allow_reflection=True)
-        
+
         # https://github.com/anibali/margipose/blob/c149ee346b0d97f5124ac08406ca381648c7801e/src/margipose/data/skeleton.py
-        
-        t , r = target.cpu().numpy(), recon.cpu().numpy()
-        
+
+        t, r = target.cpu().numpy(), recon.cpu().numpy()
+
         aligned = []
-        for t_, r_ in zip(t,r):
-            _,mtx, _ = proc(t_,r_)
-            mean = np.mean(t_,0)
+        for t_, r_ in zip(t, r):
+            _, mtx, _ = proc(t_, r_)
+            mean = np.mean(t_, 0)
             std = np.linalg.norm(t_ - mean)
             r_ = (mtx*std) + mean
             aligned.append(r_)
@@ -261,19 +261,19 @@ def create_rotation_matrices_3d(azimuths, elevations, rolls):
 
 
 def random_rotate(pose_3d,
-                  roll_range=(0, 0),
+                  roll_range=(-math.pi / 9.0,
+                              math.pi / 9.0),
                   azimuth_range=(0, 0),
                   elevation_range=(-math.pi, math.pi)
                   ):
-    #   roll_range=(-math.pi / 9.0,
-    #               math.pi / 9.0),
     """roll_range is elevation as x and y arent swapped"""
     azimuths = torch.rand(pose_3d.shape[:-2]) * \
         (azimuth_range[0]-azimuth_range[1]) + azimuth_range[1]
 
     perpendicular_novel_view = False
     if perpendicular_novel_view:
-        elevations = torch.ones(pose_3d.shape[:-2]) * math.pi/2 * (2*(torch.randint(-1,1, pose_3d.shape[:-2])+0.5))
+        elevations = torch.ones(pose_3d.shape[:-2]) * math.pi / \
+            2 * (2*(torch.randint(-1, 1, pose_3d.shape[:-2])+0.5))
     else:
         elevations = torch.rand(pose_3d.shape[:-2]) * \
             (elevation_range[0]-elevation_range[1]) + elevation_range[1]
