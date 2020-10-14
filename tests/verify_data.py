@@ -29,7 +29,7 @@ divided by the number of frames
 
 import os
 import h5py
-from src.viz.mpl_plots import plot_data, plot_errors, plot_3d
+from src.viz.mpl_plots import plot_data, plot_errors, plot_3d, plot_2d
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
 from src.processing import preprocess
@@ -78,8 +78,8 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 4
-    processed = True
+    plot = 10
+    processed = False
 
     if processed:
         sample = get_processed_sample(0)
@@ -119,27 +119,30 @@ if __name__ == "__main__":
         plot_projection_raw(sample)
     # plot rotation
     elif plot == 8:
-        from src.processing import random_rotate_and_project_3d_to_2d
+        from src.processing import random_rotate
         import torch
         import math
         pose3d = torch.tensor(pose3d)
         # pose3d = torch.index_select(pose3d, -1, torch.tensor([1,0,2]))
         pose3d = torch.stack((pose3d, pose3d), axis=0)
         while 1:
-            rot = random_rotate_and_project_3d_to_2d(
+            rot = random_rotate(
                 pose3d,
                 roll_range=(-math.pi / 6.0,
                             math.pi / 6.0),
                 azimuth_range=(0, 0),
                 elevation_range=(-math.pi, math.pi),
-                default_camera=True,
-                default_camera_z=10.0,
-                random_rotate=True)
+            )
             # UNCOMMENT PROJ FOR THIS TO WORK, ONLY ROTATE
-            plot_3d(pose3d[0].numpy(), color='gray', mode="axis",
+            plot_3d((pose3d[0]).numpy(), color='pink', mode="axis",
                     show_ticks=True, labels=False, mean_root=True)
-            plot_3d(rot[0].numpy(), color='blue', mode="show",
+            noise = torch.randn(pose3d[0].shape) * 10
+            pose3d[0]+=noise
+            plot_3d(pose3d[0].numpy(), color='blue', mode="show",
                     show_ticks=True, labels=False, mean_root=True)
+
+            # plot_3d(rot[0].numpy(), color='blue', mode="show",
+            #         show_ticks=True, labels=False, mean_root=True)
 
             # Azimuth roll (roll book wrt normal)
             # Roll elevation (rotate wrt horizontal line)
@@ -166,3 +169,18 @@ if __name__ == "__main__":
                 show_ticks=True, labels=False, mean_root=True)
         plot_3d(out[0].numpy(), color='orange', mode="show",
                 show_ticks=True, labels=False, mean_root=True)
+    elif plot == 10:
+        from src.processing import random_rotate
+        import torch
+        import math
+        pose2d = torch.tensor(pose2d)
+        # pose2d = torch.index_select(pose2d, -1, torch.tensor([1,0,2]))
+        pose2d = torch.stack((pose2d, pose2d), axis=0)
+        while 1:
+            # UNCOMMENT PROJ FOR THIS TO WORK, ONLY ROTATE
+            plot_2d((pose2d[0]).numpy(), color='pink', mode="axis",
+                    show_ticks=True, labels=False, mean_root=True)
+            noise = torch.randn(pose2d[0].shape) * (pose2d[0]*0.01)
+            pose2d[0]+=noise
+            plot_2d(pose2d[0].numpy(), color='blue', mode="show",
+                    show_ticks=True, labels=False, mean_root=True)

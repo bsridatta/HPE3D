@@ -26,10 +26,10 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         self.activation = activation
         self.neurons = neurons
-        self.name = "critic"
+        self.name = "gan"
         self.drop_out_p = drop_out_p
         self.n_joints = n_joints
-        self.blocks = 2
+        self.blocks = 1
         self.__build_model()
 
     def __build_model(self):
@@ -45,6 +45,8 @@ class Critic(nn.Module):
         if self.blocks > 1:
             self.LBAD_3 = LBAD(self.neurons, self.activation, self.drop_out_p)
             self.LBAD_4 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            # self.LBAD_5 = LBAD(self.neurons, self.activation, self.drop_out_p)
+            # self.LBAD_6 = LBAD(self.neurons, self.activation, self.drop_out_p)
         
         self.out_block = nn.Sequential(
             nn.Linear(self.neurons, 1),
@@ -64,6 +66,9 @@ class Critic(nn.Module):
             residual = x
             x = self.LBAD_3(x)
             x = self.LBAD_4(x) + residual
+            # residual = x
+            # x = self.LBAD_5(x)
+            # x = self.LBAD_6(x) + residual
 
         out = self.out_block(x)
         

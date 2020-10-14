@@ -101,7 +101,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     elif mode == "image":
         DPI = fig.get_dpi()
         fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
-        img_name = f"x{np.random.randint(1)}.png"
+        img_name = f"x{np.random.rand(1)}.png"
         fig.savefig(img_name)
         fig.clf()
         pil_image = Image.open(img_name)

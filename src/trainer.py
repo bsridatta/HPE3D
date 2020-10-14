@@ -5,6 +5,8 @@ from collections import OrderedDict, defaultdict
 import h5py
 import torch
 import torch.nn.functional as F
+import torch.autograd as autograd
+import numpy as np
 
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, random_rotate, project_3d_to_2d
@@ -32,12 +34,13 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
-
-        # Reprojection
+        ################################################
+        # Get novel training data from reprojection
+        ################################################
         target_2d = inp.detach()
+
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
-
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -48,88 +51,88 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         novel_2d = project_3d_to_2d(novel_3d+T)
         novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
 
-        # Use the same fake for training critic and the generator
-        novel_2d_detach = novel_2d.detach()
+        # uncomment to use the same fake for training critic and the generator
+        # novel_2d_detach = novel_2d.detach()
 
         ################################################
-        # Critic - maximize log(D(x)) + log(1 - D(G(z)))
+        # Critic
         ################################################
         critic = model[2].train()
-        real_label = 1
-        fake_label = 0
-        binary_loss = torch.nn.BCELoss()
         critic_optimizer = optimizer[-1]
         critic_optimizer.zero_grad()
 
-        # confuse critic
-        # if batch_idx % 7 == 0:
-        #     real_label = 0
-        #     fake_label = 1
+        one = torch.tensor(1, dtype=torch.float).to(config.device)
+        mone = one * -1
+        # confuse critic ??#############################
 
-        # train with real samples
-        labels = torch.full((len(target_2d), 1), real_label,
-                            device=config.device, dtype=target_2d.dtype)
-        # label smoothing for real labels alone
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # train on real samples
+        output_real = critic(target_2d)
+        D_x = output_real.mean().item()
+        # bprop
+        output_real = output_real.mean()
+        output_real.backward(mone)
 
-        output = critic(target_2d)
-        critic_loss_real = binary_loss(output, labels)
-        critic_loss_real.backward()
-        D_x = output.mean().item()
+        # train on fake samples
+        output_fake = critic(novel_2d_detach)  # detach to avoid gradient prop to VAE
+        D_G_z1 = output_fake.mean().item()
+        # bprop
+        output_fake = output_fake.mean()
+        output_fake.backward(one)
 
-        # train with fake samples
-        labels.fill_(fake_label)
-        # label smoothing for real labels alone *** not TODO
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
-        # labels = labels * label_noise
+        # gp
+        lambd_gp = 1
+        gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
+        gradient_penalty *= lambd_gp
+        # bprop
+        gradient_penalty.backward()
 
-        # detach to avoid gradient prop to VAE
-        output = critic(novel_2d_detach)
-        critic_loss_fake = binary_loss(output, labels)
-        critic_loss_fake.backward()
-        D_G_z1 = output.mean().item()
-
-        critic_loss = critic_loss_real+critic_loss_fake
+        # critic loss
+        # critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake) +\
+        #     lambd_gp * gradient_penalty
+        
+        # bprop done already
+        critic_loss = -1*output_real + output_fake + gradient_penalty
+        D_w = output_real - output_fake
 
         # update critic
         if batch_idx % 1 == 0:
-            # Clip grad norm to 1 ********************************
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            # bprop done already
+            # critic_loss.backward()
             critic_optimizer.step()
 
         ################################################
-        # Generator - maximize log(D(G(z)))
+        # Generator
         ################################################
-        # real lables so as to train the vae such that a-
-        # -trained discriminator predicts all fake as real
-
-        # required if the real and fake are flipped in critic training
-        real_label = 1
-        fake_label = 0
-
         vae_optimizer.zero_grad()
 
-        labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        lambd_recon = 1
+        lambd_critic = config.critic_weight
 
-        output = critic(novel_2d)
+        output_gen = critic(novel_2d)
+        D_G_z2 = output_gen.mean().item()
+        # bprop
+        output_gen = output_gen.mean()
+        output_gen *= lambd_critic
+        output_gen.backward(one)
 
-        # Sum 'recon', 'kld' and 'critic' losses
-        gen_loss = binary_loss(output, labels)
+        # gen_loss = -1*torch.mean(output_gen)
+        gen_loss = -1*output_gen
+
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + 0.1*config.beta * kld_loss + \
-            config.critic_weight*gen_loss
-        loss *= 10
+        # bprop already done for critic
+        # loss = lambd_recon * recon_loss + config.beta * kld_loss + lambd_critic * gen_loss
+        loss = lambd_recon * recon_loss + config.beta * kld_loss
+        loss.backward()
 
-        loss.backward()  # Would include VAE and critic but critic not updated
+        loss += gen_loss
+        loss *= 10  # standardize for comparision with other loss variants
 
-        D_G_z2 = output.mean().item()
+        # bprop already done
+        # loss.backward()  # Would include VAE and critic but critic not updated
 
-        if True:
+        if False:
             # Clip grad norm to 1 *****************************************
             torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
             torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
@@ -177,14 +180,13 @@ def _validation_step(batch, batch_idx, model, epoch, config):
     recon_3d = recon_3d.view(-1, 16, 3)
 
     if config.self_supervised:
-        # criterion = torch.nn.MSELoss()
-
-        # Reprojection
+        ################################################
+        # Get novel training data from reprojection
+        ################################################
         target_2d = inp.detach()
 
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
-
         T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
@@ -195,65 +197,46 @@ def _validation_step(batch, batch_idx, model, epoch, config):
         novel_2d = project_3d_to_2d(novel_3d+T)
         novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
 
-        # Use the same fake for training critic and the generator
-        novel_2d_detach = novel_2d.detach()
+        # uncomment to use the same fake for training critic and the generator
+        # novel_2d_detach = novel_2d.detach()
 
         ################################################
-        # Critic - maximize log(D(x)) + log(1 - D(G(z)))
+        # Critic
         ################################################
         critic = model[2].eval()
-        real_label = 1
-        fake_label = 0
-        binary_loss = torch.nn.BCELoss()
 
-        # train with real samples
-        labels = torch.full((len(target_2d), 1), real_label,
-                            device=recon_3d.device, dtype=target_2d.dtype)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
+        # train on real samples
+        output_real = critic(target_2d)
+        D_x = output_real.mean().item()
 
-        output = critic(target_2d)
-        critic_loss_real = binary_loss(output, labels)
-        D_x = output.mean().item()
+        # train on fake samples
+        output_fake = critic(novel_2d_detach)  # detach to avoid gradient prop to VAE
+        D_G_z1 = output_fake.mean().item()
 
-        # train with fake samples
-        labels.fill_(fake_label)
-        # label smoothing for real labels alone *** not TODO
-        # label_noise = (torch.rand_like(labels, device=labels.device)*(0.0-0.3)) + 0.3
-        # labels = labels * label_noise
+        # gp
+        lambd_gp = 10
+        # gradient_penalty = compute_gradient_penalty(critic, target_2d.data, novel_2d_detach.data)
 
-        # detach to avoid gradient prop to VAE
-        output = critic(novel_2d_detach)
-        critic_loss_fake = binary_loss(output, labels)
-        D_G_z1 = output.mean().item()
+        # critic loss
+        critic_loss = -1*torch.mean(output_real) + torch.mean(output_fake)  # +\
+        # lambd_gp * gradient_penalty
 
-        critic_loss = critic_loss_real+critic_loss_fake
         ################################################
-        # Generator - maximize log(D(G(z)))
+        # Generator
         ################################################
-        # real lables so as to train the vae such that a-
-        # -trained discriminator predicts all fake as real
+        output_gen = critic(novel_2d)
+        D_G_z2 = output_gen.mean().item()
 
-        # required if the real and fake are flipped in critic training
-        real_label = 1
-        fake_label = 0
+        gen_loss = -1*torch.mean(output_gen)
 
-        labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
-        labels = labels * label_noise
-
-        output = critic(novel_2d)
-
-        # Sum 'recon', 'kld' and 'critic' losses
-        gen_loss = binary_loss(output, labels)
         recon_loss = criterion(recon_2d, target_2d)
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + 0.1*config.beta*kld_loss + \
-            config.critic_weight*gen_loss
-        loss *= 10
+        lambd_recon = 1
+        lambd_critic = config.critic_weight
 
-        D_G_z2 = output.mean().item()
+        loss = lambd_recon * recon_loss + config.beta * kld_loss + lambd_critic * gen_loss
+        loss *= 10  # standardize for comparision with other loss variants
 
         logs = {"kld_loss": kld_loss, "recon_loss": recon_loss,
                 "gen_loss": gen_loss, "critic_loss": critic_loss,
@@ -363,3 +346,33 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
 
     del loss_dic, t_data
     return avg_loss
+
+
+def compute_gradient_penalty(D, real_samples, fake_samples):
+    """Calculates the gradient penalty loss for WGAN GP
+    Source: https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
+    Tensor = torch.cuda.FloatTensor if real_samples.device.type == "cuda" else torch.FloatTensor
+    # Random weight term for interpolation between real and fake samples
+    alpha = Tensor(np.random.random((real_samples.size(0), 1, 1)))
+    # Get random interpolation between real and fake samples
+    interpolates = (alpha * real_samples + ((1 - alpha) * fake_samples)).requires_grad_(True)
+    d_interpolates = D(interpolates)
+    fake = autograd.Variable(Tensor(real_samples.shape[0], 1).fill_(1.0), requires_grad=False)
+    # Get gradient w.r.t. interpolates
+    gradients = autograd.grad(
+        outputs=d_interpolates,
+        inputs=interpolates,
+        grad_outputs=fake,
+        create_graph=True,
+        retain_graph=True,
+        only_inputs=True,
+    )[0]
+    gradients = gradients.view(gradients.size(0), -1)
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+
+    return gradient_penalty
+
+
+def add_noise(pose, noise_level):
+    noise = torch.randn(pose.shape) * (pose*noise_level)
+    pose += noise
