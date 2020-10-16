@@ -12,7 +12,7 @@ import wandb
 from src import train_utils
 from src import viz
 from src.dataloader import train_dataloader, val_dataloader
-from src.models import PJPE, weight_init, Critic
+from src.models import PJPE, kaiming_init, Critic
 from src.trainer import training_epoch, validation_epoch
 from src.callbacks import CallbackList, ModelCheckpoint, Logging, WeightScheduler, Analyze, MaxNorm
 
@@ -83,7 +83,8 @@ def main():
     # To CPU or GPU or TODO TPU
     for key in models.keys():
         models[key] = models[key].to(device)
-        models[key].apply(weight_init)
+        if key == 'Critic':
+            models[key].apply(kaiming_init)
 
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),

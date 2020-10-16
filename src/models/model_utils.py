@@ -2,9 +2,9 @@
 import torch 
 
 
-def weight_init(m):
+def kaiming_init(m):
     if isinstance(m, torch.nn.Linear):
-        torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+        torch.nn.init.kaiming_normal_(m.weight, nonlinearity='leaky_relu')
 
     # classname = m.__class__.__name__
     # # if m.name == 'Critic':    
