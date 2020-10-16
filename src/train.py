@@ -83,7 +83,7 @@ def main():
     # To CPU or GPU or TODO TPU
     for key in models.keys():
         models[key] = models[key].to(device)
-        # models[key].apply(weight_init)
+        models[key].apply(weight_init)
 
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),
