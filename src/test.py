@@ -143,8 +143,6 @@ def main():
                 res = torch.mean(pjpe[actions == i])
                 mpjpe_pa[i.item()] = res.item()
 
-
-
             n_pjpes.append(pjpe)
 
             config.logger.log({"pjpe": pjpe.cpu()})
@@ -165,6 +163,8 @@ def main():
 
             print(f"\n MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
+            print(f"PJPE 1 {pjpe[0]} \n")
+
 
 
 def do_setup():
@@ -183,6 +183,7 @@ def do_setup():
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'inference'
     os.environ['WANDB_NOTES'] = 'inference'
+
     if not config.wandb:
         os.environ['WANDB_MODE'] = 'dryrun'
         
@@ -260,7 +261,7 @@ def training_specific_args():
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
                         help='# of batches to wait before logging training status')
-    parser.add_argument('--wandb', type=bool, default=False,
+    parser.add_argument('--wandb', type=bool, default=True,
                         help='wandb')
     # device
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
