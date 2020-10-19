@@ -26,7 +26,7 @@ def train_dataloader(config):
     return loader
 
 
-def val_dataloader(config):
+def val_dataloader(config, shuffle=True):
     print(f'[INFO]: Validation data loader called')
     dataset = H36M(config.val_subjects, config.annotation_file,
                    config.image_path, config.ignore_images, config.device, config.annotation_path, projection=config.self_supervised)
@@ -37,7 +37,7 @@ def val_dataloader(config):
         num_workers=config.num_workers,
         pin_memory=config.pin_memory,
         sampler=sampler,
-        shuffle=True
+        shuffle=shuffle
     )
     print("samples -", len(loader.dataset))
 
