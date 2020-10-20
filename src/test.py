@@ -77,22 +77,33 @@ def main():
 
 
     ####################################################################
+    
+    bh = False
+    
+    if bh:
+        zv = False
+    else:
+        zv = True
+
     cb.on_validation_start()
 
     normalize_pose = True
     n_pjpes = []
+    
     epochs = 10
+    if zv: epochs = 1
+
     for epoch in range(epochs):
+                
+        t_data = defaultdict(list)
+        loss_dic = defaultdict(int)
+        
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_loader):
                 for key in batch.keys():
                     batch[key] = batch[key].to(config.device)
-
-                
-                t_data = defaultdict(list)
-                loss_dic = defaultdict(int)
     
-                output = _validation_step(batch, batch_idx, model, epoch, config, eval=False)
+                output = _validation_step(batch, batch_idx, model, epoch, config, eval=zv)
 
                 loss_dic['loss'] += output['loss'].item()
                 loss_dic['recon_loss'] += output['log']['recon_loss'].item()
@@ -165,7 +176,19 @@ def main():
 
             print(f"PJPE 1 {pjpe[0]} \n")
 
+    if bh:
+        # multi-hypothesis
+        mh = torch.stack(n_pjpes)
 
+        # mpjpe for random z
+        mpjpe_z = torch.mean(mh, dim=1)
+        print("mpjpe for random z \n", mpjpe_z)
+
+        mpjpe_bh = torch.min(mh, dim=0).values.mean()
+        print("mpjpe best hypothesis: ", mpjpe_bh)
+
+    if zv:
+        print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
 def do_setup():
     # Experiment Configuration, Config, is distributed to all the other modules
@@ -261,7 +284,7 @@ def training_specific_args():
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_interval', type=int, default=1,
                         help='# of batches to wait before logging training status')
-    parser.add_argument('--wandb', type=bool, default=True,
+    parser.add_argument('--wandb', type=bool, default=False,
                         help='wandb')
     # device
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
