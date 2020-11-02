@@ -70,13 +70,13 @@ for subject_ in subject_list:
             for camera_ in camera_list:
                 dir_name = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
                     subject_, action_, subaction_, camera_)
-                print(dir_name)
                 annot_file = img_path + dir_name + '/' + annot_name
                 try:
                     data = sio.loadmat(annot_file)
                 except:
                     print('pass %s' % dir_name)
                     continue
+
                 pose2d_ = np.transpose(data['pose2d'], (2, 1, 0))
                 pose3d_ = np.transpose(data['pose3d'], (2, 1, 0))
                 pose3d_global_ = np.transpose(data['pose3d_global'], (2, 1, 0))
@@ -128,7 +128,7 @@ for subject_ in subject_list:
 
 print(f'number of samples = %d' % num_samples)
 ##### REMOVE to save#######
-exit()
+exit("not saving")
 
 if mean_std:
     # Not going to use this anymore

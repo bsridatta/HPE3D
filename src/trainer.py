@@ -24,6 +24,10 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
+    # n_miss = 1
+    # if n_miss:
+
+
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
     logvar = torch.clamp(logvar, max=30)

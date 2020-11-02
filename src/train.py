@@ -83,8 +83,8 @@ def main():
     # To CPU or GPU or TODO TPU
     for key in models.keys():
         models[key] = models[key].to(device)
-        if key == 'Critic':
-            models[key].apply(kaiming_init)
+        # if key == 'Critic':
+        models[key].apply(kaiming_init)
 
     # initiate all required callbacks, keep the order in mind!!!
     cb = CallbackList([ModelCheckpoint(),

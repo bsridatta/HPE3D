@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from src.models.model_utils import KLD, PJPE, reparameterize
-
+from src.models.mish import Mish
 
 class LBAD(nn.Module):
     def __init__(self, neurons, activation, drop_out_p):
@@ -24,7 +24,7 @@ class LBAD(nn.Module):
 
 
 class Encoder2D(nn.Module):
-    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
+    def __init__(self, latent_dim, n_joints=16, activation=Mish):
         super(Encoder2D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
@@ -85,7 +85,7 @@ class Encoder2D(nn.Module):
 
 
 class Decoder3D(nn.Module):
-    def __init__(self, latent_dim, n_joints=16, activation=nn.ReLU):
+    def __init__(self, latent_dim, n_joints=16, activation=Mish):
         super(Decoder3D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
