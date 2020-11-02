@@ -26,8 +26,10 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
     # n_miss = 1
     # if n_miss:
+    #     for i in n_miss:
 
 
+        
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
     logvar = torch.clamp(logvar, max=30)

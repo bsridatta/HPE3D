@@ -102,7 +102,18 @@ def main():
             for batch_idx, batch in enumerate(val_loader):
                 for key in batch.keys():
                     batch[key] = batch[key].to(config.device)
-    
+
+                pose = batch['pose2d']
+
+                p_limbs = [1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1]
+                p_limbs = torch.Tensor(p_limbs).to(pose.device)
+                p_limbs = p_limbs.repeat(pose.shape[0],1)
+                n_miss = 2
+                miss_ids = torch.multinomial(p_limbs, 2, replacement=False)
+                for i in range(n_miss):
+                    pose[:,miss_ids[:,0],:] = 0   
+                exit()
+
                 output = _validation_step(batch, batch_idx, model, epoch, config, eval=zv)
 
                 loss_dic['loss'] += output['loss'].item()
