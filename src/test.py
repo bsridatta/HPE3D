@@ -78,8 +78,10 @@ def main():
 
     ####################################################################
     
-    bh = True
-    
+    bh = False
+    epochs = 10
+    missing_joints = 0
+
     if bh:
         zv = False
     else:
@@ -90,7 +92,6 @@ def main():
     normalize_pose = True
     n_pjpes = []
     
-    epochs = 10
     if zv: epochs = 1
 
     for epoch in range(epochs):
@@ -102,17 +103,20 @@ def main():
             for batch_idx, batch in enumerate(val_loader):
                 for key in batch.keys():
                     batch[key] = batch[key].to(config.device)
+                
+                if missing_joints:
+                    pose = batch['pose2d']
 
-                pose = batch['pose2d']
+                    p_limbs = [1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1]
+                    p_limbs = torch.Tensor(p_limbs).to(pose.device)
+                    p_limbs = p_limbs.repeat(pose.shape[0],1)
 
-                p_limbs = [1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1]
-                p_limbs = torch.Tensor(p_limbs).to(pose.device)
-                p_limbs = p_limbs.repeat(pose.shape[0],1)
-                n_miss = 2
-                miss_ids = torch.multinomial(p_limbs, 2, replacement=False)
-                for i in range(n_miss):
-                    pose[:,miss_ids[:,0],:] = 0   
-                exit()
+                    miss_idx = torch.multinomial(p_limbs, missing_joints, replacement=False)
+                    for i in range(missing_joints):
+                        pose[torch.arange(pose.shape[0]),miss_idx[:,i],:] = 0   
+
+                    batch['pose2d'] = pose # not needed
+
 
                 output = _validation_step(batch, batch_idx, model, epoch, config, eval=zv)
 
@@ -201,6 +205,9 @@ def main():
     if zv:
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
+    # plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
+
+
 def do_setup():
     # Experiment Configuration, Config, is distributed to all the other modules
     parser = training_specific_args()
@@ -249,7 +256,7 @@ def training_specific_args():
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, not implemented!')
-    parser.add_argument('--resume_run', default="iconic-dew-3162", type=str,
+    parser.add_argument('--resume_run', default="absurd-music-3244", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')

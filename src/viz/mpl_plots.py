@@ -325,7 +325,7 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     plt.show()
 
 
-def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
+def plot_errors(poses, targets, errors=None, grid=4, labels=False, area=True):
     """Show difference between predictions and targets
 
     Arguments:
@@ -344,10 +344,10 @@ def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
     i = 1
     for pose, target in zip(poses[:grid*grid], targets[:grid*grid]):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
-        plot_3d(pose, mode="axis", color='b', floor=False, axis3don=True, labels=labels)
-        plot_3d(target, mode="axis", color='grey', floor=False, axis3don=True, labels=labels)
+        plot_3d(pose, mode="plt", color='b', floor=False, axis3don=True, labels=labels)
+        plot_3d(target, mode="plt", color='grey', floor=False, axis3don=True, labels=labels)
         if area:
-            plot_area(pose, target)
+            _ = plot_area(pose, target)
         i += 1
 
     plt.show()
