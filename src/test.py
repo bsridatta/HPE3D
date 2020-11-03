@@ -38,7 +38,7 @@ def main():
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
         print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
-        for key in models.keys():
+        for key in models.keys(): 
             models[key] = torch.nn.DataParallel(models[key])
 
     # To CPU or GPU or TODO TPU
