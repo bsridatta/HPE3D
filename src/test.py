@@ -79,7 +79,7 @@ def main():
 
     bh = False
     epochs = 10
-    missing_joints = 0
+    missing_joints = 2
 
     if bh:
         zv = False

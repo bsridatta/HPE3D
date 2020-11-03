@@ -24,11 +24,21 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
-    # n_miss = 1
-    # if n_miss:
-    #     for i in n_miss:
+    config.n_missing_joints = 2
 
+    if config.n_missing_joints:
+        pose = batch['pose2d']
 
+        p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        p_limbs = torch.Tensor(p_limbs).to(pose.device)
+        p_limbs = p_limbs.repeat(pose.shape[0], 1)
+
+        missing_joints_ids = torch.multinomial(p_limbs, config.n_missing_joints, replacement=False)
+        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]/10), replacement=False)
+
+        pose = mask_missing_joints(pose, incomplete_poses_ids, missing_joints_ids)
+        
+        batch['pose2d'] = pose  # not needed
         
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
@@ -379,4 +389,7 @@ def add_noise(pose, noise_level):
 
     return pose
 
-
+def mask_missing_joints(pose, incomplete_poses_ids, missing_joints_ids):
+    for i in range(missing_joints_ids.shape[-1]):
+        pose[torch.arange(pose.shape[0]), missing_joints_ids[:, i], :] = 0
+    # pose[torch.stack([torch.arange(pose.shape[0])]*2, dim=1), missing_joints_ids, :]
