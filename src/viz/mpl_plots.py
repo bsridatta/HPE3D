@@ -203,7 +203,6 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
 
     ax.view_init(elev=-45, azim=-90)
 
-
     if mode == "axis":
         return ax
 
@@ -353,9 +352,10 @@ def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
         if area:
             plot_area(pose, target, ax=ax)
         if errors is not None:
-            if torch.is_tensor(error): 
-               error = error.item() 
-            ax.text((ax.get_xlim()[1])*0.5,ax.get_ylim()[1],ax.get_zlim()[0], s=f"{error:.2f} mm", fontsize=12)
+            if torch.is_tensor(error):
+                error = error.item()
+            ax.text((ax.get_xlim()[1])*0.5, ax.get_ylim()[1],
+                    ax.get_zlim()[0], s=f"{error:.2f} mm", fontsize=12)
         i += 1
 
     plt.show()

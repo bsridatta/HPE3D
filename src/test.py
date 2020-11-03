@@ -38,7 +38,7 @@ def main():
     # For multiple GPUs
     if torch.cuda.device_count() > 1:
         print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
-        for key in models.keys(): 
+        for key in models.keys():
             models[key] = torch.nn.DataParallel(models[key])
 
     # To CPU or GPU or TODO TPU
@@ -206,8 +206,8 @@ def main():
 
     viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
                               t_data['target_3d'].cpu().numpy(),
-                              torch.mean(PJPE(t_data['recon_3d'].cpu(), 
-                              t_data['target_3d'].cpu()), dim=1), 
+                              torch.mean(PJPE(t_data['recon_3d'].cpu(),
+                                              t_data['target_3d'].cpu()), dim=1),
                               grid=5)
 
 
