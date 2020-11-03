@@ -51,7 +51,7 @@ def main():
     cb = CallbackList([ModelCheckpoint(),
                        Logging(),
                        WeightScheduler(config, strategy="beta_cycling"),
-                    #    MaxNorm()
+                       #    MaxNorm()
                        ])
 
     cb.setup(config=config, models=models, optimizers=optimizers,
@@ -75,9 +75,8 @@ def main():
         optimizer.append(optimizers[-1])
         scheduler.append(schedulers[-1])
 
-
     ####################################################################
-    
+
     bh = False
     epochs = 10
     missing_joints = 0
@@ -91,32 +90,32 @@ def main():
 
     normalize_pose = True
     n_pjpes = []
-    
-    if zv: epochs = 1
+
+    if zv:
+        epochs = 1
 
     for epoch in range(epochs):
-                
+
         t_data = defaultdict(list)
         loss_dic = defaultdict(int)
-        
+
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_loader):
                 for key in batch.keys():
                     batch[key] = batch[key].to(config.device)
-                
+
                 if missing_joints:
                     pose = batch['pose2d']
 
-                    p_limbs = [1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1]
+                    p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
                     p_limbs = torch.Tensor(p_limbs).to(pose.device)
-                    p_limbs = p_limbs.repeat(pose.shape[0],1)
+                    p_limbs = p_limbs.repeat(pose.shape[0], 1)
 
                     miss_idx = torch.multinomial(p_limbs, missing_joints, replacement=False)
                     for i in range(missing_joints):
-                        pose[torch.arange(pose.shape[0]),miss_idx[:,i],:] = 0   
+                        pose[torch.arange(pose.shape[0]), miss_idx[:, i], :] = 0
 
-                    batch['pose2d'] = pose # not needed
-
+                    batch['pose2d'] = pose  # not needed
 
                 output = _validation_step(batch, batch_idx, model, epoch, config, eval=zv)
 
@@ -155,8 +154,8 @@ def main():
                     self_supervised=True, procrustes_enabled=True)
 
             # Speed up procrustes alignment with CPU!
-            t_data['recon_3d']=t_data['recon_3d'].to('cuda')
-            t_data['target_3d']=t_data['target_3d'].to('cuda')
+            t_data['recon_3d'] = t_data['recon_3d'].to('cuda')
+            t_data['target_3d'] = t_data['target_3d'].to('cuda')
 
             pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])
             avg_pjpe = torch.mean((pjpe_), dim=0)
@@ -182,10 +181,10 @@ def main():
             avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
 
             # print to console
-            print(f"{vae_type} Validation:",            
-                    f"\t\tLoss: {round(avg_output['loss'],4)}",
-                    f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
-                    f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')        
+            print(f"{vae_type} Validation:",
+                  f"\t\tLoss: {round(avg_output['loss'],4)}",
+                  f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
+                  f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
 
             print(f"\n MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
@@ -205,7 +204,11 @@ def main():
     if zv:
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
-    # plot_diffs(recon, target, torch.mean(PJPE(recon, target), dim=1), grid=5)
+    viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
+                              t_data['target_3d'].cpu().numpy(),
+                              torch.mean(PJPE(t_data['recon_3d'].cpu(), 
+                              t_data['target_3d'].cpu()), dim=1), 
+                              grid=5)
 
 
 def do_setup():
@@ -227,7 +230,7 @@ def do_setup():
 
     if not config.wandb:
         os.environ['WANDB_MODE'] = 'dryrun'
-        
+
     # ignore when debugging on cpu
     if not use_cuda:
         # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project

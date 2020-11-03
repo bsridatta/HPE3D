@@ -108,7 +108,7 @@ if __name__ == "__main__":
         title=str(min(pose3d[:,2]))+" "+str(max(pose3d[:,2]))) 
     # MPL Grid diff
     elif plot == 5:
-        plot_errors(poses=[pose3d], targets=[sample['pose3d_global']])
+        plot_errors(poses=[pose3d]*20, targets=[sample['pose3d_global']]*20, errors= [2]*20)
         # plot_errors(poses=[pose3d, pose3d], targets=[pose3d_noise, pose3d_noise])
     # Zeroed 3D Model
     elif plot == 6:

@@ -118,7 +118,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
 
 
 def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True,
-            labels=False, show_ticks=False, mean_root=False, title=None, save_path=None):
+            labels=False, show_ticks=False, mean_root=False, title=None, save_path=None, ax=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -137,9 +137,10 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     Returns:
         Tensor/MatplotlibAxis: Depends on the mode
     """
-    fig = plt.figure(1)
-    ax = fig.gca(projection='3d')
-    ax._axis3don = axis3don
+    if not ax:
+        fig = plt.figure(1)
+        ax = fig.gca(projection='3d')
+        ax._axis3don = axis3don
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -246,7 +247,7 @@ def fix_3D_aspect(ax, x, y, z):
         ax.plot([xb], [yb], [zb], 'w')
 
 
-def plot_area(pose1, pose2):
+def plot_area(pose1, pose2, ax=None):
     """Plot area between 2 poses, used for showing error in prediction
 
     Args:
@@ -280,11 +281,14 @@ def plot_area(pose1, pose2):
                 ]
         vertices.append(area)
 
-    fig = plt.figure(1)
-    ax = fig.gca()
+    if not ax:
+        fig = plt.figure(1)
+        ax = fig.gca()
 
     ax.add_collection3d(Poly3DCollection(vertices, facecolors=[
                         'r', 'r'], alpha=0.2, zorder='max'))
+
+    return ax
 
 
 def plot_data(pose2d=None, pose3d=None, image=None):
@@ -325,7 +329,7 @@ def plot_data(pose2d=None, pose3d=None, image=None):
     plt.show()
 
 
-def plot_errors(poses, targets, errors=None, grid=4, labels=False, area=True):
+def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
     """Show difference between predictions and targets
 
     Arguments:
@@ -336,18 +340,22 @@ def plot_errors(poses, targets, errors=None, grid=4, labels=False, area=True):
     Keyword Arguments:
         grid {int} -- number of plots to show (default: {5})
     """
-    fig = plt.figure(figsize=(15., 12.))
     plt.rcParams['savefig.dpi'] = 300
 
+    fig = plt.figure(figsize=(15., 12.))
     rows = cols = grid
 
     i = 1
-    for pose, target in zip(poses[:grid*grid], targets[:grid*grid]):
+    for pose, target, error in zip(poses[:grid*grid], targets[:grid*grid], errors[:grid*grid]):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
-        plot_3d(pose, mode="plt", color='b', floor=False, axis3don=True, labels=labels)
-        plot_3d(target, mode="plt", color='grey', floor=False, axis3don=True, labels=labels)
+        plot_3d(pose, mode="plt", color='b', floor=False, axis3don=True, labels=labels, ax=ax)
+        plot_3d(target, mode="plt", color='grey', floor=False, axis3don=True, labels=labels, ax=ax)
         if area:
-            _ = plot_area(pose, target)
+            plot_area(pose, target, ax=ax)
+        if errors is not None:
+            if torch.is_tensor(error): 
+               error = error.item() 
+            ax.text((ax.get_xlim()[1])*0.5,ax.get_ylim()[1],ax.get_zlim()[0], s=f"{error:.2f} mm", fontsize=12)
         i += 1
 
     plt.show()
