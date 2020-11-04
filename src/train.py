@@ -206,8 +206,8 @@ def training_specific_args():
                         help='train last convolution block of the RGB encoder while rest is pre-trained')
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
-    parser.add_argument('--n_missing_joints', default=0, type=int,
-                        help='number of joints to miss/zero out')
+    parser.add_argument('--p_miss', default=0.0, type=int,
+                        help='number of joints to encode and decode')  
     # pose data
     parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')

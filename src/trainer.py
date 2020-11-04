@@ -24,21 +24,31 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
 
-    config.n_missing_joints = 2
+    if config.p_miss:
 
-    if config.n_missing_joints:
-        pose = batch['pose2d']
+        pose = inp
+        pose2d_org = inp.clone()
 
+        # index of poses to be incomplete
+        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
+
+        # probablity to choose a joint to miss
         p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
         p_limbs = torch.Tensor(p_limbs).to(pose.device)
-        p_limbs = p_limbs.repeat(pose.shape[0], 1)
+        p_limbs = p_limbs.repeat(len(incomplete_poses_ids), 1)
 
-        missing_joints_ids = torch.multinomial(p_limbs, config.n_missing_joints, replacement=False)
-        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]/10), replacement=False)
+        # 2 random joints to exclude for each missing pose
+        # make 0.5 of them to miss 1 joint only by duplicting the joint id
+        rand_joints = torch.multinomial(p_limbs, 2, replacement=False)
+        rand_joints[:rand_joints.shape[0]//2][:,1] = rand_joints[:rand_joints.shape[0]//2][:,0] 
 
-        pose = mask_missing_joints(pose, incomplete_poses_ids, missing_joints_ids)
-        
-        batch['pose2d'] = pose  # not needed
+        # repeat incomplete pose ids for vectorization
+        incomplete_poses_ids = incomplete_poses_ids.view(-1,1).repeat(1,2)
+
+        # zero the random joints of the 'tobe' incomplete poses
+        pose[incomplete_poses_ids, rand_joints, :] = 0
+
+        inp = pose  # not needed
         
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
@@ -50,8 +60,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     if config.self_supervised:
 
         # Reprojection
-        target_2d = inp.detach()
-        noised_real = add_noise(inp.detach(), config.noise_level)
+        target_2d = inp.detach().clone()
+        noised_real = add_noise(inp.detach().clone(), config.noise_level)
 
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
@@ -136,7 +146,15 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         # Sum 'recon', 'kld' and 'critic' losses
         gen_loss = binary_loss(output, labels)
-        recon_loss = criterion(recon_2d, target_2d)
+
+        if config.p_miss:
+            recon_2d_org = recon_2d.clone().detach()
+            recon_2d[incomplete_poses_ids, rand_joints, :] = 0
+            recon_loss = criterion(recon_2d, target_2d)
+            recon_2d = recon_2d_org
+        else:
+            recon_loss = criterion(recon_2d, target_2d)
+            
         kld_loss = KLD(mean, logvar, decoder.name)
 
         loss = recon_loss + 0.1*config.beta * kld_loss + \
@@ -186,6 +204,32 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
 
     inp, target_3d, criterion = get_inp_target_criterion(
         encoder, decoder, batch)
+
+    if config.p_miss:
+
+        pose = inp
+        pose2d_org = inp.clone()
+
+        # index of poses to be incomplete
+        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
+
+        # probablity to choose a joint to miss
+        p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+        p_limbs = torch.Tensor(p_limbs).to(pose.device)
+        p_limbs = p_limbs.repeat(len(incomplete_poses_ids), 1)
+
+        # 2 random joints to exclude for each missing pose
+        # make 0.5 of them to miss 1 joint only by duplicting the joint id
+        rand_joints = torch.multinomial(p_limbs, 2, replacement=False)
+        rand_joints[:rand_joints.shape[0]//2][:,1] = rand_joints[:rand_joints.shape[0]//2][:,0] 
+
+        # repeat incomplete pose ids for vectorization
+        incomplete_poses_ids = incomplete_poses_ids.view(-1,1).repeat(1,2)
+
+        # zero the random joints of the 'tobe' incomplete poses
+        pose[incomplete_poses_ids, rand_joints, :] = 0
+
+        inp = pose  # not needed
 
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
@@ -264,7 +308,15 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
 
         # Sum 'recon', 'kld' and 'critic' losses
         gen_loss = binary_loss(output, labels)
-        recon_loss = criterion(recon_2d, target_2d)
+        
+        if config.p_miss:
+            recon_2d_org = recon_2d.clone().detach()
+            recon_2d[incomplete_poses_ids, rand_joints, :] = 0
+            recon_loss = criterion(recon_2d, target_2d)
+            recon_2d = recon_2d_org
+        else:
+            recon_loss = criterion(recon_2d, target_2d)
+
         kld_loss = KLD(mean, logvar, decoder.name)
 
         loss = recon_loss + 0.1*config.beta*kld_loss + \
@@ -389,7 +441,3 @@ def add_noise(pose, noise_level):
 
     return pose
 
-def mask_missing_joints(pose, incomplete_poses_ids, missing_joints_ids):
-    for i in range(missing_joints_ids.shape[-1]):
-        pose[torch.arange(pose.shape[0]), missing_joints_ids[:, i], :] = 0
-    # pose[torch.stack([torch.arange(pose.shape[0])]*2, dim=1), missing_joints_ids, :]
