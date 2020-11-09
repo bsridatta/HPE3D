@@ -86,7 +86,3 @@ def calculate_rotation(xy_real, z_pred):
 def calculate_heuristic_loss(xy_real, z_pred):
     return F.average(F.relu(
         calculate_rotation(xy_real, z_pred)))
-
-
-if __name__ == "__main__":
-    print("[INFO] Method for Models")

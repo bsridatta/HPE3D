@@ -79,7 +79,8 @@ def main():
 
     bh = False
     epochs = 10
-    missing_joints = 2
+    missing_joints = 0
+    save = True
 
     if bh:
         zv = False
@@ -154,8 +155,8 @@ def main():
                     self_supervised=True, procrustes_enabled=True)
 
             # Speed up procrustes alignment with CPU!
-            t_data['recon_3d'] = t_data['recon_3d'].to('cuda')
-            t_data['target_3d'] = t_data['target_3d'].to('cuda')
+            t_data['recon_3d'] = t_data['recon_3d'].to(config.device)
+            t_data['target_3d'] = t_data['target_3d'].to(config.device)
 
             pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])
             avg_pjpe = torch.mean((pjpe_), dim=0)
@@ -203,6 +204,9 @@ def main():
 
     if zv:
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
+
+    if save:
+        torch.save(t_data, f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt")
 
     viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
                               t_data['target_3d'].cpu().numpy(),

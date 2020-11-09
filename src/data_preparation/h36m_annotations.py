@@ -30,7 +30,7 @@ skip_frame = 64
 subj_str = "".join(str(x) for x in subject_list)
 h5name = 'h36m17_' + subj_str
 inds = range(17)
-action_list = np.arange(2, 3)#17)
+action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 
@@ -128,7 +128,7 @@ for subject_ in subject_list:
 
 print(f'number of samples = %d' % num_samples)
 ##### REMOVE to save#######
-exit("not saving")
+# exit("not saving")
 
 if mean_std:
     # Not going to use this anymore
