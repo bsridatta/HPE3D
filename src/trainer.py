@@ -121,7 +121,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_loss = critic_loss_real+critic_loss_fake
 
         # update critic
-        if batch_idx % 2 == 0:
+        if batch_idx % 1 == 0:
             # Clip grad norm to 1 ********************************
             torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
@@ -411,8 +411,8 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
                 self_supervised=True, procrustes_enabled=True)
 
         # Speed up procrustes alignment with CPU!
-        t_data['recon_3d'].to('cuda')
-        t_data['target_3d'].to('cuda')
+        t_data['recon_3d'].to(config.device)
+        t_data['target_3d'].to(config.device)
 
         pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])  # per sample per joint [n,j]
         avg_pjpe = torch.mean((pjpe_), dim=0)  # across all samples per joint [j]
