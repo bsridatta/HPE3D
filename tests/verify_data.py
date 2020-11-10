@@ -78,8 +78,8 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 5
-    processed = False
+    plot = 2
+    processed = True
 
     if processed:
         sample = get_processed_sample(0)
@@ -95,11 +95,12 @@ if __name__ == "__main__":
 
     # 2D, 3D, Image
     if plot == 1:
-        plot_data(pose2d=pose2d, pose3d=pose3d)
+        plot_data( pose3d=pose3d)
         # plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
-        plot_3D_models([pose3d/100], mode='save')
+        print(pose3d)
+        plot_3D_models([pose3d])
     # 3D Model diff
     elif plot == 3:
         plot_3D_models([pose3d, sample["pose3d_noise"]])
@@ -148,21 +149,26 @@ if __name__ == "__main__":
         from src.processing import random_rotate, procrustes
         import torch
         import math
+
         pose3d = torch.tensor(pose3d)
 
         # pose3d = torch.index_select(pose3d, -1, torch.tensor([1,0,2]))
-        pose3d = torch.stack((pose3d, pose3d), axis=0)
-        gt = pose3d
-        # rotate and scale and translate
-        inp = random_rotate(gt)
-        inp = torch.tensor((0,0,1000)) + inp
-        # pose3d = torch.tensor((0,0,-1000)) + pose3d
+        # pose3d = torch.stack((pose3d, pose3d), axis=0)
+        # gt = pose3d
+        # # rotate and scale and translate
+        # inp = random_rotate(gt)
+        # inp = torch.tensor((0,0,1000)) + inp
+        # # pose3d = torch.tensor((0,0,-1000)) + pose3d
 
-        out = procrustes(gt, inp, allow_scaling=False, allow_reflection=True)
+        # out = procrustes(gt, inp, allow_scaling=False, allow_reflection=True)
 
-        plot_3d(gt[0].numpy(), color='gray', mode="axis",
-                show_ticks=True, labels=False, mean_root=True)
-        plot_3d(inp[0].numpy(), color='green', mode="axis",
-                show_ticks=True, labels=False, mean_root=True)
-        plot_3d(out[0].numpy(), color='orange', mode="show",
-                show_ticks=True, labels=False, mean_root=True)
+        # plot_3d(gt[0].numpy(), color='gray', mode="axis",
+        #         show_ticks=True, labels=False, mean_root=True)
+        # plot_3d(inp[0].numpy(), color='green', mode="axis",
+        #         show_ticks=True, labels=False, mean_root=True)
+        # plot_3d(out[0].numpy(), color='orange', mode="show",
+        #                 show_ticks=True, labels=False, mean_root=True)        
+        
+        out= pose3d 
+        plot_3d(out.numpy(), color=None, mode="show",
+                show_ticks=False, labels=False, mean_root=False)

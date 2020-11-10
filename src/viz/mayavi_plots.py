@@ -28,10 +28,10 @@ def plot_3D_models(poses, mode="show"):
         y = -1*pose[:, 2]
         z = -1*pose[:, 1]
 
-        pts = mlab.points3d(x, y, z, scale_factor=3, color=(1, 0, 0))
+        pts = mlab.points3d(x, y, z, scale_factor=30, color=(1, 0, 0))
         pts.mlab_source.dataset.lines = np.array(skeleton)
         tube = mlab.pipeline.tube(pts, tube_radius=15)
-        # tube.filter.radius_factor = 1.
+        tube.filter.radius_factor = 1.
         tube = mlab.pipeline.stripper(tube)
         mlab.pipeline.surface(tube, color=color)
 

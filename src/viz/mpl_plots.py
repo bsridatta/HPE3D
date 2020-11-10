@@ -162,12 +162,19 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     y = pose[:, 1]
     z = pose[:, 2]
 
-    ax.scatter(x, y, z, alpha=0.6, s=0.1)
+    from matplotlib.colors import LightSource
+    # # Create light source object.
+    # ls = LightSource(azdeg=0, altdeg=65)
+    # # Shade data, creating an rgb array.
+    # rgb = ls.shade(y, plt.cm.RdYlBu)
+
+    ax.scatter(x, y, z, alpha=0.6, s=60, depthshade=True)
 
     for link, color_ in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 z[([link[0], link[1]])],
+                # c=plt.cm., alpha=0.6, lw=3)
                 c=color_, alpha=0.6, lw=3)
 
     plt.tight_layout()
