@@ -199,14 +199,21 @@ def main():
         mpjpe_z = torch.mean(mh, dim=1)
         print("mpjpe for random z \n", mpjpe_z)
 
-        mpjpe_bh = torch.min(mh, dim=0).values.mean()
+        pjpe_bh = torch.min(mh, dim=0).values
+        t_data['bh'] = pjpe_bh
+        mpjpe_bh = pjpe_bh.mean()
         print("mpjpe best hypothesis: ", mpjpe_bh)
 
+
+
     if zv:
+        t_data['zv'] = pjpe
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
     if save:
-        torch.save(t_data, f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt")
+        path = f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt"
+        torch.save(t_data, path)
+        print("save results at ", path)
 
     viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
                               t_data['target_3d'].cpu().numpy(),
