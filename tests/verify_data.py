@@ -29,13 +29,13 @@ divided by the number of frames
 
 import os
 import h5py
-from src.viz.mpl_plots import plot_data, plot_errors, plot_3d
+from src.viz.mpl_plots import plot_data, plot_errors, plot_3d, plot_2d, plot_superimposition
 from src.viz.mayavi_plots import plot_3D_models
 from src.dataset import H36M
 from src.processing import preprocess
 
 
-def get_raw_sample(idx=1):
+def get_raw_sample(i):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
 
@@ -43,7 +43,7 @@ def get_raw_sample(idx=1):
 
     sample = {}
     for x in f.keys():
-        sample[x] = f[x][idx]
+        sample[x] = f[x][i]
 
     dirname = 's_%02d_act_%02d_subact_%02d_ca_%02d' % (
         sample['subject'], sample['action'], sample['subaction'], sample['camera'])
@@ -56,7 +56,7 @@ def get_raw_sample(idx=1):
     return sample
 
 
-def get_processed_sample(idx=1):
+def get_processed_sample(i):
 
     annotation_file = f'h36m17'
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
@@ -67,7 +67,7 @@ def get_processed_sample(idx=1):
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(idx)
+    sample = dataset.__getitem__(i)
 
     for key in sample.keys():
         sample[key] = sample[key].numpy()
@@ -78,13 +78,13 @@ def get_processed_sample(idx=1):
 
 if __name__ == "__main__":
 
-    plot = 2
-    processed = True
+    plot = 10
+    processed = False
 
     if processed:
         sample = get_processed_sample(0)
     else:
-        sample = get_raw_sample(1)
+        sample = get_raw_sample(10)
 
     image = sample['image']
     pose2d = sample['pose2d']
@@ -95,8 +95,8 @@ if __name__ == "__main__":
 
     # 2D, 3D, Image
     if plot == 1:
-        plot_data( pose3d=pose3d)
-        # plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
+        # plot_data( pose3d=pose3d)
+        plot_data(image=image, pose2d=pose2d, pose3d=pose3d)
     # 3D Model
     elif plot == 2:
         print(pose3d)
@@ -172,3 +172,6 @@ if __name__ == "__main__":
         out= pose3d 
         plot_3d(out.numpy(), color=None, mode="show",
                 show_ticks=False, labels=False, mean_root=False)
+    
+    elif plot == 10:
+       plot_superimposition(pose2d, image, sample['bbox'])

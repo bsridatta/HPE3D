@@ -80,7 +80,7 @@ def main():
     bh = False
     epochs = 10
     missing_joints = 0
-    save = True
+    save = False
 
     if bh:
         zv = False
@@ -95,8 +95,8 @@ def main():
     if zv:
         epochs = 1
 
+    n_recons = []
     for epoch in range(epochs):
-
         t_data = defaultdict(list)
         loss_dic = defaultdict(int)
 
@@ -157,6 +157,7 @@ def main():
             # Speed up procrustes alignment with CPU!
             t_data['recon_3d'] = t_data['recon_3d'].to(config.device)
             t_data['target_3d'] = t_data['target_3d'].to(config.device)
+            n_recons.append(t_data['recon_3d'])
 
             pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])
             avg_pjpe = torch.mean((pjpe_), dim=0)
@@ -204,8 +205,8 @@ def main():
         mpjpe_bh = pjpe_bh.mean()
         print("mpjpe best hypothesis: ", mpjpe_bh)
 
-
-
+        t_data['n_recons'] = n_recons
+ 
     if zv:
         t_data['zv'] = pjpe
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
@@ -214,12 +215,26 @@ def main():
         path = f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt"
         torch.save(t_data, path)
         print("save results at ", path)
+    
+    from torch.utils.tensorboard import SummaryWriter
 
-    viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
-                              t_data['target_3d'].cpu().numpy(),
-                              torch.mean(PJPE(t_data['recon_3d'].cpu(),
-                                              t_data['target_3d'].cpu()), dim=1),
-                              grid=5)
+    writer = SummaryWriter(log_dir= f"src/results/")
+    images = []
+    size = 100
+    subset = torch.randperm(len(t_data['z']))[:size]
+    for t in t_data['target_3d'][subset]:
+        image_ = viz.mpl_plots.plot_3d(np.asarray(t.cpu()), mode='image', axis3don=False)
+        images.append(image_)
+    images = torch.cat(images,0)
+    writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
+            
+
+
+    # viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
+    #                           t_data['target_3d'].cpu().numpy(),
+    #                           torch.mean(PJPE(t_data['recon_3d'].cpu(),
+    #                                           t_data['target_3d'].cpu()), dim=1),
+    #                           grid=5)
 
 
 def do_setup():

@@ -14,19 +14,21 @@ from PIL import Image
 from torchvision import transforms
 
 from src.processing import project_3d_to_2d
+SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), 
+            (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
+LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
+            'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+# SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
+#                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
 
-SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
-                   'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
-SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
-            (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
-LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso', 'Neck',
-          'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+                   'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
 plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, save_path=None):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, save_path=None, background=None):
     """Base function for 2D pose plotting
 
     Args:
@@ -48,6 +50,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax = fig.gca()
     ax.set_aspect('equal')
     # plt.cla()
+    if background:
+        ax.imshow(background, origin='lower')
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -67,7 +71,6 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     # Image coordinates origin on the top left corner
     # Hence keypoints value increases as we move down to the bottom of the images
     # Hence after 0ing legs would be positive and head would be negative
-    ax.scatter(x, y, alpha=0.6, s=2)
     plt.gca().invert_yaxis()
 
     for link, color in zip(SKELETON, colors):
@@ -75,6 +78,11 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
                 y[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
 
+    # link colors to joint colors
+    colors[11:13] = colors[4:6]
+    colors[14:17] = colors[0:3]
+    ax.scatter(x, y, alpha=0.8, s=60, color=colors)
+    
     if labels:
         for i, j, l in zip(x, y, LABELS):
             ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
@@ -167,15 +175,16 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     # ls = LightSource(azdeg=0, altdeg=65)
     # # Shade data, creating an rgb array.
     # rgb = ls.shade(y, plt.cm.RdYlBu)
-
-    ax.scatter(x, y, z, alpha=0.6, s=60, depthshade=True)
+    alpha = 0.6
+    
+    ax.scatter(x, y, z, alpha=alpha, s=20, depthshade=True)
 
     for link, color_ in zip(SKELETON, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 z[([link[0], link[1]])],
                 # c=plt.cm., alpha=0.6, lw=3)
-                c=color_, alpha=0.6, lw=3)
+                c=color_, alpha=alpha, lw=3)
 
     plt.tight_layout()
     fix_3D_aspect(ax, x, y, z)
@@ -218,8 +227,10 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         fig.clf()
 
     elif mode == "image":
+        size = 305.0
+        # size = 100
         DPI = fig.get_dpi()
-        fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
+        fig.set_size_inches(size/float(DPI), size/float(DPI))
         img_name = f"x{np.random.rand(1)}.png"
         fig.savefig(img_name)
         fig.clf()
@@ -296,6 +307,18 @@ def plot_area(pose1, pose2, ax=None):
 
     return ax
 
+def plot_superimposition(pose2d, image, bbox):    
+    if type(image) == str:
+        image = Image.open(image)
+    else:
+        image = Image.fromarray(image.astype('uint8'), 'RGB')
+    pose2d[:,0] =((pose2d[:,0] - bbox[0])/bbox[2])*256
+    pose2d[:,1] =((pose2d[:,1] - bbox[1])/bbox[3])*256
+    
+    
+    plot_2d(pose2d, mode='axis', show_ticks=False, background=image)
+    
+    plt.show()
 
 def plot_data(pose2d=None, pose3d=None, image=None):
     """creates a combined figure with image 2d and 3d plots
