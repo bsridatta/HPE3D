@@ -52,7 +52,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
-    # logvar = torch.clamp(logvar, max=30)
+    logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
     recon_3d = decoder(z)
     recon_3d = recon_3d.view(-1, 16, 3)
@@ -233,7 +233,7 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
 
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
-    # logvar = torch.clamp(logvar, max=30)
+    logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar, eval)
     recon_3d = decoder(z)
     recon_3d = recon_3d.view(-1, 16, 3)

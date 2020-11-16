@@ -77,10 +77,10 @@ def main():
 
     ####################################################################
 
-    bh = False
+    bh = True
     epochs = 10
     missing_joints = 0
-    save = False
+    save = True
 
     if bh:
         zv = False
@@ -91,6 +91,7 @@ def main():
 
     normalize_pose = True
     n_pjpes = []
+    n_zs = []
 
     if zv:
         epochs = 1
@@ -137,6 +138,7 @@ def main():
                 del output
                 gc.collect()
 
+
         avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
 
         for key in t_data.keys():
@@ -171,7 +173,7 @@ def main():
                 mpjpe_pa[i.item()] = res.item()
 
             n_pjpes.append(pjpe)
-
+            n_zs.append(t_data['z'])
             config.logger.log({"pjpe": pjpe.cpu()})
 
             # average epochs output
@@ -183,30 +185,32 @@ def main():
             avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
 
             # print to console
-            print(f"{vae_type} Validation:",
-                  f"\t\tLoss: {round(avg_output['loss'],4)}",
-                  f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
-                  f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
+            # print(f"{vae_type} Validation:",
+            #       f"\t\tLoss: {round(avg_output['loss'],4)}",
+            #       f"\tReCon: {round(avg_output['log']['recon_loss'], 4)}",
+            #       f"\tKLD: {round(avg_output['log']['kld_loss'], 4)}", end='')
 
-            print(f"\n MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
+            # print(f"\n MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
+            ###MH###
             print(f"PJPE 1 {pjpe[0]} \n")
 
     if bh:
         # multi-hypothesis
-        mh = torch.stack(n_pjpes)
-
+        mh_pjpes = torch.stack(n_pjpes)
+        mh_z = torch.stack(n_zs)
         # mpjpe for random z
-        mpjpe_z = torch.mean(mh, dim=1)
+        mpjpe_z = torch.mean(mh_pjpes, dim=1)
         print("mpjpe for random z \n", mpjpe_z)
 
-        pjpe_bh = torch.min(mh, dim=0).values
+        pjpe_bh = torch.min(mh_pjpes, dim=0).values
         t_data['bh'] = pjpe_bh
         mpjpe_bh = pjpe_bh.mean()
         print("mpjpe best hypothesis: ", mpjpe_bh)
-
+        print(f"{pjpe_bh.shape}")
         t_data['n_recons'] = n_recons
- 
+        t_data['n_zs'] = n_zs
+        
     if zv:
         t_data['zv'] = pjpe
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
@@ -215,18 +219,17 @@ def main():
         path = f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt"
         torch.save(t_data, path)
         print("save results at ", path)
-    
-    from torch.utils.tensorboard import SummaryWriter
 
-    writer = SummaryWriter(log_dir= f"src/results/")
-    images = []
-    size = 100
-    subset = torch.randperm(len(t_data['z']))[:size]
-    for t in t_data['target_3d'][subset]:
-        image_ = viz.mpl_plots.plot_3d(np.asarray(t.cpu()), mode='image', axis3don=False)
-        images.append(image_)
-    images = torch.cat(images,0)
-    writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
+    # from torch.utils.tensorboard import SummaryWriter
+    # writer = SummaryWriter(log_dir= f"src/results/")
+    # images = []
+    # size = 100
+    # subset = torch.randperm(len(t_data['z']))[:size]
+    # for t in t_data['target_3d'][subset]:
+    #     image_ = viz.mpl_plots.plot_3d(np.asarray(t.cpu()), mode='image', axis3don=False)
+    #     images.append(image_)
+    # images = torch.cat(images,0)
+    # writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
             
 
 
@@ -234,7 +237,7 @@ def main():
     #                           t_data['target_3d'].cpu().numpy(),
     #                           torch.mean(PJPE(t_data['recon_3d'].cpu(),
     #                                           t_data['target_3d'].cpu()), dim=1),
-    #                           grid=5)
+    #                           grid=3)
 
 
 def do_setup():
