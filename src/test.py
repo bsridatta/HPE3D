@@ -4,7 +4,7 @@ import math
 import os
 import sys
 from argparse import ArgumentParser
-
+from torchsummary import summary
 import numpy as np
 import torch
 import wandb
@@ -77,7 +77,7 @@ def main():
 
     ####################################################################
 
-    bh = True
+    bh = False
     epochs = 20
     missing_joints = 0
     save = True
@@ -221,16 +221,16 @@ def main():
         torch.save(t_data, path)
         print("save results at ", path)
 
-    # from torch.utils.tensorboard import SummaryWriter
-    # writer = SummaryWriter(log_dir= f"src/results/")
-    # images = []
-    # size = 100
-    # subset = torch.randperm(len(t_data['z']))[:size]
-    # for t in t_data['target_3d'][subset]:
-    #     image_ = viz.mpl_plots.plot_3d(np.asarray(t.cpu()), mode='image', axis3don=False)
-    #     images.append(image_)
-    # images = torch.cat(images,0)
-    # writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_dir= f"src/results/")
+    images = []
+    size = 500
+    subset = torch.randperm(len(t_data['z']))[:size]
+    for t in t_data['target_2d'][subset]:
+        image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
+        images.append(image_)
+    images = torch.cat(images,0)
+    writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
             
 
 

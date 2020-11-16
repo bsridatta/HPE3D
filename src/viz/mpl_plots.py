@@ -18,14 +18,14 @@ SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12),
             (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
 LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
             'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-# SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
-#                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
+SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
+                   'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
 
-SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
-                   'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
+# SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+#                    'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
-SKELETON_COLORS = ['deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue',
-                   'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
+# SKELETON_COLORS = ['deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+#                    'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
 
 
@@ -120,14 +120,14 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         else:
             img_name = f"{filename}"
         ax.axis('off')
-        fig.savefig(img_name, transparent=True, bbox_inches='tight', format='svg', dpi=1200)
+        # fig.savefig(img_name, transparent=True, bbox_inches='tight', format='svg', dpi=1200)
 
-        # fig.savefig(img_name)
+        fig.savefig(img_name)
         fig.clf()
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
         pil_image = transforms.ToTensor()(pil_image).unsqueeze_(0)
-        # os.remove(img_name)
+        os.remove(img_name)
         return pil_image
 
     elif mode == "plt":
@@ -242,7 +242,9 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
             img_name = f"x{np.random.rand(1)}.png"
         else:
             img_name = f"{filename}.png"
-        fig.savefig(img_name)
+        ax.axis('off')
+        fig.savefig(img_name, transparent=True)
+
         fig.clf()
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')

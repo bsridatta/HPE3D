@@ -143,7 +143,7 @@ test function for sanity check only - ignore
 
 
 def test(inp, target):
-    latent_dim = 2
+    latent_dim = 51
 
     # inp = torch.randn(2, 16, 2)  # [b, joints. 2]
     # target = torch.randn(2, 16, 3)  # [b, joints, 3]
@@ -158,8 +158,10 @@ def test(inp, target):
     with torch.no_grad():
 
         # 2D -> 3D
+        print(inp.shape)
         mean, logvar = encoder_2d(inp)
         z = reparameterize(mean, logvar)
+        print(z.shape)
         pose3d = decoder_3d(z)
         pose3d = pose3d.view(-1, 16, 3)
         recon_loss = PJPE(pose3d, target)
