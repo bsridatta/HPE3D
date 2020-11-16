@@ -16,6 +16,7 @@ reports
 
 # data pickles
 *.h5
+*.pt
 
 # Exceptions
 !norm_stats.h5
