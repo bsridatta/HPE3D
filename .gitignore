@@ -9,7 +9,7 @@
 # other reference repo
 other
 reports
-results
+# results
 
 # checkpoints
 */checkpoints/*.pt
