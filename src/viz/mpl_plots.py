@@ -24,11 +24,16 @@ LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle',
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
                    'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
+SKELETON_COLORS = ['deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+                   'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
+
+
+
 plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, save_path=None, background=None):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None):
     """Base function for 2D pose plotting
 
     Args:
@@ -50,8 +55,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax = fig.gca()
     ax.set_aspect('equal')
     # plt.cla()
-    if background:
-        ax.imshow(background, origin='lower')
+    # if background:
+    #     ax.imshow(background, origin='lower')
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -107,15 +112,22 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         plt.show()
 
     elif mode == "image":
+        res = 305.0
         DPI = fig.get_dpi()
-        fig.set_size_inches(305.0/float(DPI), 305.0/float(DPI))
-        img_name = f"x{np.random.rand(1)}.png"
-        fig.savefig(img_name)
+        fig.set_size_inches(res/float(DPI), res/float(DPI))
+        if filename == None:
+            img_name = f"x{np.random.rand(1)}.png"
+        else:
+            img_name = f"{filename}"
+        ax.axis('off')
+        fig.savefig(img_name, transparent=True, bbox_inches='tight', format='svg', dpi=1200)
+
+        # fig.savefig(img_name)
         fig.clf()
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
         pil_image = transforms.ToTensor()(pil_image).unsqueeze_(0)
-        os.remove(img_name)
+        # os.remove(img_name)
         return pil_image
 
     elif mode == "plt":
@@ -126,7 +138,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
 
 
 def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True,
-            labels=False, show_ticks=False, mean_root=False, title=None, save_path=None, ax=None):
+            labels=False, show_ticks=False, mean_root=False, title=None, ax=None, filename=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -170,11 +182,6 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     y = pose[:, 1]
     z = pose[:, 2]
 
-    from matplotlib.colors import LightSource
-    # # Create light source object.
-    # ls = LightSource(azdeg=0, altdeg=65)
-    # # Shade data, creating an rgb array.
-    # rgb = ls.shade(y, plt.cm.RdYlBu)
     alpha = 0.6
     
     ax.scatter(x, y, z, alpha=alpha, s=20, depthshade=True)
@@ -231,7 +238,10 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         # size = 100
         DPI = fig.get_dpi()
         fig.set_size_inches(size/float(DPI), size/float(DPI))
-        img_name = f"x{np.random.rand(1)}.png"
+        if filename == None:
+            img_name = f"x{np.random.rand(1)}.png"
+        else:
+            img_name = f"{filename}.png"
         fig.savefig(img_name)
         fig.clf()
         pil_image = Image.open(img_name)
@@ -316,7 +326,7 @@ def plot_superimposition(pose2d, image, bbox):
     pose2d[:,1] =((pose2d[:,1] - bbox[1])/bbox[3])*256
     
     
-    plot_2d(pose2d, mode='axis', show_ticks=False, background=image)
+    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename="../HPE3D/src/results/transparent_pose2d.svg")
     
     plt.show()
 

@@ -78,11 +78,11 @@ def get_processed_sample(i):
 
 if __name__ == "__main__":
 
-    plot = 10
+    plot = 2
     processed = False
 
     if processed:
-        sample = get_processed_sample(0)
+        sample = get_processed_sample(10)
     else:
         sample = get_raw_sample(10)
 
@@ -174,4 +174,4 @@ if __name__ == "__main__":
                 show_ticks=False, labels=False, mean_root=False)
     
     elif plot == 10:
-       plot_superimposition(pose2d, image, sample['bbox'])
+        plot_superimposition(pose2d, image, sample['bbox'])

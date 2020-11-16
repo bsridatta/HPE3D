@@ -25,7 +25,7 @@ def reparameterize(mean, logvar, eval=False):
     std = torch.exp(0.5*logvar)
     eps = torch.randn_like(std)
 
-    return mean + 10*eps*std
+    return mean + eps*std
 
 
 def PJPE(pred, target):

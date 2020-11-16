@@ -78,7 +78,7 @@ def main():
     ####################################################################
 
     bh = True
-    epochs = 10
+    epochs = 20
     missing_joints = 0
     save = True
 
@@ -92,6 +92,7 @@ def main():
     normalize_pose = True
     n_pjpes = []
     n_zs = []
+    n_inps = []
 
     if zv:
         epochs = 1
@@ -159,7 +160,7 @@ def main():
             # Speed up procrustes alignment with CPU!
             t_data['recon_3d'] = t_data['recon_3d'].to(config.device)
             t_data['target_3d'] = t_data['target_3d'].to(config.device)
-            n_recons.append(t_data['recon_3d'])
+            n_recons.append(t_data['recon_3d_org'])
 
             pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])
             avg_pjpe = torch.mean((pjpe_), dim=0)
