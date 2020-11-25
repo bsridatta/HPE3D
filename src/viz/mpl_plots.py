@@ -55,8 +55,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax = fig.gca()
     ax.set_aspect('equal')
     # plt.cla()
-    # if background:
-    #     ax.imshow(background, origin='lower')
+    if background:
+        ax.imshow(background, origin='lower')
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -234,22 +234,22 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         fig.clf()
 
     elif mode == "image":
-        size = 305.0
+        size = 300
         # size = 100
         DPI = fig.get_dpi()
-        fig.set_size_inches(size/float(DPI), size/float(DPI))
+        # fig.set_size_inches(size/float(DPI), size/float(DPI))
         if filename == None:
             img_name = f"x{np.random.rand(1)}.png"
         else:
             img_name = f"{filename}.png"
         ax.axis('off')
-        fig.savefig(img_name, transparent=True)
+        fig.savefig(img_name, transparent=False, format='png', dpi=1200)
 
         fig.clf()
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
         pil_image = transforms.ToTensor()(pil_image).unsqueeze_(0)
-        os.remove(img_name)
+        # os.remove(img_name)
         return pil_image
 
     elif mode == "plt":

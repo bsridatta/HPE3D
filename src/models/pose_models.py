@@ -153,7 +153,7 @@ def test(inp, target):
     encoder_2d.eval()
     decoder_3d.eval()
 
-    # print(encoder_2d.parameters)
+    print(decoder_3d.parameters)
 
     with torch.no_grad():
 
@@ -207,3 +207,7 @@ if __name__ == "__main__":
               [-0.9765,  0.5890,  0.8608]]
 
     test(torch.FloatTensor([pose2d]), torch.FloatTensor([pose3d]))
+
+
+
+        

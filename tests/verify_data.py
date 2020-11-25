@@ -37,7 +37,7 @@ from src.processing import preprocess
 
 def get_raw_sample(i):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
-    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
+    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_15678.h5'
 
     f = h5py.File(h5name, 'r')
 
@@ -78,13 +78,13 @@ def get_processed_sample(i):
 
 if __name__ == "__main__":
 
-    plot = 2
+    plot = 9
     processed = False
 
     if processed:
         sample = get_processed_sample(10)
     else:
-        sample = get_raw_sample(10)
+        sample = get_raw_sample(1101)
 
     image = sample['image']
     pose2d = sample['pose2d']
@@ -171,7 +171,7 @@ if __name__ == "__main__":
         
         out= pose3d 
         plot_3d(out.numpy(), color=None, mode="show",
-                show_ticks=False, labels=False, mean_root=False)
+                show_ticks=False, labels=False, mean_root=False, axis3don=False)
     
     elif plot == 10:
         plot_superimposition(pose2d, image, sample['bbox'])
