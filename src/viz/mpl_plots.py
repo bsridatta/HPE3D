@@ -19,8 +19,9 @@ SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12),
 LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
             'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
-                   'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'orange']
+                   'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange']
 
+JOINT_COLORS = ['b','b','b','b','orange','orange','orange','b','b','b','b','orange','orange','orange','b','b','b']
 # SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
 #                    'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
@@ -84,8 +85,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
                 c=color, alpha=0.6, lw=3)
 
     # link colors to joint colors
-    colors[11:13] = colors[4:6]
-    colors[14:17] = colors[0:3]
+    colors = JOINT_COLORS
     ax.scatter(x, y, alpha=0.8, s=60, color=colors)
     
     if labels:
@@ -120,9 +120,12 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         else:
             img_name = f"{filename}"
         ax.axis('off')
-        # fig.savefig(img_name, transparent=True, bbox_inches='tight', format='svg', dpi=1200)
 
+        if True:
+            fig.savefig(img_name, transparent=True, bbox_inches='tight', format='png', dpi=1200)
+            return 0
         fig.savefig(img_name)
+
         fig.clf()
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
@@ -319,7 +322,7 @@ def plot_area(pose1, pose2, ax=None):
 
     return ax
 
-def plot_superimposition(pose2d, image, bbox):    
+def plot_superimposition(pose2d, image, bbox, filename):    
     if type(image) == str:
         image = Image.open(image)
     else:
@@ -328,9 +331,9 @@ def plot_superimposition(pose2d, image, bbox):
     pose2d[:,1] =((pose2d[:,1] - bbox[1])/bbox[3])*256
     
     
-    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename="../HPE3D/src/results/transparent_pose2d.svg")
-    
-    plt.show()
+    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename=filename)
+    plt.clf()
+    # plt.show()
 
 def plot_data(pose2d=None, pose3d=None, image=None):
     """creates a combined figure with image 2d and 3d plots

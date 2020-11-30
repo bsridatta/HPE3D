@@ -32,7 +32,8 @@ def main():
     if config.self_supervised:
         critic = Critic()
         models['Critic'] = critic
-    optimizers = train_utils.get_optims(variant, models, config)  # optimer for each pair
+    optimizers = train_utils.get_optims(
+        variant, models, config)  # optimer for each pair
     schedulers = train_utils.get_schedulers(optimizers)
 
     # For multiple GPUs
@@ -114,13 +115,16 @@ def main():
                     p_limbs = torch.Tensor(p_limbs).to(pose.device)
                     p_limbs = p_limbs.repeat(pose.shape[0], 1)
 
-                    miss_idx = torch.multinomial(p_limbs, missing_joints, replacement=False)
+                    miss_idx = torch.multinomial(
+                        p_limbs, missing_joints, replacement=False)
                     for i in range(missing_joints):
-                        pose[torch.arange(pose.shape[0]), miss_idx[:, i], :] = 0
+                        pose[torch.arange(pose.shape[0]),
+                             miss_idx[:, i], :] = 0
 
                     batch['pose2d'] = pose  # not needed
 
-                output = _validation_step(batch, batch_idx, model, epoch, config, eval=zv)
+                output = _validation_step(
+                    batch, batch_idx, model, epoch, config, eval=zv)
 
                 loss_dic['loss'] += output['loss'].item()
                 loss_dic['recon_loss'] += output['log']['recon_loss'].item()
@@ -136,9 +140,11 @@ def main():
                 for key in output['data'].keys():
                     t_data[key].append(output['data'][key])
 
+                for key in ['action', 'subject', 'subaction', 'camera']:
+                    t_data[key].append(batch[key])
+         
                 del output
                 gc.collect()
-
 
         avg_loss = loss_dic['loss']/len(val_loader)  # return for scheduler
 
@@ -182,8 +188,10 @@ def main():
             avg_output['log'] = {}
 
             avg_output['loss'] = loss_dic['loss']/len(val_loader)
-            avg_output['log']['recon_loss'] = loss_dic['recon_loss']/len(val_loader)
-            avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
+            avg_output['log']['recon_loss'] = loss_dic['recon_loss'] / \
+                len(val_loader)
+            avg_output['log']['kld_loss'] = loss_dic['kld_loss'] / \
+                len(val_loader)
 
             # print to console
             # print(f"{vae_type} Validation:",
@@ -193,6 +201,8 @@ def main():
 
             # print(f"\n MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
+            if zv:
+                print(mpjpe_pa)
             ###MH###
             print(f"PJPE 1 {pjpe[0]} \n")
 
@@ -211,28 +221,26 @@ def main():
         print(f"{pjpe_bh.shape}")
         t_data['n_recons'] = n_recons
         t_data['n_zs'] = n_zs
-        
+
     if zv:
         t_data['zv'] = pjpe
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
 
     if save:
-        path = f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt"
+        path = f"src/results/t_data_{config.resume_run}_5frame_bh_{bh}_mj_{missing_joints}.pt"
         torch.save(t_data, path)
         print("save results at ", path)
 
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir= f"src/results/")
-    images = []
-    size = 500
-    subset = torch.randperm(len(t_data['z']))[:size]
-    for t in t_data['target_2d'][subset]:
-        image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
-        images.append(image_)
-    images = torch.cat(images,0)
-    writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
-            
-
+    # from torch.utils.tensorboard import SummaryWriter
+    # writer = SummaryWriter(log_dir= f"src/results/")
+    # images = []
+    # size = 500
+    # subset = torch.randperm(len(t_data['z']))[:size]
+    # for t in t_data['target_2d'][subset]:
+    #     image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
+    #     images.append(image_)
+    # images = torch.cat(images,0)
+    # writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
 
     # viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
     #                           t_data['target_3d'].cpu().numpy(),
@@ -265,7 +273,8 @@ def do_setup():
     if not use_cuda:
         # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="hpe3d", config=config)  # to_delete
+        wandb.init(anonymous='allow', project="hpe3d",
+                   config=config)  # to_delete
     else:
         wandb.init(anonymous='allow', project="hpe3d", config=config)
 
@@ -321,7 +330,7 @@ def training_specific_args():
     parser.add_argument('--p_miss', default=0, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17_5frame', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

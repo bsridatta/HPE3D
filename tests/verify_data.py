@@ -38,6 +38,7 @@ from src.processing import preprocess
 def get_raw_sample(i):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
     h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_15678.h5'
+    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_5frame_911.h5'
 
     f = h5py.File(h5name, 'r')
 
@@ -74,17 +75,15 @@ def get_processed_sample(i):
 
     del dataset
     return sample
-
-
-if __name__ == "__main__":
-
-    plot = 9
+        
+def main(idx):
+    plot = 10
     processed = False
-
+    # idx = 33987
     if processed:
-        sample = get_processed_sample(10)
+        sample = get_processed_sample(idx)
     else:
-        sample = get_raw_sample(1101)
+        sample = get_raw_sample(idx)
 
     image = sample['image']
     pose2d = sample['pose2d']
@@ -173,5 +172,13 @@ if __name__ == "__main__":
         plot_3d(out.numpy(), color=None, mode="show",
                 show_ticks=False, labels=False, mean_root=False, axis3don=False)
     
-    elif plot == 10:
-        plot_superimposition(pose2d, image, sample['bbox'])
+    if plot == 10:
+        plot_superimposition(pose2d, image, sample['bbox'], filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/inp_{idx}.png")
+    
+
+if __name__ == "__main__":
+    ids = [3493,6422,14027,74176,21621,26692,30089,33987,39416,94650,96348,54005,55495,106863,109473]
+    # ids = [39417]
+    for i in ids:
+        print(i)
+        main(i)
