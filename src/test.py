@@ -140,7 +140,7 @@ def main():
                 for key in output['data'].keys():
                     t_data[key].append(output['data'][key])
 
-                for key in ['action', 'subject', 'subaction', 'camera']:
+                for key in ['subject', 'subaction', 'camera']:
                     t_data[key].append(batch[key])
          
                 del output
@@ -225,22 +225,23 @@ def main():
     if zv:
         t_data['zv'] = pjpe
         print(f"\n ZV MPJPE: {avg_mpjpe} \n {avg_pjpe} \n")
-
+    # _5frame
     if save:
-        path = f"src/results/t_data_{config.resume_run}_5frame_bh_{bh}_mj_{missing_joints}.pt"
+        path = f"src/results/t_data_{config.resume_run}_bh_{bh}_mj_{missing_joints}.pt"
         torch.save(t_data, path)
         print("save results at ", path)
 
-    # from torch.utils.tensorboard import SummaryWriter
-    # writer = SummaryWriter(log_dir= f"src/results/")
-    # images = []
-    # size = 500
-    # subset = torch.randperm(len(t_data['z']))[:size]
-    # for t in t_data['target_2d'][subset]:
-    #     image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
-    #     images.append(image_)
-    # images = torch.cat(images,0)
-    # writer.add_embedding(t_data['z'][subset], metadata=t_data['action'][subset], label_img=images)
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_dir= f"src/results/")
+    indices = np.arange(len(t_data['z']))
+    images = []
+    size = 500
+    subset = torch.randperm(len(t_data['z']))[:size]
+    for t in t_data['target_2d'][subset]:
+        image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
+        images.append(image_)
+    images = torch.cat(images,0)
+    writer.add_embedding(t_data['z'][subset], metadata=indices[subset], label_img=images)
 
     # viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
     #                           t_data['target_3d'].cpu().numpy(),
@@ -330,7 +331,7 @@ def training_specific_args():
     parser.add_argument('--p_miss', default=0, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17_5frame', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

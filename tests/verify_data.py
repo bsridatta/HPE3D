@@ -76,8 +76,8 @@ def get_processed_sample(i):
     del dataset
     return sample
         
-def main(idx):
-    plot = 10
+def main(idx, plot):
+    plot = plot
     processed = False
     # idx = 33987
     if processed:
@@ -173,12 +173,19 @@ def main(idx):
                 show_ticks=False, labels=False, mean_root=False, axis3don=False)
     
     if plot == 10:
-        plot_superimposition(pose2d, image, sample['bbox'], filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/inp_{idx}.png")
-    
+        plot_superimposition(pose2d, image, sample['bbox'], filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/fails_{idx}_inp.png")
+
+    if plot == 11:
+        plot_2d(pose2d, mode='image', filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/{idx}_2d.png", save=True)
 
 if __name__ == "__main__":
+    # means
     ids = [3493,6422,14027,74176,21621,26692,30089,33987,39416,94650,96348,54005,55495,106863,109473]
+    # fails
+    ids = [2878,6130,73047,18120,24801,26722,31669,34930,90950,43450,98756,101351,105002,106047,61221]
+
+
     # ids = [39417]
     for i in ids:
         print(i)
-        main(i)
+        main(i, plot=11)

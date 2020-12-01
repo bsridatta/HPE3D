@@ -34,7 +34,7 @@ plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None, save=False):
     """Base function for 2D pose plotting
 
     Args:
@@ -121,12 +121,14 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
             img_name = f"{filename}"
         ax.axis('off')
 
-        if True:
+        if False:
             fig.savefig(img_name, transparent=True, bbox_inches='tight', format='png', dpi=1200)
             return 0
-        fig.savefig(img_name)
-
+        fig.savefig(img_name, dpi = 300)
         fig.clf()
+
+        if save:
+            return 0
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
         pil_image = transforms.ToTensor()(pil_image).unsqueeze_(0)
