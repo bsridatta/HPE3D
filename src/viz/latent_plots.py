@@ -29,20 +29,31 @@ def plot_umap(zs, metrics):
         metrics {list} -- metrics to color the embeddings say, actions
     """
     print("[INFO]: UMAP reducing ", [*zs.shape])
-    reducer = umap.UMAP(n_neighbors=3,
-                        min_dist=0.1,
-                        metric='cosine')
+    n_neighbors = 50
+    min_dist = 0.1
+    reducer = umap.UMAP(n_neighbors=n_neighbors,
+                        min_dist=min_dist,
+                        metric='euclidean')
     embedding = reducer.fit_transform(zs)
     print('[INFO]: Embedding shape ', embedding.shape)
+    # sns.color_palette("hls", 30)
+    colors = [
+        '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#ffd8b1', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#a9a9a9', '#469990', '#dcbeff', '#aaffc3', '#f58231', '#fabed4'
+    ]
+    sns.set_palette(sns.color_palette(colors))
 
     sns.scatterplot(x=embedding[:, 0],
                     y=embedding[:, 1],
                     hue=[ACTION_NAMES[int(x-2)] for x in metrics.tolist()],
-                    palette="Set2",
-                    alpha=0.6)
+                    # palette="Set2",
+                    alpha=1)
 
-    plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
+    plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0., fontsize=20)
     plt.axis('tight')
+    plt.xticks([]),plt.yticks([])
+
     # plt.gca().set_aspect( 'datalim') #'equal',
-    plt.title(f'UMAP projection of Z  {[*zs.shape]}', fontsize=15)
-    plt.show()
+    # plt.title(f'2D Pose Embeddings in 2D Space  {[*zs.shape]}', fontsize=45)
+    # plt.show()
+    import os
+    plt.savefig(f"{os.getenv('HOME')}/lab/HPE3D/src/results/latent_space_{n_neighbors}_{min_dist}.pdf", bbox_inches='tight', dpi=300, format='pdf')

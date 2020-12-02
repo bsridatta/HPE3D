@@ -231,17 +231,17 @@ def main():
         torch.save(t_data, path)
         print("save results at ", path)
 
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir= f"src/results/")
-    indices = np.arange(len(t_data['z']))
-    images = []
-    size = 500
-    subset = torch.randperm(len(t_data['z']))[:size]
-    for t in t_data['target_2d'][subset]:
-        image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
-        images.append(image_)
-    images = torch.cat(images,0)
-    writer.add_embedding(t_data['z'][subset], metadata=indices[subset], label_img=images)
+    # from torch.utils.tensorboard import SummaryWriter
+    # writer = SummaryWriter(log_dir= f"src/results/")
+    # indices = np.arange(len(t_data['z']))
+    # images = []
+    # size = 500
+    # subset = torch.randperm(len(t_data['z']))[:size]
+    # for t in t_data['target_2d'][subset]:
+    #     image_ = viz.mpl_plots.plot_2d(np.asarray(t.cpu()), mode='image')#, axis3don=False)
+    #     images.append(image_)
+    # images = torch.cat(images,0)
+    # writer.add_embedding(t_data['z'][subset], metadata=indices[subset], label_img=images)
 
     # viz.mpl_plots.plot_errors(t_data['recon_3d'].cpu().numpy(),
     #                           t_data['target_3d'].cpu().numpy(),

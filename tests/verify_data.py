@@ -37,8 +37,8 @@ from src.processing import preprocess
 
 def get_raw_sample(i):
     image_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
-    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_15678.h5'
-    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_5frame_911.h5'
+    h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_911.h5'
+    # h5name = f'{os.getenv("HOME")}/lab/HPE3D/src/data/h36m17_5frame_911.h5'
 
     f = h5py.File(h5name, 'r')
 
@@ -59,7 +59,7 @@ def get_raw_sample(i):
 
 def get_processed_sample(i):
 
-    annotation_file = f'h36m17'
+    annotation_file = f'h36m17_5frame'
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
 
     dataset = H36M([9, 11],
@@ -173,7 +173,7 @@ def main(idx, plot):
                 show_ticks=False, labels=False, mean_root=False, axis3don=False)
     
     if plot == 10:
-        plot_superimposition(pose2d, image, sample['bbox'], filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/fails_{idx}_inp.png")
+        plot_superimposition(pose2d, image, sample['bbox'], filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/{idx}_inp.png")
 
     if plot == 11:
         plot_2d(pose2d, mode='image', filename=f"{os.getenv('HOME')}/lab/HPE3D/src/results/{idx}_2d.png", save=True)
@@ -183,9 +183,10 @@ if __name__ == "__main__":
     ids = [3493,6422,14027,74176,21621,26692,30089,33987,39416,94650,96348,54005,55495,106863,109473]
     # fails
     ids = [2878,6130,73047,18120,24801,26722,31669,34930,90950,43450,98756,101351,105002,106047,61221]
-
-
-    # ids = [39417]
+    # neighbours
+    ids = [7817, 7742,7123,6102,7752,5484,3418,2850,6441,3279,7194,7126,7126,7264,7254,7386,7237,7108,7043,3079,2895,3125,2888,2909,791,5617,6755,826,629,8435,5850,8051,7614,7924,516,8070]    
+    # ids = [3418, 2848, 6441, 3279, 2185, 817, ]
+    # ids = [7817]
     for i in ids:
         print(i)
         main(i, plot=11)

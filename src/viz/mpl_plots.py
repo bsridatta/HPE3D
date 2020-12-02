@@ -57,7 +57,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax.set_aspect('equal')
     # plt.cla()
     if background:
-        ax.imshow(background, origin='lower')
+        ax.imshow(background, origin='lower', alpha=0.5)
 
     if color:
         colors = [color]*len(SKELETON_COLORS)
@@ -100,15 +100,16 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     if not show_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
-
-    ax.tick_params(labelsize='small', width=0)
-
-    plt.tight_layout()
+                                                               
 
     if mode == 'axis':
+        plt.tight_layout()
+
         return ax
 
     elif mode == 'show':
+        plt.tight_layout()
+
         plt.show()
 
     elif mode == "image":
@@ -120,11 +121,10 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         else:
             img_name = f"{filename}"
         ax.axis('off')
-
         if False:
             fig.savefig(img_name, transparent=True, bbox_inches='tight', format='png', dpi=1200)
             return 0
-        fig.savefig(img_name, dpi = 300)
+        fig.savefig(img_name, transparent=True,dpi = 300)
         fig.clf()
 
         if save:
@@ -136,6 +136,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         return pil_image
 
     elif mode == "plt":
+        plt.tight_layout()
+
         return plt
 
     else:
@@ -333,7 +335,7 @@ def plot_superimposition(pose2d, image, bbox, filename):
     pose2d[:,1] =((pose2d[:,1] - bbox[1])/bbox[3])*256
     
     
-    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename=filename)
+    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename=filename, save=True)
     plt.clf()
     # plt.show()
 
