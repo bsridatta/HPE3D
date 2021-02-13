@@ -22,7 +22,7 @@ skip_frame = 64
 subj_str = "".join(str(x) for x in subject_list)
 h5_save_name = 'h36m17_sh_' + subj_str
 inds = range(17)
-action_list = np.arange(2, 3)  # 17
+action_list = np.arange(3, 4)  # 17
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 

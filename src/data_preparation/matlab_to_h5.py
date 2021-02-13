@@ -22,13 +22,15 @@ annot_name = 'matlab_meta_new.mat'
 
 # Set Annotations to retrieve
 subject_list = [9, 11]
-skip_frame = 5
+skip_frames = 64
 
 # subject_list = [1, 5, 6, 7, 8]
-# skip_frame = 5
+# skip_frames = 5
 
 subj_str = "".join(str(x) for x in subject_list)
-h5name = 'h36m17_5frame_' + subj_str
+
+h5name = f'h36m17_' + subj_str
+
 
 inds = range(17)
 action_list = np.arange(2, 17)
@@ -37,8 +39,6 @@ camera_list = np.arange(1, 5)
 
 # Get smaller subset of the data for fast dev?
 debug = False
-# Get Mean and Std of the data alone?
-mean_std = False
 
 #################################################################
 
@@ -90,7 +90,7 @@ for subject_ in subject_list:
                 cam_k_ = get_camera_data(camera_, subject_, 'k')
                 num_images = pose2d_.shape[2]
                 for i in range(num_images):
-                    if i % skip_frame != 0:
+                    if i % skip_frames != 0:
                         continue
                     idx.append(i+1)
                     pose2d.append(pose2d_[inds, :, i])
@@ -109,7 +109,6 @@ for subject_ in subject_list:
                     camera.append(camera_)
                     num_samples += 1
 
-                    
                     #############################################################
                     # Comment or uncomment these debug conditions to change the debug dataset distribution
 
@@ -130,38 +129,6 @@ for subject_ in subject_list:
 print(f'number of samples = %d' % num_samples)
 #### REMOVE to save#######
 # exit("not saving")
-
-if mean_std:
-    # Not going to use this anymore
-    sys.path.append(f'{os.getenv("HOME")}/lab/HPE3D/src/')
-
-    from processing import zero_the_root 
-    
-    # Zero the root 
-    pose2d = zero_the_root(np.asarray(pose2d))
-    pose3d = zero_the_root(np.asarray(pose3d))
-    # Standardize the poses
-    # max2d = pose2d.max()
-    # max3d = pose3d.max()
-    # pose2d = pose2d/max2d
-    # pose3d = pose3d/max3d
-    # mean and std to normalize at this point
-    norm_stats = {}
-    norm_stats['mean2d'] = np.mean(pose2d, axis=(0))
-    norm_stats['mean3d'] = np.mean(pose3d, axis=(0))
-    norm_stats['std2d'] = np.std(pose2d, axis=(0))
-    norm_stats['std3d'] = np.std(pose3d, axis=(0))
-    # norm_stats['max2d'] = max2d
-    # norm_stats['max3d'] = max3d
-    # norm_stats['mean_dist2d'] = np.mean(np.sqrt(np.sum(np.power(np.subtract(pose2d, np.zeros((1,2))), 2), axis=2)), axis=1)
-    # norm_stats['mean_dist3d'] = np.mean(np.sqrt(np.sum(np.power(np.subtract(pose3d, np.zeros((1,3))), 2), axis=2)), axis=1)   
-
-    f = h5py.File(f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5", 'w')
-    for key in norm_stats.keys():
-        f[key] = norm_stats[key]
-    f.close()
-    print("Saved to", f"{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/data/norm_stats.h5")
-    exit()
 
 f = h5py.File(save_path+h5name+'.h5', 'w')
 f['idx'] = idx

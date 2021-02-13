@@ -1,7 +1,10 @@
 # dot files
 .vscode
+
+# cache
 .ipynb_checkpoints
-*/.ipynb_checkpoints/*
+__pycache__/
+.pytest_cache
 
 # packaging
 *.egg-info/
@@ -9,10 +12,6 @@
 # other reference repo
 other
 reports
-# results
-
-# checkpoints
-*/checkpoints/*.pt
 
 # data pickles
 *.h5
@@ -20,9 +19,6 @@ reports
 
 # Exceptions
 !norm_stats.h5
-
-# cache
-__pycache__/
 
 # logs
 wandb/
