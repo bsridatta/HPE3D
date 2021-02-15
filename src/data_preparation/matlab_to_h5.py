@@ -13,7 +13,8 @@ import sys
 import h5py
 import numpy as np
 import scipy.io as sio
-from src.data_preparation.camera_parameters import get_camera_data
+from src.data_preparation.get_metadata import get_camera_data
+
 ###############################################################
 # Set Paths
 img_path = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m_poselifter/'
@@ -30,7 +31,6 @@ skip_frames = 64
 subj_str = "".join(str(x) for x in subject_list)
 
 h5name = f'h36m17_' + subj_str
-
 
 inds = range(17)
 action_list = np.arange(2, 17)
