@@ -30,10 +30,11 @@ class MPIINF(Dataset):
             self.annotations[tag] = f[tag][:]
         f.close()
 
-        self.annotations['action'] = self.annotations['subject']
-        self.annotations['camera'] = self.annotations['subject']
-        self.annotations['idx'] = self.annotations['subject']
-        self.annotations['subaction'] = self.annotations['subject']
+        ###########TODO###########
+        self.annotations['action'] = self.annotations['action']
+        self.annotations['camera'] = self.annotations['camera']
+        self.annotations['idx'] = self.annotations['idx']
+        self.annotations['subaction'] = self.annotations['subaction']
 
         self.flipped_indices = [3, 4, 5, 0, 1, 2,
                                 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]

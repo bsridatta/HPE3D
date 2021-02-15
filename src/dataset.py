@@ -83,7 +83,7 @@ class H36M(Dataset):
             albumentations.Normalize(always_apply=True)
         ])
 
-        self.dataset_len = len(self.annotations['idx'])
+        self.dataset_len = len(self.annotations['subject'])
 
         # clear the HDF5 datasets
         annotations_h5.close()

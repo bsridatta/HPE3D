@@ -209,7 +209,7 @@ def training_specific_args():
     parser.add_argument('--p_miss', default=0.0, type=int,
                         help='number of joints to encode and decode')  
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
+    parser.add_argument('--annotation_file', default=f'h36m17sh', type=str,
                         help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
     parser.add_argument('--annotation_path', default=None, type=str,
                         help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')

@@ -83,7 +83,6 @@ def denormalize(pose):
 
 def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=True):
     pose2d = annotations['pose2d']
-    pose3d = annotations['pose3d']
 
     if projection:
 
@@ -115,16 +114,18 @@ def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection
 
     # center the 2d and 3d pose at the root and remove the root
     pose2d = zero_the_root(pose2d, root_idx)
-    pose3d = zero_the_root(pose3d, root_idx)
 
     if normalize_pose and not projection:
         # Normalize
         pose2d = normalize(pose2d)
+
+        pose3d = annotations['pose3d']
+        pose3d = zero_the_root(pose3d, root_idx)
         pose3d = normalize(pose3d)
+        annotations['pose3d'] = pose3d
 
     annotations['pose2d'] = pose2d
-    annotations['pose3d'] = pose3d
-
+    
     return annotations
 
 
