@@ -71,6 +71,9 @@ for recording_name, frames in pickle.items():
 
     print(len(data["pose2d"]), len(data["subject"]))
 
+    print(len(poses[0]))
+    break
+
 print(f"Number of samples: {len(data['pose2d'])}")
 
 f = h5py.File(save_path+h5name+'.h5', 'w')
@@ -80,5 +83,9 @@ f.close()
 
 print(f"Saved to {save_path+h5name+'.h5'}")
 
+
+# %%
+import torch
+t = torch.load(path+f"stat_3d.pth.tar")
 
 # %%
