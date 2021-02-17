@@ -6,7 +6,7 @@ import torch
 import os
 import h5py
 import numpy as np
-from src.data_preparation.get_metadata import action_to_id, camera_id_to_num
+from .data_utils import action_to_id, camera_id_to_num
 
 data_path: str = f'{os.getenv("HOME")}/lab/HPE_datasets/gt_sh/'
 
