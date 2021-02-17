@@ -15,14 +15,15 @@ from PIL import Image
 from torchvision import transforms
 
 from src.processing import project_3d_to_2d
-SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), 
+SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12),
             (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
-LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 
-            'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle',
+          'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
 SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange']
 
-JOINT_COLORS = ['b','b','b','b','orange','orange','orange','b','b','b','b','orange','orange','orange','b','b','b']
+JOINT_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
+                'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'b', 'b', 'b']
 # SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
 #                    'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
@@ -30,24 +31,20 @@ JOINT_COLORS = ['b','b','b','b','orange','orange','orange','b','b','b','b','oran
 #                    'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
 
-
 plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
 # %%
 
-a = [ 0.76148872 ,-0.8093056 ,  0.90174764 ,-0.80272581  ,0.99425748 ,-0.62591748
-,  1.05567881 ,-0.50993808 , 0.58991259 ,-0.81084927  ,0.65841195 ,-0.63537565
-,  0.78709126 ,-0.5336577   ,0.72580412 ,-0.60653833  ,0.78183097 ,-0.67609057
-,  0.74975749 ,-0.78524221  ,0.4344193  ,-0.59414568  ,0.43402108 ,-0.34962704
-,  0.5671055  ,-0.13761655  ,0.98946524 ,-0.61047391  ,0.97424512 ,-0.32495008
-,  1.08491325  ,0.11811715]
+a = [0.76148872, -0.8093056,  0.90174764, -0.80272581, 0.99425748, -0.62591748,  1.05567881, -0.50993808, 0.58991259, -0.81084927, 0.65841195, -0.63537565,  0.78709126, -0.5336577, 0.72580412, -0.60653833,
+     0.78183097, -0.67609057,  0.74975749, -0.78524221, 0.4344193, -0.59414568, 0.43402108, -0.34962704,  0.5671055, -0.13761655, 0.98946524, -0.61047391, 0.97424512, -0.32495008,  1.08491325, 0.11811715]
 
-b = np.array(a).reshape((-1,2))
+b = np.array(a).reshape((-1, 2))
 
 # %%
 plot_2d(b)
 # %%
+
 
 def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None, save=False):
     """Base function for 2D pose plotting
@@ -102,7 +99,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     # link colors to joint colors
     colors = JOINT_COLORS
     ax.scatter(x, y, alpha=0.8, s=60, color=colors)
-    
+
     if labels:
         for i, j, l in zip(x, y, LABELS):
             ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
@@ -115,7 +112,6 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     if not show_ticks:
         ax.set_xticks([])
         ax.set_yticks([])
-                                                               
 
     if mode == 'axis':
         plt.tight_layout()
@@ -137,9 +133,10 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
             img_name = f"{filename}"
         ax.axis('off')
         if False:
-            fig.savefig(img_name, transparent=True, bbox_inches='tight', format='png', dpi=1200)
+            fig.savefig(img_name, transparent=True,
+                        bbox_inches='tight', format='png', dpi=1200)
             return 0
-        fig.savefig(img_name, transparent=True,dpi = 300)
+        fig.savefig(img_name, transparent=True, dpi=300)
         fig.clf()
 
         if save:
@@ -205,7 +202,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
     z = pose[:, 2]
 
     alpha = 0.6
-    
+
     ax.scatter(x, y, z, alpha=alpha, s=20, depthshade=True)
 
     for link, color_ in zip(SKELETON, colors):
@@ -278,7 +275,8 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         return plt
 
     else:
-        raise ValueError("Please choose from 'image', 'show', 'axis', 'plt' only")
+        raise ValueError(
+            "Please choose from 'image', 'show', 'axis', 'plt' only")
 
 
 def fix_3D_aspect(ax, x, y, z):
@@ -341,18 +339,20 @@ def plot_area(pose1, pose2, ax=None):
 
     return ax
 
-def plot_superimposition(pose2d, image, bbox, filename):    
+
+def plot_superimposition(pose2d, image, bbox, filename):
     if type(image) == str:
         image = Image.open(image)
     else:
         image = Image.fromarray(image.astype('uint8'), 'RGB')
-    pose2d[:,0] =((pose2d[:,0] - bbox[0])/bbox[2])*256
-    pose2d[:,1] =((pose2d[:,1] - bbox[1])/bbox[3])*256
-    
-    
-    plot_2d(pose2d, mode='image', show_ticks=False, background=image, filename=filename, save=True)
+    pose2d[:, 0] = ((pose2d[:, 0] - bbox[0])/bbox[2])*256
+    pose2d[:, 1] = ((pose2d[:, 1] - bbox[1])/bbox[3])*256
+
+    plot_2d(pose2d, mode='image', show_ticks=False,
+            background=image, filename=filename, save=True)
     plt.clf()
     # plt.show()
+
 
 def plot_data(pose2d=None, pose3d=None, image=None):
     """creates a combined figure with image 2d and 3d plots
@@ -411,8 +411,10 @@ def plot_errors(poses, targets, errors=None, grid=2, labels=False, area=True):
     i = 1
     for pose, target, error in zip(poses[:grid*grid], targets[:grid*grid], errors[:grid*grid]):
         ax = fig.add_subplot(rows, cols, i, projection='3d')
-        plot_3d(pose, mode="plt", color='b', floor=False, axis3don=True, labels=labels, ax=ax)
-        plot_3d(target, mode="plt", color='grey', floor=False, axis3don=True, labels=labels, ax=ax)
+        plot_3d(pose, mode="plt", color='b', floor=False,
+                axis3don=True, labels=labels, ax=ax)
+        plot_3d(target, mode="plt", color='grey', floor=False,
+                axis3don=True, labels=labels, ax=ax)
         if area:
             plot_area(pose, target, ax=ax)
         if errors is not None:
@@ -549,34 +551,44 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
         recon_3d_org = recon_3d_org.detach().cpu().numpy()
 
     # Target 2d
-    img = plot_2d(target_2d, color='pink', mode='image', show_ticks=True, labels=False)
-    config.logger.log({name+"target_2d": config.logger.Image(img)}, commit=False)
+    img = plot_2d(target_2d, color='pink', mode='image',
+                  show_ticks=True, labels=False)
+    config.logger.log(
+        {name+"target_2d": config.logger.Image(img)}, commit=False)
     # Recon 2d
     img = plot_2d(recon_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({name+"recon_2d": config.logger.Image(img)}, commit=False)
+    config.logger.log(
+        {name+"recon_2d": config.logger.Image(img)}, commit=False)
     # Novel 2D
     img = plot_2d(novel_2d, color='blue', mode='image',
                   show_ticks=True, labels=False, mean_root=True)
-    config.logger.log({name+"novel_2d": config.logger.Image(img)}, commit=False)
+    config.logger.log(
+        {name+"novel_2d": config.logger.Image(img)}, commit=False)
 
     # T -- Target 3D | V -- Recon 3D without procrustes alignment i.e 16 joints
     if name is "":  # Training
-        img = plot_3d(target_3d, color='pink', mode="image", show_ticks=True, labels=False)
-        config.logger.log({name+"target_3d": config.logger.Image(img)}, commit=False)
+        img = plot_3d(target_3d, color='pink', mode="image",
+                      show_ticks=True, labels=False)
+        config.logger.log(
+            {name+"target_3d": config.logger.Image(img)}, commit=False)
     else:  # Validation
         img = plot_3d(recon_3d_org, color='blue', mode="image",
                       show_ticks=True, labels=False, mean_root=True)
-        config.logger.log({name+"recon_3d_org": config.logger.Image(img)}, commit=False)
+        config.logger.log(
+            {name+"recon_3d_org": config.logger.Image(img)}, commit=False)
 
     # T -- Recon 3D | V - Target 3d + Recon 3D
     if name is "":  # Training
         img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
                       labels=False, mean_root=True, title=title)
-        config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
+        config.logger.log(
+            {name+"recon_3d": config.logger.Image(img)}, commit=True)
     else:
         # Move target 3d to post processed 3d plot
-        img = plot_3d(target_3d, color='pink', mode="axis", show_ticks=True, labels=False)
+        img = plot_3d(target_3d, color='pink', mode="axis",
+                      show_ticks=True, labels=False)
         img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
                       labels=False, mean_root=True, title=title)
-        config.logger.log({name+"recon_3d": config.logger.Image(img)}, commit=True)
+        config.logger.log(
+            {name+"recon_3d": config.logger.Image(img)}, commit=True)

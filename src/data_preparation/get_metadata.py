@@ -16,13 +16,13 @@ ACTION_NAMES: Dict[int, str] = {2: "Directions",
                                 15: "Walking",
                                 16: "WalkTogether"}
 
-SWAP_JOINTS: List[int] = [2, 1, 0, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 12, 11, 10]
-
 CAMERA_IDS: Dict[int, str] = {1: "54138969",
                               2: "55011271",
                               3: "58860488",
                               4: "60457274"
                               }
+
+SWAP_JOINTS: List[int] = [2, 1, 0, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 12, 11, 10]
 
 
 def action_to_str(action_id: int) -> str:
@@ -33,12 +33,15 @@ def action_to_id(action_name: str) -> int:
     index: int = list(ACTION_NAMES.values()).index(action_name)
     return list(ACTION_NAMES.keys())[index]
 
+
 def camera_num_to_id(num: int) -> str:
     return CAMERA_IDS.get(num)
+
 
 def camera_id_to_num(id: str) -> int:
     index: int = list(CAMERA_IDS.values()).index(id)
     return list(CAMERA_IDS.keys())[index]
+
 
 def get_camera_data(camera=1, subject=1, param='r'):
     """Get Intrinsic and Extrinsic camera parameters.
