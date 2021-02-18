@@ -67,7 +67,7 @@ class H36M(Dataset):
 
         # get keys to avoid query them for every __getitem__
         self.annotation_keys = self.annotations.keys()
-        
+
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f'[INFO]: processing subjects: {subjects}')
         self.annotations = preprocess(
@@ -105,7 +105,7 @@ class H36M(Dataset):
 
         if self.train and torch.rand(1) < 0.5:
             sample = self.flip(sample)
-        
+
         return sample
 
     def get_image_tensor(self, sample):
@@ -141,7 +141,7 @@ def test_h36m():
     annotation_file = f'h36m17'
     image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
 
-    dataset = H36M([9,11],
+    dataset = H36M([9, 11],
                    annotation_file, image_path, train=True, no_images=False)
 
     print("[INFO]: Length of the dataset: ", len(dataset))

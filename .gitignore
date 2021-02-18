@@ -6,9 +6,6 @@
 __pycache__/
 .pytest_cache
 
-# packaging
-*.egg-info/
-
 # other reference repo
 other
 reports
@@ -16,6 +13,7 @@ reports
 # data pickles
 *.h5
 *.pt
+*.npy
 
 # Exceptions
 !norm_stats.h5
