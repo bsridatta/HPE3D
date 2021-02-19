@@ -34,6 +34,7 @@ JOINT_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
 plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
+
 def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None, save=False):
     """Base function for 2D pose plotting
 
@@ -256,7 +257,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         pil_image = Image.open(img_name)
         pil_image = pil_image.convert('RGB')
         pil_image = transforms.ToTensor()(pil_image).unsqueeze_(0)
-        # os.remove(img_name)
+        os.remove(img_name)
         return pil_image
 
     elif mode == "plt":
