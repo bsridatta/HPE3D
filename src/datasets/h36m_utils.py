@@ -3,6 +3,54 @@ from typing import Dict, List
 import numpy as np
 import torch
 
+#####
+# Joint data source: github.com/una-dinosauria/3d-pose-baseline
+#####
+
+# Human3.6m IDs for training and testing
+TRAIN_SUBJECTS = [1, 5, 6, 7, 8]
+TEST_SUBJECTS = [9, 11]
+
+# Joints in H3.6M -- data has 32 joints, but only 17 that move; these are the indices.
+H36M_NAMES = ['']*32
+H36M_NAMES[0] = 'Pelvis'  # 'Hip'
+H36M_NAMES[1] = 'R_Hip'
+H36M_NAMES[2] = 'R_Knee'
+H36M_NAMES[3] = 'R_Ankle'
+H36M_NAMES[6] = 'L_Hip'
+H36M_NAMES[7] = 'L_Knee'
+H36M_NAMES[8] = 'L_Ankle'
+H36M_NAMES[12] = 'Torso'
+H36M_NAMES[13] = 'Neck'
+H36M_NAMES[14] = 'Nose'
+H36M_NAMES[15] = 'Head'
+H36M_NAMES[17] = 'L_Shoulder'
+H36M_NAMES[18] = 'L_Elbow'
+H36M_NAMES[19] = 'L_Wrist'
+H36M_NAMES[25] = 'R_Shoulder'
+H36M_NAMES[26] = 'R_Elbow'
+H36M_NAMES[27] = 'R_Wrist'
+
+# Stacked Hourglass produces 16 joints. These are the names.
+SH_NAMES = ['']*16
+SH_NAMES[0] = 'R_Ankle'
+SH_NAMES[1] = 'R_Knee'
+SH_NAMES[2] = 'R_Hip'
+SH_NAMES[3] = 'L_Hip'
+SH_NAMES[4] = 'L_Knee'
+SH_NAMES[5] = 'L_Ankle'
+SH_NAMES[6] = 'Pelvis'
+SH_NAMES[7] = 'Torso'
+SH_NAMES[8] = 'Neck'
+SH_NAMES[9] = 'Head'
+SH_NAMES[10] = 'R_Wrist'
+SH_NAMES[11] = 'R_Elbow'
+SH_NAMES[12] = 'R_Shoulder'
+SH_NAMES[13] = 'L_Shoulder'
+SH_NAMES[14] = 'L_Elbow'
+SH_NAMES[15] = 'L_Wrist'
+
+
 ACTION_NAMES: Dict[int, str] = {2: "Directions",
                                 3: "Discussion",
                                 4: "Eating",
@@ -35,7 +83,6 @@ def action_to_id(action_name: str) -> int:
 
 
 def camera_id_to_num(cam_id: int) -> int:
-
     indices = [idx for idx, cam_dic in enumerate(
         h36m_cameras_intrinsic_params) if cam_dic['id'] == str(cam_id)]
 
@@ -47,11 +94,8 @@ def camera_num_to_id(camera: int) -> int:
     return int(h36m_cameras_intrinsic_params[camera-1]['id'])
 
 
-def remove_joints(poses, remove_list=None):
-    if not remove_list:
-        remove_list = [4, 5, 9, 10, 11, 16, 20, 21, 22, 23, 24, 28, 29, 30, 31]
-
-    keep_list = list(set(range(poses.shape[-2]))-set(remove_list))
+def remove_joints_from_3d(poses):
+    keep_list = [idx for idx, value in enumerate(H36M_NAMES) if value != '']
 
     return poses[:, keep_list, :]
 
@@ -381,5 +425,6 @@ h36m_cameras_extrinsic_params = {
         },
     ],
 }
+
 
 # %%

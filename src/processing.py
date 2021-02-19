@@ -16,7 +16,7 @@ if os.path.exists(path):
 
     NORM_STATS = {}
     for key in f.keys():
-        NORM_STATS[key] = f[key][:]
+        NORM_STATS[key] = np.array(f.get(key))[:]
     f.close()
 
 
