@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 import torch
 from PIL import Image
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, dataset
 
 from src.processing import preprocess, project_3d_to_2d
 from src.datasets.h36m_utils import H36M_NAMES, ACTION_NAMES
@@ -55,6 +55,9 @@ class H36M(Dataset):
             ])
 
         self.dataset_len = len(self._data['idx'])
+
+        assert self._data['pose2d'].shape[1:] == (16,2)
+        assert self._data['pose3d'].shape[1:] == (16,3)
 
     def __len__(self):
         return len(self._data['idx'])
@@ -119,8 +122,9 @@ class H36M(Dataset):
         self._flipped_indices_16 = [3, 4, 5, 0, 1,
                                     2, 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
 
+# Just for easily access content
 
-def test_h36m():
+def check_data():
     '''
     Can be used to get norm stats for all subjects
     '''
@@ -145,4 +149,4 @@ def test_h36m():
 
 
 if __name__ == "__main__":
-    test_h36m()
+    check_data()

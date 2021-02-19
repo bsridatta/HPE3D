@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 import torch
+from typing_extensions import get_args
 import wandb
 
 from src import train_utils
@@ -19,39 +20,8 @@ from src.callbacks import CallbackList, ModelCheckpoint, Logging, WeightSchedule
 
 def main():
 
-    # Experiment Configuration, Config, is distributed to all the other modules
-    parser = training_specific_args()
-    config = parser.parse_args()
-    torch.manual_seed(config.seed)
-    np.random.seed(config.seed)
+    config = do_setup()
 
-    # GPU setup
-    use_cuda = config.cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 4 if use_cuda else 4  # for dataloader
-
-    # wandb for experiment monitoring
-    os.environ['WANDB_TAGS'] = 'New_Scaling'
-    os.environ['WANDB_NOTES'] = 'None'
-
-    # ignore when debugging on cpu
-    if not use_cuda:
-        # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
-        os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="hpe3d", config=config)  # to_delete
-    else:
-        # os.environ['WANDB_MODE'] = 'dryrun'
-        wandb.init(anonymous='allow', project="hpe3d", config=config)
-
-    config.logger = wandb
-    config.logger.run.save()
-    config.run_name = config.logger.run.name  # handle name change in wandb
-    atexit.register(sync_before_exit, config, wandb)
-
-    # Data loading
-    config.train_subjects = [1, 5, 6, 7, 8]
-    config.val_subjects = [9, 11]
     train_loader = train_dataloader(config)
     val_loader = val_dataloader(config)
 
@@ -157,14 +127,44 @@ def main():
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
+def do_setup():
+    parser = get_argparser()
+    config = parser.parse_args()
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+
+    # GPU setup
+    use_cuda = config.cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    config.device = device  # Adding device to config, not already in argparse
+    config.num_workers = 4 if use_cuda else 4  # for dataloader
+
+    # wandb for experiment monitoring
+    os.environ['WANDB_TAGS'] = 'New_Scaling'
+    os.environ['WANDB_NOTES'] = 'None'
+
+    # ignore when debugging on cpu
+    if not use_cuda:
+        # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
+        os.environ['WANDB_TAGS'] = 'CPU'
+        wandb.init(anonymous='allow', project="hpe3d", config=config)  # to_delete
+    else:
+        # os.environ['WANDB_MODE'] = 'dryrun'
+        wandb.init(anonymous='allow', project="hpe3d", config=config)
+
+    config.logger = wandb
+    config.logger.run.save()
+    config.run_name = config.logger.run.name  # handle name change in wandb
+    atexit.register(sync_before_exit, config, wandb)
+
+    return config
 
 def sync_before_exit(config, wandb):
     print("[INFO]: Sync wandb before terminating")
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
-
-def training_specific_args():
+def get_argparser():
 
     parser = ArgumentParser()
 
@@ -216,8 +216,7 @@ def training_specific_args():
     # image data
     parser.add_argument('--image_path', default=f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/', type=str,
                         help='path to image folders with subject action etc as folder names')
-    parser.add_argument('--ignore_images', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='when true, do not load images for training')
+
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')
