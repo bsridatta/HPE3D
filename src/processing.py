@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from scipy.spatial import procrustes as proc
 
+# TODO think of another way to store norm_stats
 path = f"{os.path.dirname(os.path.abspath(__file__))}/data/norm_stats.h5"
 if os.path.exists(path):
     f = h5py.File(path, 'r')
@@ -20,11 +21,9 @@ if os.path.exists(path):
     f.close()
 
 
-ROOT_INDEX = 0  # Root at Pelvis index 0
-
-
-def zero_the_root(pose, root_idx=ROOT_INDEX):
+def zero_the_root(pose, root_idx):
     '''
+    TODO UPDATE
     center around root - pelvis
 
     Arguments:
@@ -47,6 +46,7 @@ def zero_the_root(pose, root_idx=ROOT_INDEX):
 
 def normalize(pose):
     '''
+    TODO UPDATE
     using the mean and std of h3.6m trainig poses after zeroing the root and standarding
     refer -- src/data_preparation/h36m_annotations.py
 
@@ -63,7 +63,9 @@ def normalize(pose):
 
 
 def denormalize(pose):
-    """ De-Standardize and then 
+    """ 
+    TODO UPDATE
+    De-Standardize and then 
     Denormalize poses for evaluation of actual pose.  
 
     Args:
@@ -81,61 +83,57 @@ def denormalize(pose):
     return pose
 
 
-def preprocess(annotations, root_idx=ROOT_INDEX, normalize_pose=True, projection=True):
-    pose2d = annotations['pose2d']
+def preprocess(data, joint_names, root_idx, normalize_pose=True, projection=True):
+    pose2d = data['pose2d']
+    pose3d = data['pose3d']
 
+    # Scale 2D pose such that mean dist from head to root is 1/konwn_constant
     if projection:
-
-        js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
-              'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-
-        #### 2D - 17J ####
         # calculate scale required to make 2D to 1/c unit
         c = 10
 
         # calculate the total distance between the head and the root ignore the nose
-
+        # 2D poses stil have 17 joints
         head2neck = np.linalg.norm(
-            pose2d[:, js.index('Head'), :] - pose2d[:, js.index('Neck'), :], axis=1, keepdims=True)
+            pose2d[:, joint_names.index('Head'), :] - pose2d[:, joint_names.index('Neck'), :], axis=1, keepdims=True)
         neck2torso = np.linalg.norm(
-            pose2d[:, js.index('Neck'), :] - pose2d[:, js.index('Torso'), :], axis=1, keepdims=True)
+            pose2d[:, joint_names.index('Neck'), :] - pose2d[:, joint_names.index('Torso'), :], axis=1, keepdims=True)
         torso2root = np.linalg.norm(
-            pose2d[:, js.index('Torso'), :] - pose2d[:, js.index('Pelvis'), :], axis=1, keepdims=True)
-        dist = head2neck+neck2torso + torso2root
+            pose2d[:, joint_names.index('Torso'), :] - pose2d[:, joint_names.index('Pelvis'), :], axis=1, keepdims=True)
+        dist = head2neck + neck2torso + torso2root
 
+        # Google's vipr etc scales using hips as well
         # head2neck = np.linalg.norm(
         #     pose2d[:,js.index('R_Hip'),:] - pose2d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
         #     pose2d[:,js.index('R_Knee'),:] - pose2d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
         # dist = head2neck+neck2torso
 
-        scale_2d = c*dist.mean()  # 1/c units
+        scale_2d = c*np.mean(dist)  # 1/c units
         pose2d = np.divide(pose2d.T, scale_2d.T).T
 
     # center the 2d and 3d pose at the root and remove the root
     pose2d = zero_the_root(pose2d, root_idx)
+    pose3d = zero_the_root(pose3d, root_idx)
 
     if normalize_pose and not projection:
-        # Normalize
+        # TODO UPDATE
         pose2d = normalize(pose2d)
-
-        pose3d = annotations['pose3d']
-        pose3d = zero_the_root(pose3d, root_idx)
         pose3d = normalize(pose3d)
-        annotations['pose3d'] = pose3d
-
-    annotations['pose2d'] = pose2d
+        
+    data['pose2d'] = pose2d
+    data['pose3d'] = pose3d
     
-    return annotations
+    return data
 
 
 def post_process(recon, target, scale=None, self_supervised=False, procrustes_enabled=False):
     '''
-    DeNormalize Validation Data
-    3D poses only - to calc the evaluation metric
+    DeNormalize Validation 3D poses alone - to calc the evaluation metric
     Add root at 0,0,0
     '''
     if not self_supervised:
+        # TODO UPDATE
         # de-normalize data to original coordinates
         recon = denormalize(recon)
         target = denormalize(target)

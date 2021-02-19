@@ -41,7 +41,7 @@ class H36M(Dataset):
         print(f"[INFO]: processing data samples: {len(self._data['idx'])}")
         
         self._data = preprocess(
-            self._data, self.root_idx, projection=projection)
+            self._data, self.joint_names, self.root_idx, projection=projection)
 
         # covert data to tensor after preprocessing them as numpys (messy with tensors)
         for key in self._data.keys():
