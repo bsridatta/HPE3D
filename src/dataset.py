@@ -37,7 +37,6 @@ class H36M(Dataset):
         h5.close()
 
         # further process to make the data learnable - zero 3dpose and norm poses
-        print(self._data['idx'])
         print(f"[INFO]: processing data samples: {len(self._data['idx'])}")
         
         self._data = preprocess(

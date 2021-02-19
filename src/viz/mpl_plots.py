@@ -34,18 +34,6 @@ JOINT_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
 plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
-# %%
-
-a = [0.76148872, -0.8093056,  0.90174764, -0.80272581, 0.99425748, -0.62591748,  1.05567881, -0.50993808, 0.58991259, -0.81084927, 0.65841195, -0.63537565,  0.78709126, -0.5336577, 0.72580412, -0.60653833,
-     0.78183097, -0.67609057,  0.74975749, -0.78524221, 0.4344193, -0.59414568, 0.43402108, -0.34962704,  0.5671055, -0.13761655, 0.98946524, -0.61047391, 0.97424512, -0.32495008,  1.08491325, 0.11811715]
-
-b = np.array(a).reshape((-1, 2))
-
-# %%
-plot_2d(b)
-# %%
-
-
 def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None, save=False):
     """Base function for 2D pose plotting
 

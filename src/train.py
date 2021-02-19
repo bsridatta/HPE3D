@@ -22,9 +22,11 @@ def main():
 
     config = do_setup()
 
+    # Data loading
     train_loader = train_dataloader(config)
     val_loader = val_dataloader(config)
 
+    # TODO REMOVE
     # combinations of Encoder, Decoder to train in each epoch
     variant_dic = {
         1: [['2d', '3d'], ['rgb', 'rgb']],
@@ -41,10 +43,11 @@ def main():
     if config.self_supervised:
         critic = Critic()
         models['Critic'] = critic
-    optimizers = train_utils.get_optims(variant, models, config)  # optimer for each pair
+    optimizers = train_utils.get_optims(
+        variant, models, config)  # optimer for each pair
     schedulers = train_utils.get_schedulers(optimizers)
 
-    # For multiple GPUs
+    # data parallel
     if torch.cuda.device_count() > 1:
         print(f'[INFO]: Using {torch.cuda.device_count()} GPUs')
         for key in models.keys():
@@ -52,7 +55,7 @@ def main():
 
     # To CPU or GPU or TODO TPU
     for key in models.keys():
-        models[key] = models[key].to(device)
+        models[key] = models[key].to(config.device)
         # if key == 'Critic':
         models[key].apply(kaiming_init)
 
@@ -60,9 +63,9 @@ def main():
     cb = CallbackList([ModelCheckpoint(),
                        Logging(),
                        WeightScheduler(config, strategy="beta_cycling"),
-                    #    WeightScheduler(config, strategy="noise_annealing"),                       
-                    #    WeightScheduler(config, strategy="critic_cycling"),
-                    #    MaxNorm()
+                       #    WeightScheduler(config, strategy="noise_annealing"),
+                       #    WeightScheduler(config, strategy="critic_cycling"),
+                       #    MaxNorm()
                        ])
 
     cb.setup(config=config, models=models, optimizers=optimizers,
@@ -127,6 +130,7 @@ def main():
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
 
+
 def do_setup():
     parser = get_argparser()
     config = parser.parse_args()
@@ -147,7 +151,8 @@ def do_setup():
     if not use_cuda:
         # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
-        wandb.init(anonymous='allow', project="hpe3d", config=config)  # to_delete
+        wandb.init(anonymous='allow', project="hpe3d",
+                   config=config)  # to_delete
     else:
         # os.environ['WANDB_MODE'] = 'dryrun'
         wandb.init(anonymous='allow', project="hpe3d", config=config)
@@ -159,28 +164,30 @@ def do_setup():
 
     return config
 
+
 def sync_before_exit(config, wandb):
     print("[INFO]: Sync wandb before terminating")
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
+
 
 def get_argparser():
 
     parser = ArgumentParser()
 
     # training specific
-    parser.add_argument('--self_supervised', default=True, type=bool,
-                        help='training strategy')
     parser.add_argument('--epochs', default=800, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=2560, type=int,
                         help='number of samples per step, have more than one for batch norm')
-    parser.add_argument('--fast_dev_run', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='run all methods once to check integrity, not implemented!')
+    parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
+                        help='run all methods once to check integrity, !!!NOT implemented!!!')
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
+    parser.add_argument('--self_supervised', default=True, type=bool,
+                        help='training strategy')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
@@ -194,10 +201,10 @@ def get_argparser():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--noise_level', default=0.0, type=float, # 0.01
+    parser.add_argument('--noise_level', default=0.0, type=float,  # 0.01
                         help='percentage of noise to inject for critic training')
-    parser.add_argument('--beta_max', default=0.01, type=float, # 0.01
-                        help='maximum value of beta during annealing or cycling')                      
+    parser.add_argument('--beta_max', default=0.01, type=float,  # 0.01
+                        help='maximum value of beta during annealing or cycling')
     parser.add_argument('--learning_rate', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
@@ -207,16 +214,14 @@ def get_argparser():
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     parser.add_argument('--p_miss', default=0.0, type=int,
-                        help='number of joints to encode and decode')  
-    # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17sh', type=str,
-                        help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
-    parser.add_argument('--annotation_path', default=None, type=str,
-                        help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
-    # image data
-    parser.add_argument('--image_path', default=f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/', type=str,
+                        help='number of joints to encode and decode')
+    # data files
+    parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_gt_2d.h5', type=str,
+                        help='abs path to training data file')
+    parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_gt_2d.h5', type=str,
+                        help='abs path to validation data file')
+    parser.add_argument('--image_path', default="", type=str,
                         help='path to image folders with subject action etc as folder names')
-
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')
@@ -237,4 +242,3 @@ def get_argparser():
 
 if __name__ == "__main__":
     main()
-

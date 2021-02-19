@@ -1,15 +1,11 @@
 import gc
-import os
 from collections import OrderedDict, defaultdict
 
-import h5py
 import torch
-import torch.nn.functional as F
 
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, random_rotate, project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
-from src.viz.mpl_plots import plot_proj, plot_2d, plot_3d
 
 # torch.autograd.set_detect_anomaly(True)
 
@@ -30,7 +26,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         pose2d_org = inp.clone()
 
         # index of poses to be incomplete
-        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
+        incomplete_poses_ids = torch.multinomial(torch.ones(
+            pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
 
         # probablity to choose a joint to miss
         p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
@@ -40,16 +37,17 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # 2 random joints to exclude for each missing pose
         # make 0.5 of them to miss 1 joint only by duplicting the joint id
         rand_joints = torch.multinomial(p_limbs, 2, replacement=False)
-        rand_joints[:rand_joints.shape[0]//2][:,1] = rand_joints[:rand_joints.shape[0]//2][:,0] 
+        rand_joints[:rand_joints.shape[0]//2][:,
+                                              1] = rand_joints[:rand_joints.shape[0]//2][:, 0]
 
         # repeat incomplete pose ids for vectorization
-        incomplete_poses_ids = incomplete_poses_ids.view(-1,1).repeat(1,2)
+        incomplete_poses_ids = incomplete_poses_ids.view(-1, 1).repeat(1, 2)
 
         # zero the random joints of the 'tobe' incomplete poses
         pose[incomplete_poses_ids, rand_joints, :] = 0
 
         inp = pose  # not needed
-        
+
     mean, logvar = encoder(inp)
     # clip logvar to prevent inf when exp is calculated
     logvar = torch.clamp(logvar, max=30)
@@ -66,7 +64,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
 
-        T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
+        T = torch.tensor((0, 0, 10), device=recon_3d.device,
+                         dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
 
@@ -98,7 +97,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         labels = torch.full((len(target_2d), 1), real_label,
                             device=config.device, dtype=target_2d.dtype)
         # label smoothing for real labels alone
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        label_noise = (torch.rand_like(
+            labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
         output = critic(noised_real)
@@ -139,7 +139,8 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         vae_optimizer.zero_grad()
 
         labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        label_noise = (torch.rand_like(
+            labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
         output = critic(novel_2d)
@@ -154,7 +155,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
             recon_2d = recon_2d_org
         else:
             recon_loss = criterion(recon_2d, target_2d)
-            
+
         kld_loss = KLD(mean, logvar, decoder.name)
 
         loss = recon_loss + 0.1*config.beta * kld_loss + \
@@ -211,7 +212,8 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         pose2d_org = inp.clone()
 
         # index of poses to be incomplete
-        incomplete_poses_ids = torch.multinomial(torch.ones(pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
+        incomplete_poses_ids = torch.multinomial(torch.ones(
+            pose.shape[0]), int(pose.shape[0]*config.p_miss), replacement=False)
 
         # probablity to choose a joint to miss
         p_limbs = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
@@ -221,10 +223,11 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         # 2 random joints to exclude for each missing pose
         # make 0.5 of them to miss 1 joint only by duplicting the joint id
         rand_joints = torch.multinomial(p_limbs, 2, replacement=False)
-        rand_joints[:rand_joints.shape[0]//2][:,1] = rand_joints[:rand_joints.shape[0]//2][:,0] 
+        rand_joints[:rand_joints.shape[0]//2][:,
+                                              1] = rand_joints[:rand_joints.shape[0]//2][:, 0]
 
         # repeat incomplete pose ids for vectorization
-        incomplete_poses_ids = incomplete_poses_ids.view(-1,1).repeat(1,2)
+        incomplete_poses_ids = incomplete_poses_ids.view(-1, 1).repeat(1, 2)
 
         # zero the random joints of the 'tobe' incomplete poses
         pose[incomplete_poses_ids, rand_joints, :] = 0
@@ -247,7 +250,8 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         # enforce unit recon if above root is scaled to 1
         recon_3d = recon_3d*1.3
 
-        T = torch.tensor((0, 0, 10), device=recon_3d.device, dtype=recon_3d.dtype)
+        T = torch.tensor((0, 0, 10), device=recon_3d.device,
+                         dtype=recon_3d.dtype)
 
         recon_2d = project_3d_to_2d(recon_3d+T)
 
@@ -271,7 +275,8 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         # validate on real samples
         labels = torch.full((len(target_2d), 1), real_label,
                             device=recon_3d.device, dtype=target_2d.dtype)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        label_noise = (torch.rand_like(
+            labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
         output = critic(noised_real)
@@ -301,14 +306,15 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         fake_label = 0
 
         labels.fill_(real_label)
-        label_noise = (torch.rand_like(labels, device=labels.device)*(0.7-1.2)) + 1.2
+        label_noise = (torch.rand_like(
+            labels, device=labels.device)*(0.7-1.2)) + 1.2
         labels = labels * label_noise
 
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
         gen_loss = binary_loss(output, labels)
-        
+
         if config.p_miss:
             recon_2d_org = recon_2d.clone().detach()
             recon_2d[incomplete_poses_ids, rand_joints, :] = 0
@@ -414,9 +420,12 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
         t_data['recon_3d'].to(config.device)
         t_data['target_3d'].to(config.device)
 
-        pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])  # per sample per joint [n,j]
-        avg_pjpe = torch.mean((pjpe_), dim=0)  # across all samples per joint [j]
-        avg_mpjpe = torch.mean(avg_pjpe).item()  # across all samples all joint [1]
+        # per sample per joint [n,j]
+        pjpe_ = PJPE(t_data['recon_3d'], t_data['target_3d'])
+        # across all samples per joint [j]
+        avg_pjpe = torch.mean((pjpe_), dim=0)
+        # across all samples all joint [1]
+        avg_mpjpe = torch.mean(avg_pjpe).item()
         pjpe = torch.mean(pjpe_, dim=1)  # per sample all joints [n]
 
         actions = t_data['action']
@@ -440,4 +449,3 @@ def add_noise(pose, noise_level):
     pose = pose+noise
 
     return pose
-

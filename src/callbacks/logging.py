@@ -5,7 +5,6 @@ import torch
 from src.callbacks.base import Callback
 from src.models import PJPE
 from src.viz.mpl_plots import plot_all_proj, plot_3d
-# from src.viz.mayavi_plots import plot_3D_models
 
 
 class Logging(Callback):
@@ -25,9 +24,9 @@ class Logging(Callback):
         n_batches = len(dataloader)
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
             vae_type, epoch, batch_idx * batch_len,
-            dataset_len, 100. *
-            batch_idx / n_batches,
-            output['loss'], output['log']['recon_loss'], output['log']['kld_loss']), end='')
+            dataset_len, 100. * batch_idx / n_batches,
+            output['loss'], output['log']['recon_loss'],
+            output['log']['kld_loss']), end='')
 
         # critic
         if config.self_supervised:
@@ -78,7 +77,8 @@ class Logging(Callback):
         avg_output['log'] = {}
 
         avg_output['loss'] = loss_dic['loss']/len(val_loader)
-        avg_output['log']['recon_loss'] = loss_dic['recon_loss']/len(val_loader)
+        avg_output['log']['recon_loss'] = loss_dic['recon_loss'] / \
+            len(val_loader)
         avg_output['log']['kld_loss'] = loss_dic['kld_loss']/len(val_loader)
 
         # print to console
@@ -90,8 +90,10 @@ class Logging(Callback):
         # critic
         if config.self_supervised:
 
-            avg_output['log']['critic_loss'] = loss_dic['critic_loss']/len(val_loader)
-            avg_output['log']['gen_loss'] = loss_dic['gen_loss']/len(val_loader)
+            avg_output['log']['critic_loss'] = loss_dic['critic_loss'] / \
+                len(val_loader)
+            avg_output['log']['gen_loss'] = loss_dic['gen_loss'] / \
+                len(val_loader)
             avg_output['log']['D_x'] = loss_dic['D_x']/len(val_loader)
             avg_output['log']['D_G_z1'] = loss_dic['D_G_z1']/len(val_loader)
             avg_output['log']['D_G_z2'] = loss_dic['D_G_z2']/len(val_loader)
@@ -119,14 +121,14 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if (epoch-1) % 30 == 0:    
+            if (epoch-1) % 30 == 0:
                 # plot_list = range(2)
                 plot_list = torch.topk(pjpe, k=n_samples, dim=0).indices
                 for i in plot_list:
                     i = i.item()
                     plot_all_proj(config, t_data["recon_2d"][i], t_data["novel_2d"][i], t_data["target_2d"][i],
-                                t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val',
-                                title=f'MPJPE: {pjpe[i].round().item()}mm')
+                                  t_data["recon_3d"][i], t_data["target_3d"][i], recon_3d_org=t_data["recon_3d_org"][i], name='val',
+                                  title=f'MPJPE: {pjpe[i].round().item()}mm')
 
         # log main metrics to wandb
         config.logger.log({

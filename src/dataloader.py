@@ -1,64 +1,67 @@
 import os
-
 import torch
-from torch.utils.data import SubsetRandomSampler
-
 from src.dataset import H36M
+from torch.utils.data import SubsetRandomSampler
 
 
 def train_dataloader(config):
     print(f'[INFO]: Training data loader called')
-    dataset = H36M(config.annotation_file, config.image_path,
+    dataset = H36M(config.train_file, config.image_path,
                    config.device, train=True, projection=config.self_supervised)
-    
-    # sampler = SubsetRandomSampler(range(0, 5)) if config.fast_dev_run else None
-    shuffle = False if sampler is not None else True
 
-    loader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
-        sampler=sampler,
-        shuffle=True
-    )
+    sampler = SubsetRandomSampler(range(0, 10)) if config.fast_dev_run else None
+    shuffle = False if sampler else True
+    loader = torch.utils.data.DataLoader(dataset,
+                                         batch_size=config.batch_size,
+                                         num_workers=config.num_workers,
+                                         pin_memory=config.pin_memory,
+                                         sampler=sampler,
+                                         shuffle=shuffle
+                                         )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
-    print("samples -", len(loader.dataset))
+    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
     return loader
 
 
 def val_dataloader(config, shuffle=True):
     print(f'[INFO]: Validation data loader called')
-    dataset = H36M(config.val_subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path, projection=config.self_supervised)
-    sampler = None
-    loader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
-        sampler=sampler,
-        shuffle=shuffle
-    )
-    print("samples -", len(loader.dataset))
+    dataset = H36M(config.test_file, config.image_path,
+                   config.device, train=True, projection=config.self_supervised)
+    
+    # TODO use test loader for test.py
+    sampler = SubsetRandomSampler(range(0, 10)) if config.fast_dev_run else None
+    
+    if sampler: 
+        shuffle = False 
+    
+    loader = torch.utils.data.DataLoader(dataset=dataset,
+                                         batch_size=config.batch_size,
+                                         num_workers=config.num_workers,
+                                         pin_memory=config.pin_memory,
+                                         sampler=sampler,
+                                         shuffle=shuffle
+                                         )
+    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
 
     return loader
 
 
 def test_dataloader(config):
     print(f'[INFO]: Test data loader called')
-    dataset = H36M(config.subjects, config.annotation_file,
-                   config.image_path, config.ignore_images, config.device, config.annotation_path, projection=config.self_supervised)
-    sampler = None
-    loader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        pin_memory=config.pin_memory,
-        sampler=sampler,
-        shuffle=True
-    )
-    print("samples -", len(loader.dataset))
+    dataset = H36M(config.test_file, config.image_path, config.device, 
+                   train=False, projection=config.self_supervised)
+    
+    sampler = SubsetRandomSampler(range(0, 10)) if config.fast_dev_run else None
+    shuffle = False if sampler else True
+
+    loader = torch.utils.data.DataLoader(dataset=dataset,
+                                         batch_size=config.batch_size,
+                                         num_workers=config.num_workers,
+                                         pin_memory=config.pin_memory,
+                                         sampler=sampler,
+                                         shuffle=shuffle
+                                         )
+    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
 
     return loader
 
@@ -71,18 +74,19 @@ test function
 def test():
     from input_reader import Namespace
     config = Namespace()
-    config.train_subjects = [1, 5, 6, 7, 8]
-    config.annotation_path = f"{os.getenv('HOME')}/lab/HPE3D/src/data"
-    config.annotation_file = "h36m17"
-    config.image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m/"
+    config.test_file = f"{os.getenv('HOME')}/lab/HPE3D/src/data/h36m_test_gt_2d.h5"
     config.batch_size = 4
     config.num_workers = 0
     config.pin_memory = False
-    config.ignore_images = False
     config.device = "cpu"
-    train_loader = train_dataloader(config)
+    config.image_path = ""
+    config.self_supervised = True
+    config.fast_dev_run = True
+    
+    train_loader = val_dataloader(config)
+    print()
     for batch_idx, batch in enumerate(train_loader):
-        print(batch_idx, len(batch))
+        print(f"batch: {batch_idx}, batch_size: {len(batch)}")
         break
         # pass
 
