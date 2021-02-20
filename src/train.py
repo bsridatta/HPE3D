@@ -1,3 +1,9 @@
+from src.callbacks import CallbackList, ModelCheckpoint, Logging, WeightScheduler, Analyze, MaxNorm
+from src.trainer import training_epoch, validation_epoch
+from src.models import PJPE, kaiming_init, Critic
+from src.dataloader import train_dataloader, val_dataloader
+from src import viz
+from src import train_utils
 import atexit
 import gc
 import math
@@ -10,13 +16,7 @@ import torch
 from typing_extensions import get_args
 import wandb
 
-from src import train_utils
-from src import viz
-from src.dataloader import train_dataloader, val_dataloader
-from src.models import PJPE, kaiming_init, Critic
-from src.trainer import training_epoch, validation_epoch
-from src.callbacks import CallbackList, ModelCheckpoint, Logging, WeightScheduler, Analyze, MaxNorm
-
+sys.path.append("../")  # noqa
 
 def main():
 

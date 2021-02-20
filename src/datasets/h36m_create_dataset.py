@@ -9,7 +9,7 @@ import glob
 
 data_path: str = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
 train: bool = False
-type_2d = ["GT_2D", "SH", "SH_FT"][0]
+type_2d = ["GT_2D", "SH", "SH_FT"][1]
 
 if train:
     subject_list = [1, 5, 6, 7, 8]
@@ -47,6 +47,7 @@ for subject in subject_list:
         dataset['pose2d'].extend(pose2d_)
 
         # get identical 3D data
+        # 3Ds corresponding to available 2Ds are only loaded
         path_3d = path.replace(type_2d, "GT_3D")
         pose3d_ = np.array(h5py.File(path_3d, 'r')['poses'])
         pose3d_ = list(pose3d_)[::skip_frames]
