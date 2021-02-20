@@ -10,7 +10,7 @@ import torch
 from typing_extensions import get_args
 import wandb
 
-sys.path.append("../") # noqa
+sys.path.append("../src") # noqa
 
 from src import train_utils
 from src import viz
