@@ -24,7 +24,7 @@ class LBAD(nn.Module):
 
 
 class Encoder2D(nn.Module):
-    def __init__(self, latent_dim, n_joints=16, activation=Mish):
+    def __init__(self, latent_dim, n_joints=15, activation=Mish):
         super(Encoder2D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation
@@ -85,7 +85,7 @@ class Encoder2D(nn.Module):
 
 
 class Decoder3D(nn.Module):
-    def __init__(self, latent_dim, n_joints=16, activation=Mish):
+    def __init__(self, latent_dim, n_joints=15, activation=Mish):
         super(Decoder3D, self).__init__()
         self.latent_dim = latent_dim
         self.activation = activation

@@ -121,7 +121,7 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if (epoch-1) % 30 == 0:
+            if config.log_interval != 0 and (epoch-1) % 30 == 0:
                 # plot_list = range(2)
                 plot_list = torch.topk(pjpe, k=n_samples, dim=0).indices
                 for i in plot_list:

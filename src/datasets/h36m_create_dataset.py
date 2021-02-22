@@ -6,7 +6,6 @@ from src.datasets.h36m_utils import action_to_id, camera_id_to_num, extract_join
 from src.datasets.common import COMMON_JOINTS
 import os
 import h5py
-0.0
 import numpy as np
 import glob
 

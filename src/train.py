@@ -209,18 +209,12 @@ def get_argparser():
                         help='maximum value of beta during annealing or cycling')
     parser.add_argument('--learning_rate', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='use pretrained weights for RGB encoder')
-    parser.add_argument('--train_last_block', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='train last convolution block of the RGB encoder while rest is pre-trained')
-    parser.add_argument('--n_joints', default=16, type=int,
-                        help='number of joints to encode and decode')
     parser.add_argument('--p_miss', default=0.0, type=int,
                         help='number of joints to encode and decode')
     # data files
-    parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_gt_2d.h5', type=str,
+    parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_sh.h5', type=str,
                         help='abs path to training data file')
-    parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_gt_2d.h5', type=str,
+    parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_sh.h5', type=str,
                         help='abs path to validation data file')
     parser.add_argument('--image_path', default="", type=str,
                         help='path to image folders with subject action etc as folder names')
@@ -229,8 +223,8 @@ def get_argparser():
                         help='path to save checkpoints')
     parser.add_argument('--exp_name', default=f'run_1', type=str,
                         help='name of the current run, used to id checkpoint and other logs')
-    parser.add_argument('--log_interval', type=int, default=1,
-                        help='# of batches to wait before logging training status')
+    parser.add_argument('--log_interval', type=int, default=0,
+                        help='# of epochs to logging validation images')
     # device
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='enable cuda if available')

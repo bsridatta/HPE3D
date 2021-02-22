@@ -11,11 +11,12 @@ from torch.utils.data import Dataset, dataset
 
 from src.processing import preprocess, project_3d_to_2d
 from src.datasets.h36m_utils import H36M_NAMES, ACTION_NAMES
+from src.datasets.common import COMMON_JOINTS
 
 
 class H36M(Dataset):
     def __init__(self, data_file: str, image_path: Optional[str] = None,
-                 device: str = 'cpu', train: bool = False, projection: bool = True):
+                 train: bool = False, projection: bool = True):
         """[summary]
 
         Args:
@@ -25,7 +26,6 @@ class H36M(Dataset):
             train (bool, optional): [description]. Defaults to False.
             projection (bool, optional): [description]. Defaults to True.
         """
-        self._device = device
         self._train = train
         self._image_path = image_path  # load image directly in __getitem__
         self._set_skeleton_data()
@@ -38,7 +38,7 @@ class H36M(Dataset):
 
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f"[INFO]: processing data samples: {len(self._data['idx'])}")
-        
+
         self._data = preprocess(
             self._data, self.joint_names, self.root_idx, projection=projection)
 
@@ -55,8 +55,8 @@ class H36M(Dataset):
 
         self.dataset_len = len(self._data['idx'])
 
-        assert self._data['pose2d'].shape[1:] == (16,2)
-        assert self._data['pose3d'].shape[1:] == (16,3)
+        assert self._data['pose2d'].shape[1:] == (15, 2)
+        assert self._data['pose3d'].shape[1:] == (15, 3)
 
     def __len__(self):
         return len(self._data['idx'])
@@ -93,8 +93,8 @@ class H36M(Dataset):
 
     def _flip(self, sample):
         # switch magnitude
-        sample['pose2d'] = sample['pose2d'][self._flipped_indices_16]
-        sample['pose3d'] = sample['pose3d'][self._flipped_indices_16]
+        sample['pose2d'] = sample['pose2d'][self._flipped_indices]
+        sample['pose3d'] = sample['pose3d'][self._flipped_indices]
 
         # switch direction
         sample['pose2d'][:, 0] *= -1
@@ -105,23 +105,35 @@ class H36M(Dataset):
         return sample
 
     def _set_skeleton_data(self):
-        self.joint_names = [name for name in H36M_NAMES if name != ""]
+        self.joint_names = [name for name in COMMON_JOINTS if name != ""]
 
         self.action_names = list(ACTION_NAMES.values())
 
         self.root_idx = self.joint_names.index('Pelvis')
 
-        self._joint_connections = (('Pelvis', 'Torso'), ('Torso', 'Neck'), ('Neck', 'Nose'), ('Nose', 'Head'), ('Neck', 'L_Shoulder'), ('L_Shoulder', 'L_Elbow'), ('L_Elbow', 'L_Wrist'), ('Neck', 'R_Shoulder'), (
+        self._joint_connections = (('Pelvis', 'Torso'), ('Torso', 'Neck'), ('Neck', 'Head'), ('Neck', 'L_Shoulder'), ('L_Shoulder', 'L_Elbow'), ('L_Elbow', 'L_Wrist'), ('Neck', 'R_Shoulder'), (
             'R_Shoulder', 'R_Elbow'), ('R_Elbow', 'R_Wrist'), ('Pelvis', 'R_Hip'), ('R_Hip', 'R_Knee'), ('R_Knee', 'R_Ankle'), ('Pelvis', 'L_Hip'), ('L_Hip', 'L_Knee'), ('L_Knee', 'L_Ankle'))
 
         self.bones = tuple([(self.joint_names.index(i), self.joint_names.index(j))
-                               for (i, j) in self._joint_connections])
+                            for (i, j) in self._joint_connections])
 
-        # fliped indices for 16 joints
-        self._flipped_indices_16 = [3, 4, 5, 0, 1,
-                                    2, 6, 7, 8, 9, 13, 14, 15, 10, 11, 12]
+        # without pelvis as its removed in the preprocessing step after zeroing
+        joints_15 = self.joint_names.copy()
+        joints_15.remove('Pelvis')
+
+        self._flipped_indices = []
+        for idx, i in enumerate(joints_15):
+            if "R_" in i:
+                self._flipped_indices.append(
+                    joints_15.index(i.replace("R_", "L_")))
+            elif "L_" in i:
+                self._flipped_indices.append(
+                    joints_15.index(i.replace("L_", "R_")))
+            else:
+                self._flipped_indices.append(idx)
 
 # Just for easily access content
+
 
 def check_data():
     '''

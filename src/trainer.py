@@ -53,7 +53,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
     recon_3d = decoder(z)
-    recon_3d = recon_3d.view(-1, 16, 3)
+    recon_3d = recon_3d.view(-1, model[0].n_joints, 3)
 
     if config.self_supervised:
 
@@ -239,7 +239,7 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar, eval)
     recon_3d = decoder(z)
-    recon_3d = recon_3d.view(-1, 16, 3)
+    recon_3d = recon_3d.view(-1, model[0].n_joints, 3)
 
     if config.self_supervised:
         # criterion = torch.nn.MSELoss()
