@@ -1,15 +1,19 @@
 # %%
 from collections import defaultdict
-from src.datasets.h36m_utils import action_to_id, camera_id_to_num
+
+from numpy.lib import utils
+from src.datasets.h36m_utils import action_to_id, camera_id_to_num, extract_joints
+from src.datasets.common import COMMON_JOINTS
 import os
 import h5py
+0.0
 import numpy as np
 import glob
 
 
 data_path: str = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
 train: bool = False
-type_2d = ["GT_2D", "SH", "SH_FT"][1]
+type_2d = ["GT_2D", "SH", "SH_FT"][0]
 
 if train:
     subject_list = [1, 5, 6, 7, 8]
@@ -43,14 +47,18 @@ for subject in subject_list:
             continue  # corrupt recording
 
         pose2d_ = np.array(h5py.File(path, 'r')['poses'])
-        pose2d_ = list(pose2d_)[::skip_frames]
+
+        if type_2d != 'GT_2D': # GT_2D already in common config
+            pose2d_ = extract_joints(pose2d_, COMMON_JOINTS, h36m_config=False)
+
+        pose2d_ = pose2d_.tolist()[::skip_frames]
         dataset['pose2d'].extend(pose2d_)
 
         # get identical 3D data
         # 3Ds corresponding to available 2Ds are only loaded
         path_3d = path.replace(type_2d, "GT_3D")
         pose3d_ = np.array(h5py.File(path_3d, 'r')['poses'])
-        pose3d_ = list(pose3d_)[::skip_frames]
+        pose3d_ = pose3d_.tolist()[::skip_frames]
         dataset['pose3d'].extend(pose3d_)
 
         # metadata - data imp. for analysis and reading images

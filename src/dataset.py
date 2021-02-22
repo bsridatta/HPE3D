@@ -114,7 +114,7 @@ class H36M(Dataset):
         self._joint_connections = (('Pelvis', 'Torso'), ('Torso', 'Neck'), ('Neck', 'Nose'), ('Nose', 'Head'), ('Neck', 'L_Shoulder'), ('L_Shoulder', 'L_Elbow'), ('L_Elbow', 'L_Wrist'), ('Neck', 'R_Shoulder'), (
             'R_Shoulder', 'R_Elbow'), ('R_Elbow', 'R_Wrist'), ('Pelvis', 'R_Hip'), ('R_Hip', 'R_Knee'), ('R_Knee', 'R_Ankle'), ('Pelvis', 'L_Hip'), ('L_Hip', 'L_Knee'), ('L_Knee', 'L_Ankle'))
 
-        self.skeleton = tuple([(self.joint_names.index(i), self.joint_names.index(j))
+        self.bones = tuple([(self.joint_names.index(i), self.joint_names.index(j))
                                for (i, j) in self._joint_connections])
 
         # fliped indices for 16 joints

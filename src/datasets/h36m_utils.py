@@ -1,6 +1,7 @@
 # %%
-from typing import Dict, List
+from typing import Dict, List, Union
 import numpy as np
+from numpy.core.defchararray import join
 import torch
 
 #####
@@ -94,10 +95,24 @@ def camera_num_to_id(camera: int) -> int:
     return int(h36m_cameras_intrinsic_params[camera-1]['id'])
 
 
-def remove_joints_from_3d(poses):
-    keep_list = [idx for idx, value in enumerate(H36M_NAMES) if value != '']
+def extract_joints(poses: np.ndarray, joint_names: List[str], h36m_config: bool) -> np.ndarray:
+    selected_indices = []
+    selected_names = []
 
-    return poses[:, keep_list, :]
+    if h36m_config:
+        assert poses.shape[-2] == 32
+        pose_config = H36M_NAMES
+    else:
+        assert poses.shape[-2] == 16
+        pose_config = SH_NAMES
+
+    for name in joint_names:
+        index = pose_config.index(name)
+        selected_indices.append(index)
+        selected_names.append(pose_config[index])
+
+    assert selected_names == joint_names
+    return poses[:, selected_indices, :]
 
 
 def get_projection_params(camera: int):
@@ -236,7 +251,7 @@ def wrap(func, *args, unsqueeze=False):
         return result
 
 
-h36m_cameras_intrinsic_params = [
+h36m_cameras_intrinsic_params: List[Dict[str, Union[str, List[float], int]]] = [
     {
         'id': '54138969',
         'center': [512.54150390625, 515.4514770507812],
@@ -279,7 +294,7 @@ h36m_cameras_intrinsic_params = [
     },
 ]
 
-h36m_cameras_extrinsic_params = {
+h36m_cameras_extrinsic_params: Dict[str, List[Dict[str, List[float]]]] = {
     'S1': [
         {
             'orientation': [0.1407056450843811, -0.1500701755285263, -0.755240797996521, 0.6223280429840088],

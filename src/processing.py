@@ -43,7 +43,7 @@ def preprocess(data, joint_names, root_idx, normalize_pose=True, projection=True
         # calculate scale required to make 2D to 1/c unit
         c = 10
 
-        # calculate the total distance between the head and the root ignore the nose
+        # calculate the total distance between the head and the root 
         # 2D poses stil have 17 joints
         head2neck = np.linalg.norm(
             pose2d[:, joint_names.index('Head'), :] - pose2d[:, joint_names.index('Neck'), :], axis=1, keepdims=True)
@@ -53,7 +53,7 @@ def preprocess(data, joint_names, root_idx, normalize_pose=True, projection=True
             pose2d[:, joint_names.index('Torso'), :] - pose2d[:, joint_names.index('Pelvis'), :], axis=1, keepdims=True)
         dist = head2neck + neck2torso + torso2root
 
-        # Google's poem scales using hips as well
+        # Google's poem scales using lower half 
         # head2neck = np.linalg.norm(
         #     pose2d[:,js.index('R_Hip'),:] - pose2d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
