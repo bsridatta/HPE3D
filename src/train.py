@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 import numpy as np
 import torch
-from typing_extensions import get_args
 import wandb
 
 sys.path.append("../src") # noqa
@@ -148,7 +147,7 @@ def do_setup():
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'New_Scaling'
     os.environ['WANDB_NOTES'] = 'None'
-
+    os.environ['']
     # ignore when debugging on cpu
     if not use_cuda:
         # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
