@@ -320,26 +320,22 @@ def training_specific_args():
                         help='percentage of noise to inject for critic training')
     parser.add_argument('--beta_max', default=0.01, type=float,  # 0.01
                         help='maximum value of beta during annealing or cycling')
-    parser.add_argument('--learning_rate', default=2e-4, type=float,
+    parser.add_argument('--lr_generator', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--pretrained', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='use pretrained weights for RGB encoder')
-    parser.add_argument('--train_last_block', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='train last convolution block of the RGB encoder while rest is pre-trained')
+    parser.add_argument('--lr_discriminator', default=2e-4, type=float,
+                        help='learning rate for all optimizers')
+
     parser.add_argument('--n_joints', default=16, type=int,
                         help='number of joints to encode and decode')
     parser.add_argument('--p_miss', default=0, type=int,
                         help='number of joints to encode and decode')
     # pose data
-    parser.add_argument('--annotation_file', default=f'h36m17', type=str,
-                        help='prefix of the annotation h5 file: h36m17 or h36m17_2 or debug_h36m17')
-    parser.add_argument('--annotation_path', default=None, type=str,
-                        help='if none, checks data folder. Use if data is elsewhere for colab/kaggle')
-    # image data
-    parser.add_argument('--image_path', default=f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/', type=str,
+    parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_sh.h5', type=str,
+                        help='abs path to training data file')
+    parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_sh.h5', type=str,
+                        help='abs path to validation data file')
+    parser.add_argument('--image_path', default="", type=str,
                         help='path to image folders with subject action etc as folder names')
-    parser.add_argument('--ignore_images', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='when true, do not load images for training')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')
