@@ -212,7 +212,7 @@ def get_argparser():
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_disc', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--lr_decay', default=2e-4, type=float,
+    parser.add_argument('--lr_decay', default=0.95, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--p_miss', default=0.0, type=int,
                         help='number of joints to encode and decode')
