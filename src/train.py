@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import wandb
 
-sys.path.append("../src") # noqa
+sys.path.append("../src")  # noqa
 
 from src import train_utils
 from src import viz
@@ -101,7 +101,7 @@ def main():
                            optimizer, epoch, vae_type)
 
             val_loss = 0
-            if (epoch-1) % 5 == 0:
+            if epoch % 5 == 0:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -142,7 +142,7 @@ def do_setup():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    config.num_workers = 4 if use_cuda else 4  # for dataloader
+    # config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'New_Scaling'
@@ -231,6 +231,8 @@ def get_argparser():
                         help='enable cuda if available')
     parser.add_argument('--pin_memory', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='pin memory to device')
+    parser.add_argument('--num_workers', default=4, type=int,
+                        help='workers for data loader')
     parser.add_argument('--seed', default=400, type=int,
                         help='random seed')
 
