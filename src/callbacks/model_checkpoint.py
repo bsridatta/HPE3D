@@ -29,13 +29,12 @@ class ModelCheckpoint(Callback):
                 optimizers[n_pair].load_state_dict(optimizer_state_dic)
     
     def on_epoch_end(self, config, val_loss, model, optimizers, epoch, n_pair, **kwargs):
-                
-        # if val_loss < self.val_loss_min and config.device != 'cpu':
-        #     self.val_loss_min = val_loss
-        
+                        
         if config.mpjpe < config.mpjpe_min and config.device != 'cpu':
+            print(f"[INFO]: MPJPE decreased from {config.mpjpe_min} -> {config.mpjpe}")
             config.mpjpe_min = config.mpjpe
 
+            # just update val_loss for record
             if val_loss < self.val_loss_min and config.device != 'cpu':
                 self.val_loss_min = val_loss
 
