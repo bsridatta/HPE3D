@@ -86,7 +86,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         fake_label = 0
         binary_loss = torch.nn.BCELoss()
         critic_optimizer = optimizer[-1]
-        critic_optimizer.zero_grad()
+        critic_optimizer.zero_grad(set_to_none=True)
 
         # confuse critic
         # if batch_idx % 7 == 0:
@@ -136,7 +136,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         real_label = 1
         fake_label = 0
 
-        vae_optimizer.zero_grad()
+        vae_optimizer.zero_grad(set_to_none=True)
 
         labels.fill_(real_label)
         label_noise = (torch.rand_like(
@@ -186,7 +186,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
                 "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
 
     else:
-        vae_optimizer.zero_grad()
+        vae_optimizer.zero_grad(set_to_none=True)
         recon_loss = criterion(recon_3d, target_3d)
         # TODO clip kld loss to prevent explosion
         kld_loss = KLD(mean, logvar, decoder.name)
