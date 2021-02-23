@@ -2,7 +2,7 @@ import gc
 from collections import OrderedDict, defaultdict
 
 import torch
-
+from torch import nn
 from src.models import KLD, PJPE, reparameterize
 from src.processing import post_process, random_rotate, project_3d_to_2d
 from src.train_utils import get_inp_target_criterion
@@ -49,6 +49,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         inp = pose  # not needed
 
     mean, logvar = encoder(inp)
+
     # clip logvar to prevent inf when exp is calculated
     logvar = torch.clamp(logvar, max=30)
     z = reparameterize(mean, logvar)
@@ -84,7 +85,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic = model[2].train()
         real_label = 1
         fake_label = 0
-        binary_loss = torch.nn.BCELoss()
+        binary_loss = nn.BCELoss()
         critic_optimizer = optimizer[-1]
         critic_optimizer.zero_grad(set_to_none=True)
 
@@ -123,7 +124,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         # update critic
         if batch_idx % 1 == 0:
             # Clip grad norm to 1 ********************************
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 1)
+            nn.utils.clip_grad_norm_(critic.parameters(), 1)
             critic_optimizer.step()
 
         ################################################
@@ -168,13 +169,13 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         if True:
             # Clip grad norm to 1 *****************************************
-            torch.nn.utils.clip_grad_norm_(encoder.parameters(), 2)
-            torch.nn.utils.clip_grad_norm_(decoder.parameters(), 2)
-            torch.nn.utils.clip_grad_norm_(critic.parameters(), 2)
+            nn.utils.clip_grad_norm_(encoder.parameters(), 2)
+            nn.utils.clip_grad_norm_(decoder.parameters(), 2)
+            nn.utils.clip_grad_norm_(critic.parameters(), 2)
 
-            torch.nn.utils.clip_grad_value_(encoder.parameters(), 1000)
-            torch.nn.utils.clip_grad_value_(decoder.parameters(), 1000)
-            torch.nn.utils.clip_grad_value_(critic.parameters(), 1000)
+            nn.utils.clip_grad_value_(encoder.parameters(), 1000)
+            nn.utils.clip_grad_value_(decoder.parameters(), 1000)
+            nn.utils.clip_grad_value_(critic.parameters(), 1000)
 
         # update VAE
         if batch_idx % 1 == 0:
@@ -242,7 +243,7 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
     recon_3d = recon_3d.view(-1, model[0].n_joints, 3)
 
     if config.self_supervised:
-        # criterion = torch.nn.MSELoss()
+        # criterion = nn.MSELoss()
 
         # Reprojection
         target_2d = inp.detach()
@@ -270,7 +271,7 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         critic = model[2].eval()
         real_label = 1
         fake_label = 0
-        binary_loss = torch.nn.BCELoss()
+        binary_loss = nn.BCELoss()
 
         # validate on real samples
         labels = torch.full((len(target_2d), 1), real_label,

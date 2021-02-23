@@ -47,17 +47,18 @@ def get_optims(variant, models, config):
         decoder = models[f"Decoder{pair[1].upper()}"]
         params = list(encoder.parameters())+list(decoder.parameters())
         # TODO have specific learning rate according to combo
-        optimizer = torch.optim.Adam(params, lr=config.lr_generator)
+        optimizer = torch.optim.Adam(params, lr=config.lr_gen)
         optims.append(optimizer)
 
     if config.self_supervised:
         params = list(models['Critic'].parameters())
-        optimizer = torch.optim.Adam(params, lr=config.lr_discriminator, betas=[0.9, 0.999]) # using SGD worsens Dx
+        optimizer = torch.optim.Adam(params, lr=config.lr_disc, betas=[
+                                     0.9, 0.999])  # using SGD worsens Dx
         optims.append(optimizer)
     return optims
 
 
-def get_schedulers(optimizers):
+def get_schedulers(optimizers, config):
     '''
     get scheduler for each optimizer
 
@@ -70,8 +71,9 @@ def get_schedulers(optimizers):
     '''
     schedulers = []
     for optimizer in optimizers:
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=10,
-                                                               factor=0.3, verbose=True, threshold=1e-5)
+        def lmbda(epoch): return config.lr_decay
+        scheduler = torch.optim.lr_scheduler.MultiplicativeLR(
+            optimizer, lr_lambda=lmbda, verbose=True)
         schedulers.append(scheduler)
 
     return schedulers
@@ -112,7 +114,7 @@ def get_inp_target_criterion(encoder, decoder, batch):
         criterion = torch.nn.L1Loss()
     elif '3D' in decoder.__class__.__name__:
         target = batch['pose3d'].float()
-         # different if self-supervised
+        # different if self-supervised
         criterion = torch.nn.L1Loss()
         # criterion = torch.nn.MSELoss()
     else:

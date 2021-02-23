@@ -110,7 +110,9 @@ def main():
                     break
 
                 # TODO have different learning rates for generator and discriminator
-                # scheduler[0].step(val_loss)
+                scheduler[0].step()
+                scheduler[1].step()
+                
 
                 # only model ckpt as of now
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
@@ -206,9 +208,11 @@ def get_argparser():
                         help='percentage of noise to inject for critic training')
     parser.add_argument('--beta_max', default=0.01, type=float,  # 0.01
                         help='maximum value of beta during annealing or cycling')
-    parser.add_argument('--lr_generator', default=2e-4, type=float,
+    parser.add_argument('--lr_gen', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--lr_discriminator', default=2e-4, type=float,
+    parser.add_argument('--lr_disc', default=2e-4, type=float,
+                        help='learning rate for all optimizers')
+    parser.add_argument('--lr_decay', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--p_miss', default=0.0, type=int,
                         help='number of joints to encode and decode')

@@ -320,9 +320,9 @@ def training_specific_args():
                         help='percentage of noise to inject for critic training')
     parser.add_argument('--beta_max', default=0.01, type=float,  # 0.01
                         help='maximum value of beta during annealing or cycling')
-    parser.add_argument('--lr_generator', default=2e-4, type=float,
+    parser.add_argument('--lr_gen', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--lr_discriminator', default=2e-4, type=float,
+    parser.add_argument('--lr_disc', default=2e-4, type=float,
                         help='learning rate for all optimizers')
 
     parser.add_argument('--n_joints', default=16, type=int,
