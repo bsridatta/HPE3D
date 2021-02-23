@@ -46,7 +46,7 @@ def main():
         models['Critic'] = critic
     optimizers = train_utils.get_optims(
         variant, models, config)  # optimer for each pair
-    schedulers = train_utils.get_schedulers(optimizers)
+    schedulers = train_utils.get_schedulers(optimizers, config)
 
     # data parallel
     if torch.cuda.device_count() > 1:
