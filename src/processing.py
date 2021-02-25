@@ -37,7 +37,9 @@ def zero_the_root(pose, root_idx):
 def preprocess(data, joint_names, root_idx, normalize_pose=True, projection=True):
     pose2d = data['pose2d']
     pose3d = data['pose3d']
+    assert pose2d.shape[1:] == (16,2)
 
+    assert pose3d.shape[1:] == (16,3)
     # Scale 2D pose such that mean dist from head to root is 1/konwn_constant
     if projection:
         # calculate scale required to make 2D to 1/c unit

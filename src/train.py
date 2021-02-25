@@ -144,15 +144,14 @@ def do_setup():
     use_cuda = config.cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     config.device = device  # Adding device to config, not already in argparse
-    # config.num_workers = 4 if use_cuda else 4  # for dataloader
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'New_Scaling'
     os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
-    if not use_cuda:
-        # os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
+    if config.device == 'cpu':
+        os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="hpe3d",
                    config=config)  # to_delete
@@ -228,7 +227,7 @@ def get_argparser():
                         help='path to save checkpoints')
     parser.add_argument('--exp_name', default=f'run_1', type=str,
                         help='name of the current run, used to id checkpoint and other logs')
-    parser.add_argument('--log_interval', type=int, default=0,
+    parser.add_argument('--log_interval', type=int, default=1,
                         help='# of epochs to logging validation images')
     # device
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),

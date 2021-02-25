@@ -2,6 +2,7 @@
 import io
 import os
 from copy import deepcopy
+from src.datasets.common import BONES, COMMON_JOINTS
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -15,19 +16,17 @@ from PIL import Image
 from torchvision import transforms
 
 from src.processing import project_3d_to_2d
-SKELETON = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12),
-            (12, 13), (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
-LABELS = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle',
-          'Torso', 'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-SKELETON_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
-                   'b', 'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange']
+
+BONE_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
+                   'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange']
 
 JOINT_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
-                'b', 'b', 'b', 'b', 'orange', 'orange', 'orange', 'b', 'b', 'b']
-# SKELETON_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+                'b', 'b', 'b', 'orange', 'orange', 'orange', 'b', 'b', 'b']
+
+# BONE_COLORS = ['b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue',
 #                    'b', 'b', 'b', 'b', 'b', 'b', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
-# SKELETON_COLORS = ['deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue',
+# BONE_COLORS = ['deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue',
 #                    'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue', 'deepskyblue']
 
 
@@ -35,7 +34,7 @@ plt.locator_params(nbins=4)
 plt.rcParams["figure.figsize"] = (19.20, 10.80)
 
 
-def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_root=False, background=None, filename=None, save=False):
+def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, add_root_at_origin=True, background=None, filename=None, save=False):
     """Base function for 2D pose plotting
 
     Args:
@@ -61,17 +60,13 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         ax.imshow(background, origin='lower', alpha=0.5)
 
     if color:
-        colors = [color]*len(SKELETON_COLORS)
+        colors = [color]*len(BONE_COLORS)
     else:
-        colors = SKELETON_COLORS
+        colors = BONE_COLORS
 
-    if pose.shape[0] == 16:
-        if mean_root:
-            root = (pose[0] + pose[3])/2
-            pose = np.concatenate((root.reshape((1, 2)), pose), axis=0)
-            (colors[0], colors[10], colors[13]) = 'pink', 'pink', 'pink'
-        else:
-            pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
+    if pose.shape[0] == 15 and add_root_at_origin:
+        pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
+        (colors[0], colors[10], colors[13]) = 'gray', 'gray', 'gray'
 
     x = pose[:, 0]
     y = pose[:, 1]
@@ -80,7 +75,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     # Hence after 0ing legs would be positive and head would be negative
     plt.gca().invert_yaxis()
 
-    for link, color in zip(SKELETON, colors):
+    for link, color in zip(BONES, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 c=color, alpha=0.6, lw=3)
@@ -90,7 +85,7 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
     ax.scatter(x, y, alpha=0.8, s=60, color=colors)
 
     if labels:
-        for i, j, l in zip(x, y, LABELS):
+        for i, j, l in zip(x, y, COMMON_JOINTS):
             ax.text(i, j, s=f"{l[:4], i, j}", size=8, zorder=1, color='k')
 
     # if show_ticks:
@@ -145,8 +140,8 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, mean_
         raise ValueError("Please choose from 'image', 'show', 'axis' only")
 
 
-def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=True,
-            labels=False, show_ticks=False, mean_root=False, title=None, ax=None, filename=None):
+def plot_3d(pose, mode="show", color=None, floor=False, axis3don=True,
+            labels=False, show_ticks=False, add_root_at_origin=True, title=None, ax=None, filename=None):
     """Base function for 3D pose plotting
 
     Args:
@@ -171,20 +166,13 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
         ax._axis3don = axis3don
 
     if color:
-        colors = [color]*len(SKELETON_COLORS)
+        colors = [color]*len(BONE_COLORS)
     else:
-        colors = SKELETON_COLORS
+        colors = BONE_COLORS
 
-    if pose.shape[0] == 16:
-        if mean_root:
-            root = (pose[0] + pose[3])/2
-            pose = np.concatenate((root.reshape((1, 3)), pose), axis=0)
-            (colors[0], colors[10], colors[13]) = 'pink', 'pink', 'pink'
-        else:
-            if root_z is None:
-                root_z = 0
-            root_ = np.array([0, 0, float(root_z)]).reshape(1, 3)
-            pose = np.concatenate((root_, pose), axis=0)
+    if pose.shape[0] == 15 and add_root_at_origin:
+        pose = np.concatenate((np.zeros((1, 3)), pose), axis=0)
+        (colors[0], colors[10], colors[13]) = 'gray', 'gray', 'gray'
 
     x = pose[:, 0]
     y = pose[:, 1]
@@ -194,7 +182,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
 
     ax.scatter(x, y, z, alpha=alpha, s=20, depthshade=True)
 
-    for link, color_ in zip(SKELETON, colors):
+    for link, color_ in zip(BONES, colors):
         ax.plot(x[([link[0], link[1]])],
                 y[([link[0], link[1]])],
                 z[([link[0], link[1]])],
@@ -206,7 +194,7 @@ def plot_3d(pose, root_z=None, mode="show", color=None, floor=False, axis3don=Tr
 
     if labels:
         # Show coordinate values
-        for i, j, k, l in zip(x, y, z, LABELS):
+        for i, j, k, l in zip(x, y, z, COMMON_JOINTS):
             ax.text(i, j, k, s=f'{l[:4], round(i, 2), round(j, 2), round(k, 2)}',
                     size=7, zorder=1, color='k')
 
@@ -311,7 +299,7 @@ def plot_area(pose1, pose2, ax=None):
     z2 = pose2[:, 2]
 
     vertices = []
-    for link in SKELETON:
+    for link in BONES:
         area = [(x1[link[0]], y1[link[0]], z1[link[0]]),
                 (x1[link[1]], y1[link[1]], z1[link[1]]),
                 (x2[link[1]], y2[link[1]], z2[link[1]]),
@@ -448,7 +436,7 @@ def plot_proj(pose2d, pose3d, pose2d_proj, log=False):
     # pose3d
     ax = fig.add_subplot(100+col*10+i, projection='3d')
     i += 1
-    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True, mean_root=True)
+    plot_3d(pose3d, mode="axis", show_ticks=True, labels=True, add_root_at_origin=True)
 
     # psoe2d_proj[0]
     ax = fig.add_subplot(100+col*10+i)
@@ -546,12 +534,12 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
         {name+"target_2d": config.logger.Image(img)}, commit=False)
     # Recon 2d
     img = plot_2d(recon_2d, color='blue', mode='image',
-                  show_ticks=True, labels=False, mean_root=True)
+                  show_ticks=True, labels=False, add_root_at_origin=True)
     config.logger.log(
         {name+"recon_2d": config.logger.Image(img)}, commit=False)
     # Novel 2D
     img = plot_2d(novel_2d, color='blue', mode='image',
-                  show_ticks=True, labels=False, mean_root=True)
+                  show_ticks=True, labels=False, add_root_at_origin=True)
     config.logger.log(
         {name+"novel_2d": config.logger.Image(img)}, commit=False)
 
@@ -563,14 +551,14 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
             {name+"target_3d": config.logger.Image(img)}, commit=False)
     else:  # Validation
         img = plot_3d(recon_3d_org, color='blue', mode="image",
-                      show_ticks=True, labels=False, mean_root=True)
+                      show_ticks=True, labels=False, add_root_at_origin=True)
         config.logger.log(
             {name+"recon_3d_org": config.logger.Image(img)}, commit=False)
 
     # T -- Recon 3D | V - Target 3d + Recon 3D
     if name is "":  # Training
         img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
-                      labels=False, mean_root=True, title=title)
+                      labels=False, add_root_at_origin=True, title=title)
         config.logger.log(
             {name+"recon_3d": config.logger.Image(img)}, commit=True)
     else:
@@ -578,6 +566,6 @@ def plot_all_proj(config, recon_2d, novel_2d, target_2d, recon_3d, target_3d, re
         img = plot_3d(target_3d, color='pink', mode="axis",
                       show_ticks=True, labels=False)
         img = plot_3d(recon_3d, color='blue', mode="image", show_ticks=True,
-                      labels=False, mean_root=True, title=title)
+                      labels=False, add_root_at_origin=True, title=title)
         config.logger.log(
             {name+"recon_3d": config.logger.Image(img)}, commit=True)

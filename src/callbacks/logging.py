@@ -23,8 +23,8 @@ class Logging(Callback):
         dataset_len = len(dataloader.dataset)
         n_batches = len(dataloader)
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
-            vae_type, epoch, batch_idx * batch_len,
-            dataset_len, 100. * batch_idx / n_batches,
+            vae_type, epoch, batch_idx+1 * batch_len,
+            dataset_len, 100. * batch_idx+1 / n_batches,
             output['loss'], output['log']['recon_loss'],
             output['log']['kld_loss']), end='')
 
@@ -121,7 +121,7 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if config.log_interval and (epoch-1) % config.log_interval == 0:
+            if config.log_interval and epoch % config.log_interval == 0:
                 # plot_list = range(2)
                 plot_list = torch.topk(pjpe, k=n_samples, dim=0).indices
                 for i in plot_list:

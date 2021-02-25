@@ -11,8 +11,8 @@ import glob
 
 
 data_path: str = f'{os.getenv("HOME")}/lab/HPE_datasets/h36m/'
-train: bool = False
-type_2d = ["GT_2D", "SH", "SH_FT"][0]
+train: bool = True
+type_2d = ["GT_2D", "SH", "SH_FT"][2]
 
 if train:
     subject_list = [1, 5, 6, 7, 8]

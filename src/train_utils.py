@@ -47,14 +47,18 @@ def get_optims(variant, models, config):
         decoder = models[f"Decoder{pair[1].upper()}"]
         params = list(encoder.parameters())+list(decoder.parameters())
         # TODO have specific learning rate according to combo
-        optimizer = torch.optim.Adam(params, lr=config.lr_gen)
+        optimizer = torch.optim.Adam(params,
+                                     lr=config.lr_gen,
+                                     betas=[0.5, 0.999])
         optims.append(optimizer)
 
     if config.self_supervised:
         params = list(models['Critic'].parameters())
-        optimizer = torch.optim.Adam(params, lr=config.lr_disc, betas=[
-                                     0.9, 0.999])  # using SGD worsens Dx
+        optimizer = torch.optim.Adam(params,
+                                     lr=config.lr_disc,
+                                     betas=[0.5, 0.999])  # using SGD worsens Dx
         optims.append(optimizer)
+        
     return optims
 
 

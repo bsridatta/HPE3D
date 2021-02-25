@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, dataset
 
 from src.processing import preprocess, project_3d_to_2d
 from src.datasets.h36m_utils import H36M_NAMES, ACTION_NAMES
-from src.datasets.common import COMMON_JOINTS
+from src.datasets.common import COMMON_JOINTS, JOINT_CONNECTIONS
 
 
 class H36M(Dataset):
@@ -38,7 +38,7 @@ class H36M(Dataset):
 
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f"[INFO]: processing data samples: {len(self._data['idx'])}")
-
+        
         self._data = preprocess(
             self._data, self.joint_names, self.root_idx, projection=projection)
 
@@ -105,17 +105,9 @@ class H36M(Dataset):
         return sample
 
     def _set_skeleton_data(self):
-        self.joint_names = [name for name in COMMON_JOINTS if name != ""]
-
+        self.joint_names = COMMON_JOINTS.copy()
         self.action_names = list(ACTION_NAMES.values())
-
         self.root_idx = self.joint_names.index('Pelvis')
-
-        self._joint_connections = (('Pelvis', 'Torso'), ('Torso', 'Neck'), ('Neck', 'Head'), ('Neck', 'L_Shoulder'), ('L_Shoulder', 'L_Elbow'), ('L_Elbow', 'L_Wrist'), ('Neck', 'R_Shoulder'), (
-            'R_Shoulder', 'R_Elbow'), ('R_Elbow', 'R_Wrist'), ('Pelvis', 'R_Hip'), ('R_Hip', 'R_Knee'), ('R_Knee', 'R_Ankle'), ('Pelvis', 'L_Hip'), ('L_Hip', 'L_Knee'), ('L_Knee', 'L_Ankle'))
-
-        self.bones = tuple([(self.joint_names.index(i), self.joint_names.index(j))
-                            for (i, j) in self._joint_connections])
 
         # without pelvis as its removed in the preprocessing step after zeroing
         joints_15 = self.joint_names.copy()
