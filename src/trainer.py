@@ -159,8 +159,10 @@ def _training_step(batch, batch_idx, model, config, optimizer):
 
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + 0.1*config.beta * kld_loss + \
-            config.critic_weight*gen_loss
+        # lambda_kld is used to compute the beta coeff
+        loss = config.lambda_gen*recon_loss + config.beta * kld_loss + \
+            config.lambda_disc*gen_loss
+
         loss *= 10
 
         loss.backward()  # Would include VAE and critic but critic not updated
@@ -326,8 +328,9 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
 
         kld_loss = KLD(mean, logvar, decoder.name)
 
-        loss = recon_loss + 0.1*config.beta*kld_loss + \
-            config.critic_weight*gen_loss
+        # lambda_kld is used to compute the beta coeff
+        loss = config.lambda_gen*recon_loss + config.beta * kld_loss + \
+            config.lambda_disc*gen_loss
         loss *= 10
 
         D_G_z2 = output.mean().item()

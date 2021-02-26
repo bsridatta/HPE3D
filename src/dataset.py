@@ -70,7 +70,7 @@ class H36M(Dataset):
             image = self.get_image_tensor(sample)
             sample['image'] = image
 
-        if self._train and torch.rand(1) < 0:
+        if self._train and torch.rand(1) < 0.5:
             sample = self._flip(sample)
 
         return sample

@@ -194,8 +194,13 @@ def get_argparser():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--critic_weight', default=1e-3, type=float,
+    parser.add_argument('--lambda_gen', default=1, type=float,
                         help='critic weight for self supervised procedure')
+    parser.add_argument('--lambda_disc', default=1e-3, type=float,
+                        help='critic weight for self supervised procedure')
+    parser.add_argument('--lambda_kld', default=1e-3, type=float,  # 0.01
+                        help='beta (kld coeff in b-vae) or maximum value of beta during annealing or cycling')
+   
     parser.add_argument('--critic_annealing_epochs', default=10, type=int,
                         help='critic weight annealing time')
     parser.add_argument('--beta_warmup_epochs', default=10, type=int,
@@ -204,8 +209,7 @@ def get_argparser():
                         help='KLD weight annealing time')
     parser.add_argument('--noise_level', default=0.0, type=float,  # 0.01
                         help='percentage of noise to inject for critic training')
-    parser.add_argument('--beta_max', default=0.01, type=float,  # 0.01
-                        help='maximum value of beta during annealing or cycling')
+
     parser.add_argument('--lr_gen', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_disc', default=2e-4, type=float,
