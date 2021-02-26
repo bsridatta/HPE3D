@@ -20,7 +20,7 @@ def train_dataloader(config):
                                          shuffle=shuffle
                                          )
     # if enabling the fastdev method len(dataset) doesnt reflect actual data !ignore
-    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
+    print(f"[INFO]: Samples in loader: {loader.batch_size} * {len(loader)} -> {len(loader)*loader.batch_size}")
     return loader
 
 
@@ -43,7 +43,7 @@ def val_dataloader(config, shuffle=True):
                                          sampler=sampler,
                                          shuffle=shuffle
                                          )
-    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
+    print(f"[INFO]: Samples in loader: {loader.batch_size} * {len(loader)} -> {len(loader)*loader.batch_size}")
 
     return loader
 
