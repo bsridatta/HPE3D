@@ -2,7 +2,7 @@
 import io
 import os
 from copy import deepcopy
-from src.datasets.common import BONES, COMMON_JOINTS
+from src.datasets.common import BONES, COMMON_JOINTS, JOINT_CONNECTIONS
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -66,7 +66,9 @@ def plot_2d(pose, mode="show", color=None, labels=False, show_ticks=False, add_r
 
     if pose.shape[0] == 15 and add_root_at_origin:
         pose = np.concatenate((np.zeros((1, 2)), pose), axis=0)
-        (colors[0], colors[10], colors[13]) = 'gray', 'gray', 'gray'
+        for idx, connection in enumerate(JOINT_CONNECTIONS):
+            if 'Pelvis' in connection:
+                colors[idx] = 'gray'
 
     x = pose[:, 0]
     y = pose[:, 1]
