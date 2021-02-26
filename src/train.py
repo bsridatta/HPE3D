@@ -146,7 +146,7 @@ def do_setup():
 
     # wandb for experiment monitoring
     os.environ['WANDB_TAGS'] = 'New_Scaling'
-    os.environ['WANDB_NOTES'] = 'None'
+    # os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
     if config.device.type == 'cpu':
