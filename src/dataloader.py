@@ -64,7 +64,7 @@ def test_dataloader(config):
                                          sampler=sampler,
                                          shuffle=shuffle
                                          )
-    print(f"[INFO]: Samples in loader: {len(loader)*loader.batch_size}")
+    print(f"[INFO]: Samples in loader: {loader.batch_size} * {len(loader)} -> {len(loader)*loader.batch_size}")
 
     return loader
 
