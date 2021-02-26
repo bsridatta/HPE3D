@@ -101,7 +101,6 @@ def test():
     config.num_workers = 4
     config.pin_memory = False
     config.ignore_images = True
-    config.device = "cpu"
     train_loader = train_dataloader(config)
 
     for batch_idx, batch in enumerate(train_loader):

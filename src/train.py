@@ -112,7 +112,6 @@ def main():
                 # TODO have different learning rates for generator and discriminator
                 scheduler[0].step()
                 scheduler[1].step()
-                
 
                 # only model ckpt as of now
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
@@ -150,7 +149,7 @@ def do_setup():
     os.environ['WANDB_NOTES'] = 'None'
 
     # ignore when debugging on cpu
-    if config.device == 'cpu':
+    if config.device.type == 'cpu':
         os.environ['WANDB_MODE'] = 'dryrun'  # Doesnt auto sync to project
         os.environ['WANDB_TAGS'] = 'CPU'
         wandb.init(anonymous='allow', project="hpe3d",
@@ -213,7 +212,7 @@ def get_argparser():
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_decay', default=0.95, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--p_miss', default=0.0, type=int,
+    parser.add_argument('--p_miss', default=0.0, type=float,
                         help='number of joints to encode and decode')
     # data files
     parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_sh.h5', type=str,

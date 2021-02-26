@@ -23,8 +23,8 @@ class Logging(Callback):
         dataset_len = len(dataloader.dataset)
         n_batches = len(dataloader)
         print('{} Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.4f}\tReCon: {:.4f}\tKLD: {:4f}'.format(
-            vae_type, epoch, batch_idx+1 * batch_len,
-            dataset_len, 100. * batch_idx+1 / n_batches,
+            vae_type, epoch, (batch_idx+1) * batch_len,
+            dataset_len, 100. * ((batch_idx+1)*batch_len) / dataset_len,
             output['loss'], output['log']['recon_loss'],
             output['log']['kld_loss']), end='')
 
