@@ -90,9 +90,9 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         critic_optimizer.zero_grad(set_to_none=True)
 
         # confuse critic
-        # if batch_idx % 7 == 0:
-        #     real_label = 0
-        #     fake_label = 1
+        if config.flip_labels_n_e and batch_idx % config.flip_labels_n_e == 0:
+            real_label = 0
+            fake_label = 1
 
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,

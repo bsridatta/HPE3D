@@ -207,9 +207,11 @@ def get_argparser():
                         help='KLD weight warmup time. weight is 0 during this period')
     parser.add_argument('--beta_annealing_epochs', default=40, type=int,
                         help='KLD weight annealing time')
-    parser.add_argument('--noise_level', default=0.0, type=float,  # 0.01
+    parser.add_argument('--noise_level', default=0.0, type=float, 
                         help='percentage of noise to inject for critic training')
-
+    parser.add_argument('--flip_labels_n_e', default=0, type=int,  
+                        help='flip real fake labels for critic every n epochs')
+    
     parser.add_argument('--lr_gen', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_disc', default=2e-4, type=float,
