@@ -112,7 +112,7 @@ def main():
                 scheduler[0].step()
                 scheduler[1].step()
 
-                # only model ckpt as of now
+                # only model ckpt as of now - technically on validation epoch end but not for all validation
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
                                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
@@ -127,7 +127,7 @@ def main():
             print("[INFO]: LR < 1e-6. Stop training")
             break
             
-            
+
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)

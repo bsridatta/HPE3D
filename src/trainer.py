@@ -439,7 +439,7 @@ def validation_epoch(config, cb, model, val_loader, epoch, vae_type, normalize_p
             mpjpe_pa[i.item()] = res.item()
 
         config.logger.log({"pjpe": pjpe.cpu()})
-
+    
     cb.on_validation_end(config=config, vae_type=vae_type, epoch=epoch, loss_dic=loss_dic, mpjpe_pa=mpjpe_pa,
                          val_loader=val_loader, mpjpe=avg_mpjpe, avg_pjpe=avg_pjpe, pjpe=pjpe, t_data=t_data
                          )

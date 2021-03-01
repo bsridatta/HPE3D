@@ -70,4 +70,4 @@ class ModelCheckpoint(Callback):
                 f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_optimizer_{n_pair}.pt')
             
             
-            config.logger.config.update({"mpjpe_min": config.mpjpe_min})
+            config.logger.config.update({"mpjpe_min": config.mpjpe_min}, allow_val_change=True)
