@@ -108,14 +108,17 @@ def main():
                     print("[WARNING]: NAN loss")
                     break
 
-                # TODO have different learning rates for generator and discriminator
-                scheduler[0].step()
-                scheduler[1].step()
-
                 # only model ckpt as of now - 
-                # technically should be in validation epoch code but easier acces to model info here
+                # TODO change to on_validation_end as no change in mpjpe_min without validation run
+                # ideally should be in validation epoch code but easier acces to model info here
+                # checkpoint if new mpjpe from validation is best
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
                                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
+
+            # TODO have different learning rates for generator and discriminator
+            scheduler[0].step()
+            scheduler[1].step()
+
 
         # TODO add better metric log for every batch with partial epoch for batch size independence
         config.logger.log({"epoch": epoch})
