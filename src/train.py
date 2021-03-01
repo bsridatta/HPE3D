@@ -100,7 +100,7 @@ def main():
                            optimizer, epoch, vae_type)
 
             val_loss = 0
-            if epoch % 5 == 0:
+            if epoch % config.validation_interval == 0:
                 val_loss = validation_epoch(
                     config, cb, model, val_loader, epoch, vae_type)
 
@@ -112,7 +112,8 @@ def main():
                 scheduler[0].step()
                 scheduler[1].step()
 
-                # only model ckpt as of now - technically on validation epoch end but not for all validation
+                # only model ckpt as of now - 
+                # technically should be in validation epoch code but easier acces to model info here
                 cb.on_epoch_end(config=config, val_loss=val_loss, model=model,
                                 n_pair=n_pair, optimizers=optimizers, epoch=epoch)
 
@@ -232,8 +233,11 @@ def get_argparser():
                         help='path to save checkpoints')
     parser.add_argument('--exp_name', default=f'run_1', type=str,
                         help='name of the current run, used to id checkpoint and other logs')
-    parser.add_argument('--log_interval', type=int, default=1,
-                        help='# of epochs to logging validation images')
+    parser.add_argument('--log_image_interval', type=int, default=1,
+                        help='log images during eval epoch falling in this interval')
+    parser.add_argument('--validation_interval', type=int, default=5,
+                        help='validate every nth epoch')
+
     # device
     parser.add_argument('--cuda', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='enable cuda if available')

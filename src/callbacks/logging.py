@@ -121,7 +121,7 @@ class Logging(Callback):
 
             # log intermediate visualizations
             n_samples = 2
-            if config.log_interval and epoch % config.log_interval == 0:
+            if config.log_image_interval and epoch % config.log_image_interval == 0:
                 # plot_list = range(2)
                 # viz worst 2 to check what the model is not able to learn
                 plot_list = torch.topk(pjpe, k=n_samples, dim=0).indices
