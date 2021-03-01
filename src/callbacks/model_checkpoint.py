@@ -21,18 +21,18 @@ class ModelCheckpoint(Callback):
                 print(
                     f'[INFO] Loaded Checkpoint {config.resume_run}: {model.name} @ epoch {state["epoch"]}')
                 model.load_state_dict(state['model_state_dict'])
-            
+
             # Optimizers
             for n_pair in range(len(variant)):
                 optimizer_state_dic = torch.load(
-                    f'{config.save_dir}/{config.resume_run}_optimizer_{n_pair}.pt', map_location=config.device)            
+                    f'{config.save_dir}/{config.resume_run}_optimizer_{n_pair}.pt', map_location=config.device)
                 optimizers[n_pair].load_state_dict(optimizer_state_dic)
-    
+
     def on_epoch_end(self, config, val_loss, model, optimizers, epoch, n_pair, **kwargs):
-                        
         if config.mpjpe < config.mpjpe_min and config.device.type != 'cpu':
-            print(f"[INFO]: MPJPE decreased from {config.mpjpe_min} -> {config.mpjpe}")
-            config.mpjpe_min = config.mpjpe
+            print(
+                f"[INFO]: MPJPE decreased from {config.mpjpe_min} -> {config.mpjpe}")
+            config.mpjpe_min = config.mpjpe  
 
             # just update val_loss for record
             if val_loss < self.val_loss_min and config.device.type != 'cpu':
@@ -59,7 +59,7 @@ class ModelCheckpoint(Callback):
                     f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_{model_.name}.pt')
 
                 del state
-            
+
             # Optimizer
             torch.save(
                 optimizers[n_pair].state_dict(),
@@ -68,3 +68,6 @@ class ModelCheckpoint(Callback):
                 f'{config.save_dir}/{config.logger.run.name}_optimizer_{n_pair}.pt')
             print(
                 f'[INFO] Saved pt: {config.save_dir}/{config.logger.run.name}_optimizer_{n_pair}.pt')
+            
+            
+            config.logger.config.update({"mpjpe_min": config.mpjpe_min})

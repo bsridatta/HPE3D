@@ -1,4 +1,3 @@
-
 import torch 
 
 
@@ -43,7 +42,7 @@ def PJPE(pred, target):
         torch.sum((pred-target).pow(2), dim=2))
 
     # MPJPE = torch.mean(PJPE, dim=0)
-    torch.nn.L1Loss()
+    # torch.nn.L1Loss()
     return PJPE
 
 # TODO add static methods wherever neccesary

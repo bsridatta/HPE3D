@@ -73,7 +73,6 @@ def main():
              train_loader=train_loader, val_loader=val_loader, variant=variant)
 
     config.mpjpe_min = float('inf')
-    config.mpjpe_at_min_val = float('inf')
 
     # Training
     for epoch in range(1, config.epochs+1):
@@ -127,7 +126,8 @@ def main():
         if optimizer[0].param_groups[0]['lr'] < 1e-6:
             print("[INFO]: LR < 1e-6. Stop training")
             break
-
+            
+            
     # sync config with wandb for easy experiment comparision
     config.logger = None  # wandb cant have objects in its config
     wandb.config.update(config)
