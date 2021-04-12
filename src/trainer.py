@@ -10,7 +10,7 @@ from src.train_utils import get_inp_target_criterion
 # torch.autograd.set_detect_anomaly(True)
 
 
-def _training_step(batch, batch_idx, model, config, optimizer):
+def _training_step(batch, batch_idx, model, config, optimizer, epoch):
     encoder = model[0].train()
     decoder = model[1].train()
 
@@ -86,6 +86,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         real_label = 1
         fake_label = 0
         binary_loss = nn.BCELoss()
+        binary_loss_no_red = nn.BCELoss(reduction='none')
         critic_optimizer = optimizer[-1]
         critic_optimizer.zero_grad(set_to_none=True)
 
@@ -130,7 +131,7 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         ################################################
         # Generator - maximize log(D(G(z)))
         ################################################
-        # real lables so as to train the vae such that a-
+        # real labels so as to train the vae such that a-
         # -trained discriminator predicts all fake as real
 
         # required if the real and fake are flipped in critic training
@@ -147,7 +148,20 @@ def _training_step(batch, batch_idx, model, config, optimizer):
         output = critic(novel_2d)
 
         # Sum 'recon', 'kld' and 'critic' losses
-        gen_loss = binary_loss(output, labels)
+        gen_loss = binary_loss_no_red(output, labels)
+
+        if config.top_k:
+            # top k generations
+            top_k_gamma = 0.99 # decay rate of k
+            top_k_min = 0.5 # least % of k
+            k = int(max(top_k_min, top_k_gamma ** epoch) * len(gen_loss))
+            gen_loss, top_k_indices = gen_loss.topk(k=k, largest=False, dim=0)
+            recon_2d = recon_2d[top_k_indices]
+            target_2d = target_2d[top_k_indices]
+            mean = mean[top_k_indices]
+            logvar = logvar[top_k_indices]
+
+        gen_loss = torch.mean(gen_loss)
 
         if config.p_miss:
             recon_2d_org = recon_2d.clone().detach()
@@ -364,7 +378,7 @@ def training_epoch(config, cb, model, train_loader, optimizer, epoch, vae_type):
         for key in batch.keys():
             batch[key] = batch[key].to(config.device).float()
 
-        output = _training_step(batch, batch_idx, model, config, optimizer)
+        output = _training_step(batch, batch_idx, model, config, optimizer, epoch)
 
         cb.on_train_batch_end(config=config, vae_type=vae_type, epoch=epoch, batch_idx=batch_idx,
                               batch=batch, dataloader=train_loader, output=output, models=model)

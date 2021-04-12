@@ -181,9 +181,9 @@ def get_argparser():
     parser = ArgumentParser()
 
     # training specific
-    parser.add_argument('--epochs', default=800, type=int,
+    parser.add_argument('--epochs', default=2, type=int,
                         help='number of epochs to train')
-    parser.add_argument('--batch_size', default=2560, type=int,
+    parser.add_argument('--batch_size', default=4, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity, !!!NOT implemented!!!')
@@ -193,6 +193,8 @@ def get_argparser():
                         help='run validatoin epoch only')
     parser.add_argument('--self_supervised', default=True, type=bool,
                         help='training strategy')
+    parser.add_argument('--top_k', default=True, type=bool,
+                        help='top k realistic samples to train generator')
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')

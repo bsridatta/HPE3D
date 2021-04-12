@@ -31,7 +31,7 @@ def val_dataloader(config, shuffle=True):
 
     # TODO use test loader for test.py
     sampler = SubsetRandomSampler(
-        range(0, 10)) if config.fast_dev_run else None
+        range(0, 20)) if config.fast_dev_run else None
 
     if sampler:
         shuffle = False
