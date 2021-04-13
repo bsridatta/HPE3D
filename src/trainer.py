@@ -152,9 +152,7 @@ def _training_step(batch, batch_idx, model, config, optimizer, epoch):
 
         if config.top_k:
             # top k generations
-            top_k_gamma = 0.99 # decay rate of k
-            top_k_min = 0.5 # least % of k
-            k = int(max(top_k_min, top_k_gamma ** epoch) * len(gen_loss))
+            k = int(max(config.top_k_min, config.top_k_gamma ** epoch) * len(gen_loss))
             gen_loss, top_k_indices = gen_loss.topk(k=k, largest=False, dim=0)
             recon_2d = recon_2d[top_k_indices]
             target_2d = target_2d[top_k_indices]

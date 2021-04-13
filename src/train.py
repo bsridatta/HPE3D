@@ -195,6 +195,11 @@ def get_argparser():
                         help='training strategy')
     parser.add_argument('--top_k', default=True, type=bool,
                         help='top k realistic samples to train generator')
+    parser.add_argument('--top_k_gamma', default=0.99, type=float,
+                        help='# decay rate of k')
+    parser.add_argument('--top_k_min', default=0.5, type=float,
+                        help='# least % of k')
+    
     # model specific
     parser.add_argument('--variant', default=2, type=int,
                         help='choose variant, the combination of VAEs to be trained')
