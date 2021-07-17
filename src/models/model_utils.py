@@ -16,17 +16,6 @@ def kaiming_init(m):
     #         torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
     
 
-def reparameterize(mean, logvar, eval=False):
-    # TODO not sure why few repos do that
-    if eval:
-        return mean
-
-    std = torch.exp(0.5*logvar)
-    eps = torch.randn_like(std)
-
-    return mean + eps*std
-
-
 def PJPE(pred, target):
     '''
     Equation per sample per sample in batch

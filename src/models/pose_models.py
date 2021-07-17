@@ -14,6 +14,7 @@ class LBAD(nn.Module):
         use_bn: bool,
     ):
         super(LBAD, self).__init__()
+        self.name = "LBAD"
         self.activ = activation()
         self.w1 = nn.Linear(neurons, neurons, bias=False)
         self.dropout = nn.Dropout(p=drop_out_p)
@@ -40,6 +41,7 @@ class ResBlock(nn.Module):
     ):
         super(ResBlock, self).__init__()
         self.activation = activation
+        self.name = "ResBlock"
         # feature
         self.BB_1 = BasicBlock(neurons, activation, drop_out_p, use_bn)
         self.BB_2 = BasicBlock(neurons, activation, drop_out_p, use_bn)
@@ -139,7 +141,7 @@ class Discriminator(nn.Module):
         drop_out_p: float = 0.5,
     ):
         super(Discriminator, self).__init__()
-        self.name = "critic"
+        self.name = "Discriminator"
         self.n_joints = n_joints
 
         self.inp_block = nn.Sequential(
