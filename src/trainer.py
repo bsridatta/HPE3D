@@ -4,7 +4,7 @@ from collections import OrderedDict, defaultdict
 import torch
 from torch import nn
 from src.models import KLD, PJPE, reparameterize
-from src.processing import post_process, random_rotate, project_3d_to_2d
+from src.processing import post_process, random_rotate, translate_and_project
 from src.train_utils import get_inp_target_criterion
 
 # torch.autograd.set_detect_anomaly(True)
@@ -63,18 +63,19 @@ def _training_step(batch, batch_idx, model, config, optimizer, epoch):
         noised_real = add_noise(inp.detach().clone(), config.noise_level)
 
         # enforce unit recon if above root is scaled to 1
+        # tanh gives 0 to 1-  lower is 1 then upper is 0.8 we need upper 1
         recon_3d = recon_3d*1.3
 
         T = torch.tensor((0, 0, 10), device=recon_3d.device,
                          dtype=recon_3d.dtype)
 
-        recon_2d = project_3d_to_2d(recon_3d+T)
+        recon_2d = translate_and_project(recon_3d+T)
 
         novel_3d_detach = random_rotate(recon_3d.detach())
         novel_3d = random_rotate(recon_3d)
 
-        novel_2d = project_3d_to_2d(novel_3d+T)
-        novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
+        novel_2d = translate_and_project(novel_3d+T)
+        novel_2d_detach = translate_and_project(novel_3d_detach+T)
 
         # Use the same fake for training critic and the generator
         novel_2d_detach = novel_2d.detach()
@@ -97,7 +98,7 @@ def _training_step(batch, batch_idx, model, config, optimizer, epoch):
 
         # train with real samples
         labels = torch.full((len(target_2d), 1), real_label,
-                            device=config.device, dtype=target_2d.dtype)
+                            device=config.device    , dtype=target_2d.dtype)
         # label smoothing for real labels alone
         label_noise = (torch.rand_like(
             labels, device=labels.device)*(0.7-1.2)) + 1.2
@@ -268,13 +269,13 @@ def _validation_step(batch, batch_idx, model, epoch, config, eval=True):
         T = torch.tensor((0, 0, 10), device=recon_3d.device,
                          dtype=recon_3d.dtype)
 
-        recon_2d = project_3d_to_2d(recon_3d+T)
+        recon_2d = translate_and_project(recon_3d+T)
 
         novel_3d_detach = random_rotate(recon_3d.detach())
         novel_3d = random_rotate(recon_3d)
 
-        novel_2d = project_3d_to_2d(novel_3d+T)
-        novel_2d_detach = project_3d_to_2d(novel_3d_detach+T)
+        novel_2d = translate_and_project(novel_3d+T)
+        novel_2d_detach = translate_and_project(novel_3d_detach+T)
 
         # Use the same fake for training critic and the generator
         novel_2d_detach = novel_2d.detach()

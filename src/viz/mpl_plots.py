@@ -15,7 +15,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from PIL import Image
 from torchvision import transforms
 
-from src.processing import project_3d_to_2d
+from src.processing import translate_and_project
 
 BONE_COLORS = ['b', 'b', 'b', 'b', 'orange', 'orange', 'orange',
                    'b', 'b', 'b', 'b', 'b', 'orange', 'orange', 'orange']
@@ -500,7 +500,7 @@ def plot_projection_raw(sample):
         if not isinstance(sample[x], str):
             sample[x] = torch.Tensor(sample[x])
 
-    pose2d_proj = project_3d_to_2d(pose3d)
+    pose2d_proj = translate_and_project(pose3d)
 
     # print("dist", dist, "dist1", dist1, "dist2", dist2, "dist3", dist3, "scale", pose2d/pose2d_proj)
     print(pose2d, "\n", pose2d_proj)

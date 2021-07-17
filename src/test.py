@@ -16,7 +16,7 @@ from src.models import PJPE, kaiming_init, Critic
 from src.trainer import validation_epoch, _validation_step
 from src.callbacks import CallbackList, ModelCheckpoint, Logging, WeightScheduler, Analyze, MaxNorm
 from collections import OrderedDict, defaultdict
-from src.processing import post_process, random_rotate, project_3d_to_2d
+from src.processing import post_process, random_rotate, translate_and_project
 
 
 def main():

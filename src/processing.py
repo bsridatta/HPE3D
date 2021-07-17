@@ -32,56 +32,59 @@ def zero_the_root(poses: np.ndarray, root_idx: int) -> np.ndarray:
 
     return poses
 
+def scale_3d(poses):
+    # TODO scale such that each poses upper half is of scale 1
+
+    # enforce unit recon if above root is scaled to 1
+    # tanh gives 0 to 1-  lower is 1 then upper is 0.8 we need upper 1    
+    return poses*1.3
 
 def preprocess(
-    data: Dict[str, np.ndarray],
+    poses: np.ndarray,
     joint_names: List[str],
     root_idx: int,
     normalize_pose: bool = True,
     is_ss: bool = True,
-    projection_plane_distance: float = 10,
-) -> Dict:
+    project_dist: float = 10,
+) -> np.ndarray:
     """Normalize 2D, 3D for supervised or scale 2D for self supervised. Zero poses at root and remove roots.
 
     Args:
-        data (Dict[str, np.ndarray]): Dict of 2D, 3D poses and meta data
+        poses (np.ndarray): 2D/3D poses 
         joint_names (List[str]): joint names in the order of the points in the dataset - taken care in dataset creation code
         root_idx (int): index of root
         normalize_pose (bool, optional): If supervised. Defaults to True.
         is_ss (bool, optional): True if self supervised training. Defaults to True.
-        projection_plane_distance (float, optional): Distance of the image plane from camera. A unit 3D pose projected to 2D will be the inverse of this value. Defaults to 10.
+        project_dist (float, optional): Distance of the image plane from camera. A unit 3D pose projected to 2D will be the inverse of this value. Defaults to 10.
 
     Returns:
         Dict: The dictionary with process pose values
     """
-    pose2d = data["pose2d"]
-    pose3d = data["pose3d"]
 
-    assert pose2d.shape[1:] == (16, 2)
-    assert pose3d.shape[1:] == (16, 3)
+    assert poses.shape[-1] in [2, 3]
 
     # Scale 2D pose such that mean dist from head to root is 1/konwn_constant
-    if is_ss:
+    if is_ss and poses.shape[-1] == 2:
         # calculate scale required to make 2D to 1/c unit
-        c = projection_plane_distance
+        c = project_dist
 
         # calculate the total distance between the head and the root
         # 2D poses stil have 17 joints
         head2neck = np.linalg.norm(
-            pose2d[:, joint_names.index("Head"), :]
-            - pose2d[:, joint_names.index("Neck"), :],
+            poses[:, joint_names.index("Head"), :]
+            - poses[:, joint_names.index("Neck"), :],
             axis=1,
             keepdims=True,
         )
         neck2torso = np.linalg.norm(
-            pose2d[:, joint_names.index("Neck"), :]
-            - pose2d[:, joint_names.index("Torso"), :],
+            poses[:, joint_names.index("Neck"), :]
+            - poses[:, joint_names.index("Torso"), :],
             axis=1,
             keepdims=True,
         )
         torso2root = np.linalg.norm(
-            pose2d[:, joint_names.index("Torso"), :]
-            - pose2d[:, joint_names.index("Pelvis"), :],
+            poses[:, joint_names.index("Torso"), :]
+            - poses[:, joint_names.index("Pelvis"), :],
             axis=1,
             keepdims=True,
         )
@@ -89,27 +92,22 @@ def preprocess(
 
         # Google's poem scales using lower half
         # head2neck = np.linalg.norm(
-        #     pose2d[:,js.index('R_Hip'),:] - pose2d[:,js.index('R_Knee'),:], axis=1, keepdims=True)
+        #     poses[:,js.index('R_Hip'),:] - poses[:,js.index('R_Knee'),:], axis=1, keepdims=True)
         # neck2torso = np.linalg.norm(
-        #     pose2d[:,js.index('R_Knee'),:] - pose2d[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
+        #     poses[:,js.index('R_Knee'),:] - poses[:,js.index('R_Ankle'),:], axis=1, keepdims=True)
         # dist = head2neck+neck2torso
 
         scale_2d = c * np.mean(dist)  # 1/c units
-        pose2d = np.divide(pose2d.T, scale_2d.T).T  # type: ignore
+        poses = np.divide(poses.T, scale_2d.T).T  # type: ignore
 
-    # center the 2d and 3d pose at the root and remove the root
-    pose2d = zero_the_root(pose2d, root_idx)
-    pose3d = zero_the_root(pose3d, root_idx)
+    # center the 2d/3d pose at the root and remove the root
+    poses = zero_the_root(poses, root_idx)
 
-    # do not normalize if ss - using gans and normalization is done above by scaling 2d
+    # do not normalize if ss i.e using gans as normalization is done above by scaling 2d
     if normalize_pose and not is_ss:
-        pose2d = normalize(pose2d)
-        pose3d = normalize(pose3d)
+        poses = normalize(poses)
 
-    data["pose2d"] = pose2d
-    data["pose3d"] = pose3d
-
-    return data
+    return poses
 
 
 def post_process(
@@ -229,12 +227,13 @@ def random_rotate(
     return pose_3d_rotated
 
 
-def project_3d_to_2d(pose_3d):
+def translate_and_project(pose3d, project_dist):
+    T = torch.tensor((0, 0, project_dist)).to(pose3d).type_as(pose3d)
+    pose3d = pose3d + T
+    pose3d_z = torch.clamp(pose3d[Ellipsis, -1:], min=1e-12)
+    pose2d_reprojection = pose3d[Ellipsis, :-1] / pose3d_z
 
-    pose_3d_z = torch.clamp(pose_3d[Ellipsis, -1:], min=1e-12)
-    pose_2d_reprojection = pose_3d[Ellipsis, :-1] / pose_3d_z
-
-    return pose_2d_reprojection
+    return pose2d_reprojection
 
 
 ################################################################################

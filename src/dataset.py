@@ -1,6 +1,6 @@
 import gc
 import os
-from typing import Optional
+from typing import List, Optional, Union
 
 import albumentations
 import h5py
@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, dataset
 
-from processing import preprocess, project_3d_to_2d
+from processing import preprocess, translate_and_project
 from datasets.h36m_utils import H36M_NAMES, ACTION_NAMES
 from datasets.common import COMMON_JOINTS, JOINT_CONNECTIONS
 
@@ -19,6 +19,7 @@ class H36M(Dataset):
         h5_filepath: str,
         is_ss: bool = True,
         is_train: bool = False,
+        all_keys: bool = False,
     ):
         """H36M dataset
 
@@ -26,36 +27,44 @@ class H36M(Dataset):
             h5_filepath (str): path to h5 file
             is_ss (bool, optional): [description]. Defaults to True.
             is_train (bool, optional): [description]. Defaults to False.
+            all_keys (bool, optional): include all keys. Defaults to False.
         """
+
         self.is_train = is_train
         self._set_skeleton_data()
-        self.data = {}
-
+        
         h5 = h5py.File(h5_filepath, "r")
-        for key in h5.keys():
+
+        if all_keys:
+            self.keys = h5.keys() 
+        elif is_train and is_ss:
+            self.keys = ["pose2d", "idx"]
+        else:
+            self.keys = ["pose2d", "pose3d", "idx"]
+
+        self.data = {}
+        for key in self.keys:
             self.data[key] = np.array(h5.get(key))
         h5.close()
 
         # further process to make the data learnable - zero 3dpose and norm poses
         print(f"[INFO]: processing data samples: {len(self.data['idx'])}")
 
-        self.data = preprocess(self.data, self.joint_names, self.root_idx, is_ss=is_ss)
+        for key in self.keys:
+            if key in ["pose2d", "pose3d"]:
+                self.data[key] = preprocess(
+                    self.data[key], self.joint_names, self.root_idx, is_ss=is_ss
+                )  # preprocessing in numpy is easy
+                assert self.data[key].shape[-2] == 15
 
-        # covert data to tensor after preprocessing them as numpys (for convinience)
-        for key in self.data.keys():
             self.data[key] = torch.tensor(self.data[key], dtype=torch.float32)
 
-        self.dataset_len = len(self.data["idx"])
-
-        assert self.data["pose2d"].shape[1:] == (15, 2)
-        assert self.data["pose3d"].shape[1:] == (15, 3)
-
     def __len__(self):
-        return len(self.data["idx"])
+        return len(self.data["pose2d"])
 
     def __getitem__(self, idx):
         sample = {}
-        for key in self.data.keys():
+        for key in self.keys:
             sample[key] = self.data[key][idx]
 
         if self.is_train and torch.rand(1) < 0.5:
@@ -64,13 +73,13 @@ class H36M(Dataset):
         return sample
 
     def _flip(self, sample):
-        # switch magnitude
+        # switch magnitude and direction
         sample["pose2d"] = sample["pose2d"][self._flipped_indices]
-        sample["pose3d"] = sample["pose3d"][self._flipped_indices]
-
-        # switch direction
         sample["pose2d"][:, 0] *= -1
-        sample["pose3d"][:, 0] *= -1
+
+        if "pose3d" in sample.keys():
+            sample["pose3d"] = sample["pose3d"][self._flipped_indices]
+            sample["pose3d"][:, 0] *= -1
 
         return sample
 
@@ -98,7 +107,7 @@ def check_data():
     Can be used to get norm stats for all subjects/ # Just for easily access content.
     """
 
-    h5_filepath = f"src/data/h36m_test_gt_2d.h5"
+    h5_filepath = f"src/data/h36m_train_sh_ft.h5"
     # image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
 
     dataset = H36M(h5_filepath, is_train=True)

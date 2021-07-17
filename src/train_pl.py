@@ -1,8 +1,10 @@
 import os
+
+from trainer_pl import VAEGAN
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 import torch
-from src.dataset import H36M
+from dataset import H36M
 
 
 def main():
@@ -28,7 +30,12 @@ def main():
         shuffle=False,
     )
 
-    
+    model = VAEGAN(opt.latent_dim, lr_d= opt.lr_disc, lr_g=opt.lr_gen, is_ss=True)
+    trainer = pl.Trainer(fast_dev_run=True,)
+    trainer.fit(model, train_loader, val_loader)
+
+
+
 
 
 
@@ -68,7 +75,7 @@ def get_argparser():
                         help='critic weight for self supervised procedure')
     parser.add_argument('--lambda_kld', default=1e-3, type=float,  # 0.01
                         help='beta (kld coeff in b-vae) or maximum value of beta during annealing or cycling')
-   
+
     parser.add_argument('--critic_annealing_epochs', default=10, type=int,
                         help='critic weight annealing time')
     parser.add_argument('--beta_warmup_epochs', default=10, type=int,
