@@ -186,13 +186,13 @@ def get_argparser():
     parser.add_argument('--batch_size', default=4, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
-                        help='run all methods once to check integrity, !!!NOT implemented!!!')
+                        help='run all methods once to check integrity')
     parser.add_argument('--resume_run', default="None", type=str,
                         help='wandb run name to resume training using the saved checkpoint')
     parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='run validatoin epoch only')
-    parser.add_argument('--self_supervised', default=True, type=bool,
-                        help='training strategy')
+    parser.add_argument('--is_ss', default=True, type=bool,
+                        help='training strategy - self supervised')
     parser.add_argument('--top_k', default=True, type=bool,
                         help='top k realistic samples to train generator')
     parser.add_argument('--top_k_gamma', default=0.99, type=float,
@@ -236,8 +236,6 @@ def get_argparser():
                         help='abs path to training data file')
     parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_sh.h5', type=str,
                         help='abs path to validation data file')
-    parser.add_argument('--image_path', default="", type=str,
-                        help='path to image folders with subject action etc as folder names')
     # output
     parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
                         help='path to save checkpoints')

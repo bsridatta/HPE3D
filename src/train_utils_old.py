@@ -2,31 +2,8 @@ import sys
 
 import torch
 
-from src.models import (PJPE, Decoder3D, DecoderRGB, Encoder2D, EncoderRGB)
+from src.models import (PJPE, Decoder3D, Encoder2D)
 
-
-def get_models(variant, config):
-    '''
-    get models based on model names in the variant
-
-    Arguments:
-        variant (list(list)) -- all the combination of models
-        config (namespace) -- contain all params for the pipeline
-
-    Returns:
-        models (dic) -- dic of unique instances of required models 
-    '''
-    models = {}
-
-    for pair in variant:
-        encoder = getattr(sys.modules[__name__],
-                          f"Encoder{pair[0].upper()}")
-        decoder = getattr(sys.modules[__name__],
-                          f"Decoder{pair[1].upper()}")
-        models[f"Encoder{pair[0].upper()}"] = encoder(config.latent_dim)
-        models[f"Decoder{pair[1].upper()}"] = decoder(config.latent_dim)
-
-    return models
 
 
 def get_optims(variant, models, config):
