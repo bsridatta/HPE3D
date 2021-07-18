@@ -1,3 +1,4 @@
+from processing import scale_3d
 from typing import Type
 import torch
 import torch.nn as nn
@@ -127,6 +128,7 @@ class Decoder3D(nn.Module):
         x = self.dec_inp_block(x)
         x = self.features(x)
         x = self.dec_out_block(x)
+        x = scale_3d(x)
         return x
 
 

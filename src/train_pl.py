@@ -30,7 +30,7 @@ def main():
         shuffle=False,
     )
 
-    model = VAEGAN(opt.latent_dim, lr_d= opt.lr_disc, lr_g=opt.lr_gen, is_ss=True)
+    model = VAEGAN(opt)
     trainer = pl.Trainer(fast_dev_run=True,)
     trainer.fit(model, train_loader, val_loader)
 
@@ -87,9 +87,9 @@ def get_argparser():
     parser.add_argument('--flip_labels_n_e', default=0, type=int,  
                         help='flip real fake labels for critic every n epochs')
     
-    parser.add_argument('--lr_gen', default=2e-4, type=float,
+    parser.add_argument('--lr_g', default=2e-4, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--lr_disc', default=2e-4, type=float,
+    parser.add_argument('--lr_d', default=2e-4, type=float,
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_decay', default=0.95, type=float,
                         help='learning rate for all optimizers')
