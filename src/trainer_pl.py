@@ -1,3 +1,4 @@
+import math
 from utils import auto_init_args
 from typing import Tuple, Type
 import pytorch_lightning as pl
@@ -40,7 +41,9 @@ class VAEGAN(pl.LightningModule):
         )  # fakes to train G and D
 
         opt_g, opt_d = self.optimizers()
-        reals, fakes = self.get_label(inp, )
+        reals, fakes = self.get_label(
+            inp,
+        )
         """Train D"""
         opt_d.zero_grad(set_to_none=True)
         # with real
@@ -72,18 +75,6 @@ class VAEGAN(pl.LightningModule):
         loss = self.recon_loss(recon_3d, target) + self.kld_loss(mean, logvar)
         return loss
 
-    def adversarial_loss(self, y_hat, y, reduction: str = "mean"):
-        return F.binary_cross_entropy(y_hat, y, reduction=reduction)
-
-    def recon_loss(self, y_hat, y):
-        return F.l1_loss(y_hat, y)
-
-    def kld_loss(self, mean, logvar):
-        # mean as recon is mean or reduction is sum for both TODO i guess
-        return torch.mean(
-            -0.5 * torch.sum(1 + logvar - mean ** 2 - logvar.exp(), dim=1), dim=0
-        )
-
     def configure_optimizers(self):
         opt_g = torch.optim.Adam(
             self.generator.parameters(), lr=self.opt.lr_g, betas=(0.5, 0.999)
@@ -94,15 +85,38 @@ class VAEGAN(pl.LightningModule):
 
         return [opt_g, opt_d], []  # TODO scheduler
 
-    def get_label(self, inp: torch.Tensor, smooth: bool=True):
-        """label smoothing for real labels 
-           TODO flip labels - confuse D.
+    def top_k_grad(self, loss):
+        k = math.ceil(
+            max(self.opt.top_k_min, self.opt.top_k_gamma ** self.current_epoch) * len(loss)
+        )
+        loss, top_k_indices = loss.topk(k=k, largest=False, dim=0)
+        return loss
+
+    def get_label(self, inp: torch.Tensor, smooth: bool = True):
+        """label smoothing for real labels
+        TODO flip labels - confuse D.
         """
         real = 1
         fake = 0
         reals = torch.full((len(inp), 1), real).to(inp.device).type_as(inp)
         fakes = reals.fill_(fake)
         if smooth:
-            noise = (torch.rand_like(reals)*(0.7-1.2)) + 1.2
+            noise = (torch.rand_like(reals) * (0.7 - 1.2)) + 1.2
             reals = reals * noise.to(reals.device).type_as(reals)
         return reals, fakes
+
+    @staticmethod
+    def adversarial_loss(y_hat, y, reduction: str = "mean"):
+        return F.binary_cross_entropy(y_hat, y, reduction=reduction)
+
+    @staticmethod
+    def recon_loss(y_hat, y):
+        exit(print(y_hat.shape, y.shape))
+        return F.l1_loss(y_hat, y)
+
+    @staticmethod
+    def kld_loss(mean, logvar):
+        # mean as recon is mean or reduction is sum for both TODO i guess
+        return torch.mean(
+            -0.5 * torch.sum(1 + logvar - mean ** 2 - logvar.exp(), dim=1), dim=0
+        )

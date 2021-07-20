@@ -1,16 +1,89 @@
 import gc
 import os
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
-import albumentations
 import h5py
 import numpy as np
 import torch
+from torch._C import dtype
 from torch.utils.data import Dataset, dataset
 
 from processing import preprocess, translate_and_project
 from datasets.h36m_utils import H36M_NAMES, ACTION_NAMES
-from datasets.common import COMMON_JOINTS, JOINT_CONNECTIONS
+from datasets.skeleton import Skeleton
+
+
+class Compose(object):
+    """Composes several transforms together.
+    source: https://github.com/pytorch/vision/blob/8759f3035b860365cae15656a5636e408163e8b4/torchvision/transforms/transforms.py#L58
+    """
+
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, inp):
+        val = {}
+        val["pose"] = inp
+        for t in self.transforms:
+            val = t(val)
+        return val
+
+
+class Flip(object):
+    def __init__(self, flipped_indices: List[str], p: float = 0.5) -> None:
+        self.flipped_indices = flipped_indices
+        self.p = p
+
+    def __call__(self, val: torch.Tensor):
+        if torch.rand(1) < self.p:
+            return self.flip(val, self.flipped_indices)
+        return val
+
+    @staticmethod
+    def flip(val: torch.Tensor, flipped_indices):
+        # switch magnitude and direction
+        val = val[flipped_indices]
+        val[:, 0] *= -1
+        return val
+
+
+class MissJoints(object):
+    def __init__(self, joints: List[str], p: float = 0.0, n_miss: int = -1):
+        self.p = p
+        self.n_miss = n_miss
+        self.p_miss_joint = torch.Tensor(
+            self.get_p_miss_joint(joints, select_all=False)
+        )
+
+    @staticmethod
+    def get_p_miss_joint(joints: List[str], select_all: bool) -> List[int]:
+        p_miss_joint = [1] * len(joints)
+        if select_all:
+            return p_miss_joint
+        else:  # select outer joints
+            for idx, joint in enumerate(joints):
+                if "R_" not in joint and "L_" not in joint:
+                    p_miss_joint[idx] = 0
+        return p_miss_joint
+
+    def __call__(self, val):
+        if torch.rand(1) < self.p:
+            if self.n_miss != -1:
+                n_miss = self.n_miss
+            elif torch.rand(1) < 0.5:
+                n_miss = 1
+            else:
+                n_miss = 2
+
+            return self.random_zero_rows(val, self.p_miss_joint, n_miss)
+
+        return val
+
+    @staticmethod
+    def random_zero_rows(val: torch.Tensor, weights: torch.Tensor, n_samples: int):
+        miss_idx = torch.multinomial(weights, n_samples, replacement=False)
+        val[miss_idx, :] = 0
+        return val
 
 
 class H36M(Dataset):
@@ -20,6 +93,7 @@ class H36M(Dataset):
         is_ss: bool = True,
         is_train: bool = False,
         all_keys: bool = False,
+        p_miss_joints: float = 0.0,
     ):
         """H36M dataset
 
@@ -28,78 +102,47 @@ class H36M(Dataset):
             is_ss (bool, optional): [description]. Defaults to True.
             is_train (bool, optional): [description]. Defaults to False.
             all_keys (bool, optional): include all keys. Defaults to False.
+            p_miss_joints (float, optional): Miss joints . Defaults to False.
         """
 
         self.is_train = is_train
-        self._set_skeleton_data()
-        
+        self.skel = Skeleton()
+
         h5 = h5py.File(h5_filepath, "r")
 
         if all_keys:
-            self.keys = h5.keys() 
+            self.keys = h5.keys()
         elif is_train and is_ss:
             self.keys = ["pose2d", "idx"]
         else:
             self.keys = ["pose2d", "pose3d", "idx"]
 
-        self.data = {}
+        self.data: Dict[str, torch.Tensor] = {}
         for key in self.keys:
-            self.data[key] = np.array(h5.get(key))
+            val = h5.get(key)
+            if key in ["pose2d", "pose3d"]:
+                val = np.array(val)  # preprocessing in numpy is easy
+                val = preprocess(val, self.skel.joints, self.skel.root_idx, is_ss=is_ss)
+            self.data[key] = torch.tensor(val, dtype=torch.float32)
         h5.close()
 
-        # further process to make the data learnable - zero 3dpose and norm poses
-        print(f"[INFO]: processing data samples: {len(self.data['idx'])}")
-
-        for key in self.keys:
-            if key in ["pose2d", "pose3d"]:
-                self.data[key] = preprocess(
-                    self.data[key], self.joint_names, self.root_idx, is_ss=is_ss
-                )  # preprocessing in numpy is easy
-                assert self.data[key].shape[-2] == 15
-
-            self.data[key] = torch.tensor(self.data[key], dtype=torch.float32)
+        # if self.is_train:
+        # self.transforms = Compose[Flip(p)]
 
     def __len__(self):
-        return len(self.data["pose2d"])
+        return len(self.data["idx"])
 
     def __getitem__(self, idx):
         sample = {}
         for key in self.keys:
-            sample[key] = self.data[key][idx]
-
-        if self.is_train and torch.rand(1) < 0.5:
-            sample = self._flip(sample)
-
-        return sample
-
-    def _flip(self, sample):
-        # switch magnitude and direction
-        sample["pose2d"] = sample["pose2d"][self._flipped_indices]
-        sample["pose2d"][:, 0] *= -1
-
-        if "pose3d" in sample.keys():
-            sample["pose3d"] = sample["pose3d"][self._flipped_indices]
-            sample["pose3d"][:, 0] *= -1
+            val = self.data[key][idx]
+            # if key == "pose2d":
+            # val = transform_2d(val)
+            # if key == "pose3d":
+            # val = transform_3d(val)
+            sample[key] = val
 
         return sample
-
-    def _set_skeleton_data(self):
-        self.joint_names = COMMON_JOINTS.copy()
-        self.action_names = list(ACTION_NAMES.values())
-        self.root_idx = self.joint_names.index("Pelvis")
-
-        # without pelvis as its removed in the preprocessing step after zeroing
-        joints_15 = self.joint_names.copy()
-        joints_15.remove("Pelvis")
-
-        self._flipped_indices = []
-        for idx, i in enumerate(joints_15):
-            if "R_" in i:
-                self._flipped_indices.append(joints_15.index(i.replace("R_", "L_")))
-            elif "L_" in i:
-                self._flipped_indices.append(joints_15.index(i.replace("L_", "R_")))
-            else:
-                self._flipped_indices.append(idx)
 
 
 def check_data():

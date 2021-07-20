@@ -1,5 +1,6 @@
 import gc
 from collections import OrderedDict, defaultdict
+import math
 
 import torch
 from torch import nn
@@ -153,12 +154,12 @@ def _training_step(batch, batch_idx, model, config, optimizer, epoch):
 
         if config.top_k:
             # top k generations
-            k = int(max(config.top_k_min, config.top_k_gamma ** epoch) * len(gen_loss))
+            k = math.ceil(max(config.top_k_min, config.top_k_gamma ** epoch) * len(gen_loss))
             gen_loss, top_k_indices = gen_loss.topk(k=k, largest=False, dim=0)
-            recon_2d = recon_2d[top_k_indices]
-            target_2d = target_2d[top_k_indices]
-            mean = mean[top_k_indices]
-            logvar = logvar[top_k_indices]
+            # recon_2d = recon_2d[top_k_indices]
+            # target_2d = target_2d[top_k_indices]
+            # mean = mean[top_k_indices]
+            # logvar = logvar[top_k_indices]
 
         gen_loss = torch.mean(gen_loss)
 
@@ -175,9 +176,7 @@ def _training_step(batch, batch_idx, model, config, optimizer, epoch):
         # lambda_kld is used to compute the beta coeff
         loss = config.lambda_gen*recon_loss + config.beta * kld_loss + \
             config.lambda_disc*gen_loss
-
         loss *= 10
-
         loss.backward()  # Would include VAE and critic but critic not updated
 
         D_G_z2 = output.mean().item()

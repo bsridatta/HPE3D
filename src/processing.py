@@ -107,6 +107,7 @@ def preprocess(
     if normalize_pose and not is_ss:
         poses = normalize(poses)
 
+    assert poses.shape[-2] == 15
     return poses
 
 
