@@ -69,12 +69,12 @@ def get_argparser():
                         help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
-    parser.add_argument('--lambda_gen', default=1, type=float,
-                        help='critic weight for self supervised procedure')
-    parser.add_argument('--lambda_disc', default=1e-3, type=float,
-                        help='critic weight for self supervised procedure')
+    parser.add_argument('--lambda_g', default=1, type=float,
+                        help='ss- weight for gen loss/adversarial loss based on disc')
+    parser.add_argument('--lambda_recon', default=1e-3, type=float,
+                        help='ss - weight for recon loss')
     parser.add_argument('--lambda_kld', default=1e-3, type=float,  # 0.01
-                        help='beta (kld coeff in b-vae) or maximum value of beta during annealing or cycling')
+                        help='ss - beta (kld coeff in b-vae) or maximum value of beta during annealing or cycling')
 
     parser.add_argument('--critic_annealing_epochs', default=10, type=int,
                         help='critic weight annealing time')
@@ -93,7 +93,7 @@ def get_argparser():
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_decay', default=0.95, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--p_miss', default=0.0, type=float,
+    parser.add_argument('--p_occlude', default=0.0, type=float,
                         help='number of joints to encode and decode')
     # data files
     parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_sh.h5', type=str,

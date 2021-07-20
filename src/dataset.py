@@ -21,9 +21,11 @@ class Compose(object):
     def __init__(self, transforms):
         self.transforms = transforms
 
-    def __call__(self, inp):
+    def __call__(self, pose2d, pose3d=None):
         val = {}
-        val["pose"] = inp
+        val["pose2d"] = pose2d
+        if pose3d:
+            val["pose3d"] = pose3d
         for t in self.transforms:
             val = t(val)
         return val
@@ -34,9 +36,11 @@ class Flip(object):
         self.flipped_indices = flipped_indices
         self.p = p
 
-    def __call__(self, val: torch.Tensor):
+    def __call__(self, val: Dict[str, torch.Tensor]):
         if torch.rand(1) < self.p:
-            return self.flip(val, self.flipped_indices)
+            val["pose2d"] = self.flip(val["pose2d"], self.flipped_indices)
+            if "pose3d" in val.keys():
+                val["pose3d"] = self.flip(val["pose3d"], self.flipped_indices)
         return val
 
     @staticmethod
@@ -47,43 +51,46 @@ class Flip(object):
         return val
 
 
-class MissJoints(object):
-    def __init__(self, joints: List[str], p: float = 0.0, n_miss: int = -1):
+class Occlude(object):
+    def __init__(self, joints: List[str], p: float = 0.0, n_occlude: int = -1):
         self.p = p
-        self.n_miss = n_miss
-        self.p_miss_joint = torch.Tensor(
-            self.get_p_miss_joint(joints, select_all=False)
+        self.n_occlude = n_occlude
+        self.can_occlude = torch.Tensor(
+            self.get_joints_to_occlude(joints, select_all=False)
         )
 
     @staticmethod
-    def get_p_miss_joint(joints: List[str], select_all: bool) -> List[int]:
-        p_miss_joint = [1] * len(joints)
+    def get_joints_to_occlude(joints: List[str], select_all: bool) -> List[int]:
+        can_occlude = [1] * len(joints)
         if select_all:
-            return p_miss_joint
+            return can_occlude
         else:  # select outer joints
             for idx, joint in enumerate(joints):
                 if "R_" not in joint and "L_" not in joint:
-                    p_miss_joint[idx] = 0
-        return p_miss_joint
+                    can_occlude[idx] = 0
+        return can_occlude
 
     def __call__(self, val):
+        val["mask"] = torch.ones_like(val["pose2d"])
         if torch.rand(1) < self.p:
-            if self.n_miss != -1:
-                n_miss = self.n_miss
+            if self.n_occlude != -1:
+                n_occlude = self.n_occlude
             elif torch.rand(1) < 0.5:
-                n_miss = 1
+                n_occlude = 1
             else:
-                n_miss = 2
+                n_occlude = 2
 
-            return self.random_zero_rows(val, self.p_miss_joint, n_miss)
-
+            val["pose2d"], miss_idx = self.random_zero_rows(
+                val["pose2d"], self.can_occlude, n_occlude
+            )
+            val["mask"] = val["mask"][miss_idx, :] = 0
         return val
 
     @staticmethod
     def random_zero_rows(val: torch.Tensor, weights: torch.Tensor, n_samples: int):
         miss_idx = torch.multinomial(weights, n_samples, replacement=False)
         val[miss_idx, :] = 0
-        return val
+        return val, miss_idx
 
 
 class H36M(Dataset):
@@ -93,7 +100,7 @@ class H36M(Dataset):
         is_ss: bool = True,
         is_train: bool = False,
         all_keys: bool = False,
-        p_miss_joints: float = 0.0,
+        p_occlude: float = 0.0,
     ):
         """H36M dataset
 
@@ -102,7 +109,7 @@ class H36M(Dataset):
             is_ss (bool, optional): [description]. Defaults to True.
             is_train (bool, optional): [description]. Defaults to False.
             all_keys (bool, optional): include all keys. Defaults to False.
-            p_miss_joints (float, optional): Miss joints . Defaults to False.
+            p_occlude (float, optional): emulate missed detection due to occlusion (x,y set to 0). Defaults to 0.0.
         """
 
         self.is_train = is_train
@@ -117,6 +124,7 @@ class H36M(Dataset):
         else:
             self.keys = ["pose2d", "pose3d", "idx"]
 
+        print(f"[INFO]: Processing dataset")
         self.data: Dict[str, torch.Tensor] = {}
         for key in self.keys:
             val = h5.get(key)
@@ -126,8 +134,21 @@ class H36M(Dataset):
             self.data[key] = torch.tensor(val, dtype=torch.float32)
         h5.close()
 
-        # if self.is_train:
-        # self.transforms = Compose[Flip(p)]
+        if self.is_train:
+            self.transform = Compose(
+                [
+                    Flip(self.skel.flipped_indices, p=0.5),
+                    Occlude(self.skel.joints_15, p=0, n_occlude=-1),
+                ]
+            )
+        else:
+            self.transform = Compose(
+                [
+                    Occlude(self.skel.joints_15, p=p_occlude, n_occlude=-1),
+                ]
+            )
+        
+        assert(is_ss or not p_occlude) # no occlusion for supervised
 
     def __len__(self):
         return len(self.data["idx"])
@@ -135,39 +156,22 @@ class H36M(Dataset):
     def __getitem__(self, idx):
         sample = {}
         for key in self.keys:
-            val = self.data[key][idx]
-            # if key == "pose2d":
-            # val = transform_2d(val)
-            # if key == "pose3d":
-            # val = transform_3d(val)
-            sample[key] = val
-
+            sample[key] = self.data[key][idx]
+        sample.update(self.transform(sample["pose2d"], sample.get("pose3d")))
         return sample
 
 
-def check_data():
+if __name__ == "__main__":
     """
     Can be used to get norm stats for all subjects/ # Just for easily access content.
     """
-
     h5_filepath = f"src/data/h36m_train_sh_ft.h5"
     # image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
-
     dataset = H36M(h5_filepath, is_train=True)
-
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
     sample = dataset.__getitem__(10)
-
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\n")
         pass
-
-    del dataset
-    del sample
-    gc.collect()
-
-
-if __name__ == "__main__":
-    check_data()

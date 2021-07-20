@@ -21,6 +21,9 @@ class VAEGAN(pl.LightningModule):
         self.discriminator = Discriminator()
         self.automatic_optimization = False
         self.project_dist = 10
+        self.w_recon = opt.lambda_recon
+        self.w_g = opt.lambda_g
+        self.w_kld = opt.lambda_kld
 
     def forward(self, x):
         return self.generator(x)
@@ -30,20 +33,16 @@ class VAEGAN(pl.LightningModule):
         if not self.opt.is_ss:
             return self.supervised_step(batch)
 
-        inp, target = batch["pose2d"], batch["pose2d"]
+        inp, target = batch["pose2d"].detach(), batch["pose2d"].detach()
         recon_3d, mean, logvar = self.generator(inp)
         recon_2d = translate_and_project(recon_3d, self.project_dist)
-        loss_recon = self.recon_loss(recon_2d, target)
+        loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
         loss_kld = self.kld_loss(mean, logvar)
 
-        novel_2d = translate_and_project(
-            random_rotate(recon_3d), self.project_dist
-        )  # fakes to train G and D
-
+        # fakes to train G and D
+        novel_2d = translate_and_project(random_rotate(recon_3d), self.project_dist)
+        reals, fakes = self.get_label(inp)
         opt_g, opt_d = self.optimizers()
-        reals, fakes = self.get_label(
-            inp,
-        )
         """Train D"""
         opt_d.zero_grad(set_to_none=True)
         # with real
@@ -63,8 +62,49 @@ class VAEGAN(pl.LightningModule):
         opt_g.zero_grad(set_to_none=True)
         # with same fake/ novel_2d sample
         out = self.discriminator(novel_2d)
-        loss_g = self.adversarial_loss(out, reals)  # includes Enc.
-        loss_vae = loss_g + loss_recon + loss_kld  # G -> realistic + proj recon acc.
+        loss_g = self.adversarial_loss(out, reals, top_k=True)  # includes Enc.
+        loss_vae = self.w_g * loss_g + self.w_recon * loss_recon + self.w_kld * loss_kld
+        # G -> realistic + proj recon acc. | Would be diff. if only decoder is G.
+        self.manual_backward(loss_vae)
+        D_G_z2 = out.mean().item()
+        opt_g.step()
+
+
+    def validation_step(self, batch, batch_idx):
+        if not self.opt.is_ss:
+            return self.supervised_step(batch)
+
+        inp, target = batch["pose2d"].detach(), batch["pose2d"].detach()
+        recon_3d, mean, logvar = self.generator(inp)
+        recon_2d = translate_and_project(recon_3d, self.project_dist)
+        loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
+        loss_kld = self.kld_loss(mean, logvar)
+
+        # fakes to train G and D
+        novel_2d = translate_and_project(random_rotate(recon_3d), self.project_dist)
+        reals, fakes = self.get_label(inp)
+        """Train D"""
+        opt_d.zero_grad(set_to_none=True)
+        # with real
+        out = self.discriminator(inp)
+        loss_d_real = self.adversarial_loss(out, reals)
+        self.manual_backward(loss_d_real)
+        D_x = out.mean().item()
+        # with fake
+        out = self.discriminator(novel_2d.detach())
+        loss_d_fake = self.adversarial_loss(out, fakes)
+        self.manual_backward(loss_d_fake)
+        D_G_z1 = out.mean().item()
+        loss_d = loss_d_real + loss_d_fake
+        opt_d.step()
+
+        """Train G"""
+        opt_g.zero_grad(set_to_none=True)
+        # with same fake/ novel_2d sample
+        out = self.discriminator(novel_2d)
+        loss_g = self.adversarial_loss(out, reals, top_k=True)  # includes Enc.
+        loss_vae = self.w_g * loss_g + self.w_recon * loss_recon + self.w_kld * loss_kld
+        # G -> realistic + proj recon acc. | Would be diff. if only decoder is G.
         self.manual_backward(loss_vae)
         D_G_z2 = out.mean().item()
         opt_g.step()
@@ -72,7 +112,7 @@ class VAEGAN(pl.LightningModule):
     def supervised_step(self, batch):
         inp, target = batch["pose2d"], batch["pose3d"]
         recon_3d, mean, logvar = self.generator(inp)
-        loss = self.recon_loss(recon_3d, target) + self.kld_loss(mean, logvar)
+        loss = self.recon_loss(recon_3d, target) + self.kld_loss(mean, logvar)  # lambd?
         return loss
 
     def configure_optimizers(self):
@@ -87,7 +127,8 @@ class VAEGAN(pl.LightningModule):
 
     def top_k_grad(self, loss):
         k = math.ceil(
-            max(self.opt.top_k_min, self.opt.top_k_gamma ** self.current_epoch) * len(loss)
+            max(self.opt.top_k_min, self.opt.top_k_gamma ** self.current_epoch)
+            * len(loss)
         )
         loss, top_k_indices = loss.topk(k=k, largest=False, dim=0)
         return loss
@@ -105,13 +146,21 @@ class VAEGAN(pl.LightningModule):
             reals = reals * noise.to(reals.device).type_as(reals)
         return reals, fakes
 
-    @staticmethod
-    def adversarial_loss(y_hat, y, reduction: str = "mean"):
+    def adversarial_loss(self, y_hat, y, reduction: str = "mean", top_k: bool = False):
+        if top_k:
+            loss = F.binary_cross_entropy(y_hat, y, reduction="none")
+            loss = torch.mean(self.top_k_grad(loss))
+            if reduction == "mean":
+                return torch.mean(loss)
+            if reduction == "sum":
+                return torch.sum(loss)
+
         return F.binary_cross_entropy(y_hat, y, reduction=reduction)
 
     @staticmethod
-    def recon_loss(y_hat, y):
-        exit(print(y_hat.shape, y.shape))
+    def recon_loss(y_hat, y, occlusion_mask=None):
+        if (occlusion_mask != None) and (0 in occlusion_mask):
+            y_hat *= occlusion_mask  # 0 if occluded, occlusion is 0 in y
         return F.l1_loss(y_hat, y)
 
     @staticmethod

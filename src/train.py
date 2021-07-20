@@ -229,8 +229,8 @@ def get_argparser():
                         help='learning rate for all optimizers')
     parser.add_argument('--lr_decay', default=0.95, type=float,
                         help='learning rate for all optimizers')
-    parser.add_argument('--p_miss', default=0.0, type=float,
-                        help='number of joints to encode and decode')
+    parser.add_argument('--p_miss_joints', default=0.0, type=float,
+                        help='emulate joint occlusion')
     # data files
     parser.add_argument('--train_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_train_sh.h5', type=str,
                         help='abs path to training data file')
