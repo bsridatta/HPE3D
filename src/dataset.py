@@ -101,6 +101,7 @@ class H36M(Dataset):
         is_train: bool = False,
         all_keys: bool = False,
         p_occlude: float = 0.0,
+        debug: bool = False
     ):
         """H36M dataset
 
@@ -124,15 +125,19 @@ class H36M(Dataset):
         else:
             self.keys = ["pose2d", "pose3d", "idx"]
 
-        print(f"[INFO]: Processing dataset")
+        print(f"[INFO]: processing data samples:", end=" ")
+
         self.data: Dict[str, torch.Tensor] = {}
         for key in self.keys:
-            val = h5.get(key)
+            val = h5.get(key) if not debug else h5.get(key)[:10]
             if key in ["pose2d", "pose3d"]:
-                val = np.array(val)  # preprocessing in numpy is easy
+                # preprocessing in numpy is easy
+                val = np.array(val) 
                 val = preprocess(val, self.skel.joints, self.skel.root_idx, is_ss=is_ss)
             self.data[key] = torch.tensor(val, dtype=torch.float32)
         h5.close()
+
+        print(len(self.data['idx']))
 
         if self.is_train:
             self.transform = Compose(
@@ -167,11 +172,11 @@ if __name__ == "__main__":
     """
     h5_filepath = f"src/data/h36m_train_sh_ft.h5"
     # image_path = f"{os.getenv('HOME')}/lab/HPE_datasets/h36m_poselifter/"
-    dataset = H36M(h5_filepath, is_train=True)
+    dataset = H36M(h5_filepath, is_train=True, debug=True)
     print("[INFO]: Length of the dataset: ", len(dataset))
     print("[INFO]: One sample -")
 
-    sample = dataset.__getitem__(10)
+    sample = dataset.__getitem__(5)
     for k, v in zip(sample.keys(), sample.values()):
         print(k, v.size(), v.dtype, end="\n")
         pass

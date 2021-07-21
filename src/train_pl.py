@@ -15,7 +15,7 @@ def main():
     pl.seed_everything(opt.seed)
 
     train_loader = torch.utils.data.DataLoader(
-        H36M(opt.train_file, opt.is_ss, is_train=True),
+        H36M(opt.train_file, opt.is_ss, is_train=True, debug=opt.fast_dev_run),
         batch_size=opt.batch_size,
         num_workers=opt.num_workers,
         pin_memory=opt.pin_memory,
@@ -23,7 +23,7 @@ def main():
     )
 
     val_loader = torch.utils.data.DataLoader(
-        H36M(opt.test_file, opt.is_ss, is_train=False),
+        H36M(opt.test_file, opt.is_ss, is_train=False, debug=opt.fast_dev_run),
         batch_size=opt.batch_size,
         num_workers=opt.num_workers,
         pin_memory=opt.pin_memory,
@@ -31,12 +31,8 @@ def main():
     )
 
     model = VAEGAN(opt)
-    trainer = pl.Trainer(fast_dev_run=True,)
+    trainer = pl.Trainer(fast_dev_run=opt.fast_dev_run)
     trainer.fit(model, train_loader, val_loader)
-
-
-
-
 
 
 def get_argparser():

@@ -1,6 +1,6 @@
 import math
 from utils import auto_init_args
-from typing import Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from models import Discriminator, Generator
@@ -55,7 +55,7 @@ class VAEGAN(pl.LightningModule):
         loss_d_fake = self.adversarial_loss(out, fakes)
         self.manual_backward(loss_d_fake)
         D_G_z1 = out.mean().item()
-        loss_d = loss_d_real + loss_d_fake
+        loss_d = (loss_d_real + loss_d_fake) / 2
         opt_d.step()
 
         """Train G"""
@@ -69,6 +69,21 @@ class VAEGAN(pl.LightningModule):
         D_G_z2 = out.mean().item()
         opt_g.step()
 
+        self.log_dict(
+            {
+                "loss_recon": loss_recon,
+                "loss_kld": loss_kld,
+                "loss_g": loss_g,
+                "loss_d": loss_d,
+                "D_x": D_x,
+                "D_G_z1": D_G_z1,
+                "D_G_z2": D_G_z2,
+            },
+            on_step=True,
+            on_epoch=False,
+            prog_bar=True,
+            logger=True,
+        )
 
     def validation_step(self, batch, batch_idx):
         if not self.opt.is_ss:
@@ -79,35 +94,8 @@ class VAEGAN(pl.LightningModule):
         recon_2d = translate_and_project(recon_3d, self.project_dist)
         loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
         loss_kld = self.kld_loss(mean, logvar)
-
-        # fakes to train G and D
-        novel_2d = translate_and_project(random_rotate(recon_3d), self.project_dist)
-        reals, fakes = self.get_label(inp)
-        """Train D"""
-        opt_d.zero_grad(set_to_none=True)
-        # with real
-        out = self.discriminator(inp)
-        loss_d_real = self.adversarial_loss(out, reals)
-        self.manual_backward(loss_d_real)
-        D_x = out.mean().item()
-        # with fake
-        out = self.discriminator(novel_2d.detach())
-        loss_d_fake = self.adversarial_loss(out, fakes)
-        self.manual_backward(loss_d_fake)
-        D_G_z1 = out.mean().item()
-        loss_d = loss_d_real + loss_d_fake
-        opt_d.step()
-
-        """Train G"""
-        opt_g.zero_grad(set_to_none=True)
-        # with same fake/ novel_2d sample
-        out = self.discriminator(novel_2d)
-        loss_g = self.adversarial_loss(out, reals, top_k=True)  # includes Enc.
-        loss_vae = self.w_g * loss_g + self.w_recon * loss_recon + self.w_kld * loss_kld
-        # G -> realistic + proj recon acc. | Would be diff. if only decoder is G.
-        self.manual_backward(loss_vae)
-        D_G_z2 = out.mean().item()
-        opt_g.step()
+        # TODO log at the end of epoch - few gens
+        # all you need to know if how good the vae is! mpjpe, recon, kld
 
     def supervised_step(self, batch):
         inp, target = batch["pose2d"], batch["pose3d"]
@@ -135,12 +123,21 @@ class VAEGAN(pl.LightningModule):
 
     def get_label(self, inp: torch.Tensor, smooth: bool = True):
         """label smoothing for real labels
-        TODO flip labels - confuse D.
+        TODO flip labels - confuse D. (one-sided label flipping - mathworks tut.)
         """
         real = 1
         fake = 0
-        reals = torch.full((len(inp), 1), real).to(inp.device).type_as(inp)
-        fakes = reals.fill_(fake)
+        reals = (
+            torch.full((len(inp), 1), real, requires_grad=False)
+            .to(inp.device)
+            .type_as(inp)
+        )
+        fakes = (
+            torch.full((len(inp), 1), fake, requires_grad=False)
+            .to(inp.device)
+            .type_as(inp)
+        )
+
         if smooth:
             noise = (torch.rand_like(reals) * (0.7 - 1.2)) + 1.2
             reals = reals * noise.to(reals.device).type_as(reals)
