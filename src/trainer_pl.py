@@ -93,7 +93,7 @@ class VAEGAN(pl.LightningModule):
         # TODO log at the end of epoch - few gens
         mpjpe = torch.mean(PJPE(recon_3d, gt_3d))
         self.log_dict(
-            {"mpjpe": mpjpe, "loss_recon": loss_recon, "loss_kld": loss_kld},
+            {"mpjpe": mpjpe, "val_loss_recon": loss_recon, "val_loss_kld": loss_kld},
             prog_bar=True,
             on_step=False,
             on_epoch=True,

@@ -31,6 +31,7 @@ def main():
     )
 
     logger = WandbLogger(project="gan", reinit=True)
+    logger.log_hyperparams(opt)
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         monitor="mpjpe",
         dirpath="./ckpts/",
@@ -39,10 +40,9 @@ def main():
         verbose=True,
     )
     checkpoint_callback.FILE_EXTENSION = '.pt'
-    
     trainer = pl.Trainer(
         gpus=torch.cuda.device_count() * int(opt.gpu),
-        fast_dev_run=False,#opt.fast_dev_run,
+        fast_dev_run=opt.fast_dev_run,
         max_epochs=opt.epochs,
         callbacks=[checkpoint_callback],
         logger=logger,
@@ -59,21 +59,15 @@ def get_argparser():
 
     # fmt: off
     # training specific
-    parser.add_argument('--epochs', default=10, type=int,
+    parser.add_argument('--epochs', default=2, type=int,
                         help='number of epochs to train')
     parser.add_argument('--batch_size', default=4, type=int,
                         help='number of samples per step, have more than one for batch norm')
     parser.add_argument('--fast_dev_run', default=True, type=lambda x: (str(x).lower() == 'true'),
                         help='run all methods once to check integrity')
-    parser.add_argument('--resume_run', default="None", type=str,
-                        help='wandb run name to resume training using the saved checkpoint')
-    parser.add_argument('--test', default=False, type=lambda x: (str(x).lower() == 'true'),
-                        help='run validatoin epoch only')
     parser.add_argument('--is_ss', default=True, type=bool,
                         help='training strategy - self supervised')
     # model specific
-    parser.add_argument('--variant', default=2, type=int,
-                        help='choose variant, the combination of VAEs to be trained')
     parser.add_argument('--latent_dim', default=51, type=int,
                         help='dimensions of the cross model latent space')
     parser.add_argument('--lambda_g', default=1, type=float,
@@ -116,8 +110,6 @@ def get_argparser():
     # output
     # parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/../checkpoints', type=str,
     #                     help='path to save checkpoints')
-    parser.add_argument('--exp_name', default=f'run_1', type=str,
-                        help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_image_interval', type=int, default=1,
                         help='log images during eval epoch falling in this interval')
     parser.add_argument('--validation_interval', type=int, default=5,
