@@ -112,15 +112,15 @@ def preprocess(
 
 
 def post_process(
-    recon, target, is_ss=False, procrustes=False
+    recon, target, is_ss=True, procrustes=True
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Denormalize or rigid body transformation of 3D poses for calculating eval metric. Adds root at 0,0,0 to get the metric for 17 joints.
 
     Args:
         recon (torch.Tensor): predicted 3D pose
         target (torch.Tensor): ground truth 3D pose
-        is_ss (bool, optional): true if self supervised. Defaults to False.
-        procrustes (bool, optional): if true, do procrustes alignemnt of recon to target. Defaults to False.
+        is_ss (bool, optional): true if self supervised. Defaults to True.
+        procrustes (bool, optional): if true, do procrustes alignemnt of recon to target. Defaults to True.
 
     Returns:
         Tuple: modified recon and target
@@ -128,6 +128,7 @@ def post_process(
 
     # TODO remove adding root for 16j metric
     assert recon.shape == target.shape
+    device = target.device
 
     if not is_ss:
         # de-normalize data to original coordinates
@@ -135,7 +136,7 @@ def post_process(
         target = denormalize(target)
 
     if procrustes:
-        # algined recon with target
+        # Speed up procrustes alignment with CPU!
         t, r = target.cpu().numpy(), recon.cpu().numpy()
 
         aligned = []
@@ -154,8 +155,8 @@ def post_process(
         recon.shape[0], 1, 1
     )
 
-    recon = torch.cat((zeros, recon), dim=1)
-    target = torch.cat((zeros, target), dim=1)
+    recon = torch.cat((zeros, recon), dim=1).to(device)
+    target = torch.cat((zeros, target), dim=1).to(device)
 
     return recon, target
 

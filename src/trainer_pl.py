@@ -1,11 +1,11 @@
 import math
-from utils import auto_init_args
+from utils import PJPE, auto_init_args
 from typing import Any, Dict, List, Tuple, Type
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from models import Discriminator, Generator
 import torch
-from processing import translate_and_project, random_rotate, scale_3d
+from processing import post_process, translate_and_project, random_rotate, scale_3d
 
 
 class VAEGAN(pl.LightningModule):
@@ -30,9 +30,6 @@ class VAEGAN(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         """TODO add miss joint augmentation, noise for disc. training"""
-        if not self.opt.is_ss:
-            return self.supervised_step(batch)
-
         inp, target = batch["pose2d"].detach(), batch["pose2d"].detach()
         recon_3d, mean, logvar = self.generator(inp)
         recon_2d = translate_and_project(recon_3d, self.project_dist)
@@ -84,18 +81,24 @@ class VAEGAN(pl.LightningModule):
             prog_bar=True,
             logger=True,
         )
+        return loss_vae
 
     def validation_step(self, batch, batch_idx):
-        if not self.opt.is_ss:
-            return self.supervised_step(batch)
-
         inp, target = batch["pose2d"].detach(), batch["pose2d"].detach()
         recon_3d, mean, logvar = self.generator(inp)
         recon_2d = translate_and_project(recon_3d, self.project_dist)
         loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
         loss_kld = self.kld_loss(mean, logvar)
+        recon_3d, gt_3d = post_process(recon_3d, batch["pose3d"])
         # TODO log at the end of epoch - few gens
-        # all you need to know if how good the vae is! mpjpe, recon, kld
+        mpjpe = torch.mean(PJPE(recon_3d, gt_3d))
+        self.log_dict(
+            {"mpjpe": mpjpe, "loss_recon": loss_recon, "loss_kld": loss_kld},
+            prog_bar=True,
+            on_step=False,
+            on_epoch=True,
+        )
+        return mpjpe
 
     def supervised_step(self, batch):
         inp, target = batch["pose2d"], batch["pose3d"]
@@ -166,3 +169,12 @@ class VAEGAN(pl.LightningModule):
         return torch.mean(
             -0.5 * torch.sum(1 + logvar - mean ** 2 - logvar.exp(), dim=1), dim=0
         )
+
+    def get_progress_bar_dict(self):
+        # don't show the version number
+        items = super().get_progress_bar_dict()
+        items.pop("v_num", None)
+        items.pop("global step", None)
+        items.pop("Epoch", None)
+        
+        return items

@@ -52,8 +52,7 @@ def KLD(mean, logvar):
 
 
 def auto_init_args(obj, tgt=None, can_overwrite=False):
-    """Source - https://github.com/facebookresearch/c3dpo_nrsfm/blob/aa558fd0cc10a704706a6c9704b221f7a42f5f80/tools/utils.py#L44
-    """
+    """Source - https://github.com/facebookresearch/c3dpo_nrsfm/blob/aa558fd0cc10a704706a6c9704b221f7a42f5f80/tools/utils.py#L44"""
     import inspect
 
     # autoassign constructor arguments
@@ -72,3 +71,30 @@ def auto_init_args(obj, tgt=None, can_overwrite=False):
     for name in paramnames:
         # print('autosetting %s -> %s' % (name,str(params[name])) )
         setattr(tgt_attr, name, params[name])
+
+
+@torch.jit.script
+def mish(input):
+    """
+    Source: https://github.com/digantamisra98/Mish/blob/master/Mish/Torch/mish.py
+    mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + exp(x)))
+    """
+    return input * torch.tanh(F.softplus(input))
+
+
+class Mish(torch.nn.Module):
+    """
+    Source: https://github.com/digantamisra98/Mish/blob/master/Mish/Torch/mish.py
+
+    Applies the mish function element-wise:
+    Shape:
+        - Input: (N, *) where * means, any number of additional
+          dimensions
+        - Output: (N, *), same shape as the input
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, input):
+        return mish(input)

@@ -24,7 +24,7 @@ class Compose(object):
     def __call__(self, pose2d, pose3d=None):
         val = {}
         val["pose2d"] = pose2d
-        if pose3d:
+        if pose3d != None:
             val["pose3d"] = pose3d
         for t in self.transforms:
             val = t(val)

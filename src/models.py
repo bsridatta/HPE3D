@@ -2,7 +2,7 @@ from processing import scale_3d
 from typing import Type
 import torch
 import torch.nn as nn
-
+from utils import Mish
 
 class LBAD(nn.Module):
     def __init__(
@@ -167,7 +167,7 @@ class Generator(nn.Module):
         self,
         latent_dim: int,
         n_joints: int = 15,
-        activation: Type[torch.nn.Module] = nn.Mish,
+        activation: Type[torch.nn.Module] = Mish,
         neurons: int = 1024,
         drop_out_p: float = 0.2,
     ):

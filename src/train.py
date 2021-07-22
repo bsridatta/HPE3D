@@ -237,8 +237,8 @@ def get_argparser():
     parser.add_argument('--test_file', default=f'{os.path.dirname(os.path.abspath(__file__))}/data/h36m_test_sh.h5', type=str,
                         help='abs path to validation data file')
     # output
-    parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
-                        help='path to save checkpoints')
+    # parser.add_argument('--save_dir', default=f'{os.path.dirname(os.path.abspath(__file__))}/checkpoints', type=str,
+    #                     help='path to save checkpoints')
     parser.add_argument('--exp_name', default=f'run_1', type=str,
                         help='name of the current run, used to id checkpoint and other logs')
     parser.add_argument('--log_image_interval', type=int, default=1,
