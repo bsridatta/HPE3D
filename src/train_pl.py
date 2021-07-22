@@ -1,6 +1,7 @@
 import os
 
 from torch.cuda import device_count
+from torch.nn.modules.loss import TripletMarginLoss
 
 from trainer_pl import VAEGAN
 import pytorch_lightning as pl
@@ -35,17 +36,17 @@ def main():
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         monitor="mpjpe",
         dirpath="./ckpts/",
-        filename=f"{logger.experiment.name}_"+"{epoch}-{mpjpe:.2f}",
+        filename=f"{logger.experiment.name}_" + "{epoch}-{mpjpe:.2f}",
         mode="max",
         verbose=True,
     )
-    checkpoint_callback.FILE_EXTENSION = '.pt'
+    checkpoint_callback.FILE_EXTENSION = ".pt"
     trainer = pl.Trainer(
-        gpus=torch.cuda.device_count() * int(opt.gpu),
         fast_dev_run=opt.fast_dev_run,
         max_epochs=opt.epochs,
         callbacks=[checkpoint_callback],
         logger=logger,
+        auto_select_gpus=True,
     )
     model = VAEGAN(opt)
     trainer.fit(model, train_loader, val_loader)

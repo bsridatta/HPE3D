@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from models import Discriminator, Generator
 import torch
 from processing import post_process, translate_and_project, random_rotate, scale_3d
-
+from torch.nn.utils import clip_grad_norm_
 
 class VAEGAN(pl.LightningModule):
     def __init__(
@@ -29,17 +29,17 @@ class VAEGAN(pl.LightningModule):
         return self.generator(x)
 
     def training_step(self, batch, batch_idx):
-        """TODO add miss joint augmentation, noise for disc. training"""
+        """TODO add noise for disc. training"""
         inp, target = batch["pose2d"].detach(), batch["pose2d"].detach()
         recon_3d, mean, logvar = self.generator(inp)
         recon_2d = translate_and_project(recon_3d, self.project_dist)
         loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
         loss_kld = self.kld_loss(mean, logvar)
-
         # fakes to train G and D
         novel_2d = translate_and_project(random_rotate(recon_3d), self.project_dist)
         reals, fakes = self.get_label(inp)
         opt_g, opt_d = self.optimizers()
+
         """Train D"""
         opt_d.zero_grad(set_to_none=True)
         # with real
@@ -53,6 +53,7 @@ class VAEGAN(pl.LightningModule):
         self.manual_backward(loss_d_fake)
         D_G_z1 = out.mean().item()
         loss_d = (loss_d_real + loss_d_fake) / 2
+        clip_grad_norm_(self.discriminator.parameters(), 1)
         opt_d.step()
 
         """Train G"""
@@ -64,6 +65,7 @@ class VAEGAN(pl.LightningModule):
         # G -> realistic + proj recon acc. | Would be diff. if only decoder is G.
         self.manual_backward(loss_vae)
         D_G_z2 = out.mean().item()
+        clip_grad_norm_(self.generator.parameters(), 1)
         opt_g.step()
 
         self.log_dict(
