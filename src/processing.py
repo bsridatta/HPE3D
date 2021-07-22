@@ -128,7 +128,6 @@ def post_process(
 
     # TODO remove adding root for 16j metric
     assert recon.shape == target.shape
-    device = target.device
 
     if not is_ss:
         # de-normalize data to original coordinates
@@ -148,15 +147,15 @@ def post_process(
             r_ = (mtx * std) + mean
             aligned.append(r_)
 
-        recon = torch.from_numpy(np.array(aligned)).float()
+        recon = torch.from_numpy(np.array(aligned)).float().to(recon.device)
 
     # since the MPJPE is computed for 17 joints with roots aligned i.e zeroed
     zeros = torch.tensor((0, 0, 0), device=recon.device, dtype=torch.float32).repeat(
         recon.shape[0], 1, 1
-    )
+    ).to(recon.device)
 
-    recon = torch.cat((zeros, recon), dim=1).to(device)
-    target = torch.cat((zeros, target), dim=1).to(device)
+    recon = torch.cat((zeros, recon), dim=1)
+    target = torch.cat((zeros, target), dim=1)
 
     return recon, target
 
