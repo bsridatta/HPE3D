@@ -8,6 +8,7 @@ import torch
 from processing import post_process, translate_and_project, random_rotate, scale_3d
 from torch.nn.utils import clip_grad_norm_
 
+
 class VAEGAN(pl.LightningModule):
     def __init__(
         self,
@@ -66,7 +67,8 @@ class VAEGAN(pl.LightningModule):
         self.manual_backward(loss_vae)
         D_G_z2 = out.mean().item()
         clip_grad_norm_(self.generator.parameters(), 1)
-        opt_g.step()
+        if batch_idx % self.opt.disc_freq == 0:
+            opt_g.step()
 
         self.log_dict(
             {
@@ -178,5 +180,5 @@ class VAEGAN(pl.LightningModule):
         items.pop("v_num", None)
         items.pop("global step", None)
         items.pop("Epoch", None)
-        
+
         return items
