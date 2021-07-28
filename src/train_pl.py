@@ -1,13 +1,13 @@
 import os
+from argparse import ArgumentParser
 
+import pytorch_lightning as pl
+import torch
+from pytorch_lightning.loggers import WandbLogger
 from torch.cuda import device_count
 
-from trainer_pl import VAEGAN
-import pytorch_lightning as pl
-from argparse import ArgumentParser
-import torch
 from dataset import H36M
-from pytorch_lightning.loggers import WandbLogger
+from trainer_pl import VAEGAN
 
 
 def main():

@@ -1,4 +1,6 @@
 import math
+
+from torch.nn.utils.clip_grad import clip_grad_value_
 from utils import PJPE, auto_init_args
 from typing import Any, Dict, List, Tuple, Type
 import pytorch_lightning as pl
@@ -24,7 +26,8 @@ class VAEGAN(pl.LightningModule):
         self.project_dist = 10
         self.w_recon = opt.lambda_recon
         self.w_g = opt.lambda_g
-        self.w_kld = opt.lambda_kld
+        self.betas = BetaCycling(4, 0.5, opt.epochs, 0, opt.lambda_kld)
+        self.w_kld = self.betas.next()
 
     def forward(self, x):
         return self.generator(x)
@@ -67,6 +70,7 @@ class VAEGAN(pl.LightningModule):
         self.manual_backward(loss_vae)
         D_G_z2 = out.mean().item()
         clip_grad_norm_(self.generator.parameters(), 1)
+        clip_grad_value_(self.generator.parameters(), 1000)
         if batch_idx % self.opt.disc_freq == 0:
             opt_g.step()
 
@@ -94,15 +98,24 @@ class VAEGAN(pl.LightningModule):
         loss_recon = self.recon_loss(recon_2d, target, batch["mask"])
         loss_kld = self.kld_loss(mean, logvar)
         recon_3d, gt_3d = post_process(recon_3d, batch["pose3d"])
-        # TODO log at the end of epoch - few gens
         mpjpe = torch.mean(PJPE(recon_3d, gt_3d))
+        
         self.log_dict(
             {"mpjpe": mpjpe, "val_loss_recon": loss_recon, "val_loss_kld": loss_kld},
             prog_bar=True,
             on_step=False,
             on_epoch=True,
         )
+
         return mpjpe
+
+    # def validation_epoch_end(self, outputs) -> None:
+    #     # TODO log at the end of epoch - few gens
+    #     return None
+
+    def training_epoch_end(self, training_step_outputs) -> None:
+        self.w_kld = self.betas.next()
+        print("[INFO]: Cyling beta to ", self.w_kld)
 
     def supervised_step(self, batch):
         inp, target = batch["pose2d"], batch["pose3d"]
@@ -182,3 +195,31 @@ class VAEGAN(pl.LightningModule):
         items.pop("Epoch", None)
 
         return items
+
+
+class BetaCycling:
+    def __init__(
+        self,
+        n_cycles: int = 4,
+        ratio: float = 0.5,
+        n_epochs: int = 100,
+        low: float = 0.0,
+        high: float = 1.0,
+    ) -> None:
+        """https://github.com/haofuml/cyclical_annealing"""
+        self.values = torch.ones(n_epochs) * high
+        periodicity = n_epochs / n_cycles
+        step = (high - low) / (periodicity * ratio)
+        for c in range(n_cycles):
+            val, idx = low, 0
+            while val <= high and (int(idx + c * periodicity) < n_epochs):
+                self.values[int(idx + c * periodicity)] = val
+                val += step
+                idx += 1
+
+        self.curr_idx = 0
+
+    def next(self):
+        value = self.values[self.curr_idx]
+        self.curr_idx += 1
+        return value
